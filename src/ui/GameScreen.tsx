@@ -479,7 +479,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const tableauPiles = Object.values(piles)
     .filter((pile: any) => pile.type === 'tableau')
     .sort((a: any, b: any) => a.id.localeCompare(b.id));
-  const deckPile = Object.values(piles).find((pile: any) => pile.type === 'stock');
+  const deckPile = Object.values(piles).find((pile: any) => pile.type === 'deck' || pile.type === 'stock');
   const wastePile = Object.values(piles).find((pile: any) => pile.type === 'waste');
   const handPile = Object.values(piles).find((pile: any) => pile.type === 'hand');
   

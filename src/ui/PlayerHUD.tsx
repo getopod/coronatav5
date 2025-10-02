@@ -213,6 +213,19 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
 
   return (
     <div className="player-hud">
+      {/* Current Encounter Info */}
+      {encounter && (
+        <div className="encounter-section">
+          <div className="encounter-header">
+            <span className={`encounter-type ${encounter.type}`}>
+              {encounter.type === 'fear' ? '😰' : '⚡'} {encounter.type.toUpperCase()}
+            </span>
+            <span className="encounter-name">{encounter.title || encounter.name}</span>
+          </div>
+          <div className="encounter-description">{encounter.description}</div>
+        </div>
+      )}
+
       {/* Full-width Progress Bar */}
       {encounter && (
         <div className="progress-container-full">
@@ -262,19 +275,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
               <span className="choice-description">Risk for reward</span>
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Current Encounter Info */}
-      {encounter && (
-        <div className="encounter-section">
-          <div className="encounter-header">
-            <span className={`encounter-type ${encounter.type}`}>
-              {encounter.type === 'fear' ? '😰' : '⚡'} {encounter.type.toUpperCase()}
-            </span>
-            <span className="encounter-name">{encounter.name}</span>
-          </div>
-          <div className="encounter-description">{encounter.description}</div>
         </div>
       )}
 
