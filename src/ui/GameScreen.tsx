@@ -9,6 +9,7 @@ import { GameState } from '../core_engine/types';
 import ChoiceSelectionScreen from './ChoiceSelectionScreen';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
+import { endGameSession } from '../core_engine/persistenceManager';
 import './GameScreen.css';
 
 interface GameScreenProps {
@@ -797,6 +798,25 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
               <button 
                 className="modal-button confirm"
                 onClick={() => {
+                  // End the game session and save to history
+                  try {
+                    const gameData = {
+                      score: gameState.player?.score || 0,
+                      coinsEarned: gameState.player?.coins || 0,
+                      encountersCompleted: gameState.player?.encountersCompleted || 0,
+                      exploitsGained: gameState.player?.exploits || [],
+                      blessingsGained: gameState.player?.blessings || [],
+                      fearsGained: gameState.player?.fears || [],
+                      selectedFortune: selectedFortune
+                    };
+                    
+                    // Save as resigned since this is triggered from resign button
+                    endGameSession('resigned', gameData);
+                    console.log('Game session ended and saved to history');
+                  } catch (error) {
+                    console.error('Error saving game session:', error);
+                  }
+                  
                   // Navigate back to welcome screen
                   if (onNavigateToWelcome) {
                     onNavigateToWelcome();
@@ -919,48 +939,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                 }}
               >
                 Resign
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Run recap modal */}
-      {showRunRecap && (
-        <div className="modal-overlay">
-          <div className="modal-content run-recap">
-            <h2>Run Summary</h2>
-            <div className="recap-stats">
-              <div className="stat-item">
-                <label>Final Score:</label>
-                <span>{gameState.player?.score || 0}</span>
-              </div>
-              <div className="stat-item">
-                <label>Coins Earned:</label>
-                <span>{gameState.player?.coins || 0}</span>
-              </div>
-              <div className="stat-item">
-                <label>Cards Moved:</label>
-                <span>{gameState.history?.length || 0}</span>
-              </div>
-              <div className="stat-item">
-                <label>Shuffles Used:</label>
-                <span>{3 - (gameState.player?.shuffles || 3)}</span>
-              </div>
-            </div>
-            <div className="modal-buttons">
-              <button 
-                className="modal-button confirm"
-                onClick={() => {
-                  // Navigate back to welcome screen
-                  if (onNavigateToWelcome) {
-                    onNavigateToWelcome();
-                  } else {
-                    window.location.reload(); // Fallback for non-Coronata modes
-                  }
-                }}
-              >
-                Return to Main Menu
               </button>
             </div>
           </div>

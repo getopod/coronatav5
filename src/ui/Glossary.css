@@ -369,14 +369,24 @@
   }
   
   .tab-navigation {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
   }
   
   .tab-button {
-    width: 100%;
-    max-width: 250px;
+    flex: 1;
+    max-width: calc(33.333% - 6px);
+    min-width: 90px;
+    padding: 8px 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
     justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .filter-controls {

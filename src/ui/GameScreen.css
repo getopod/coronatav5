@@ -34,6 +34,47 @@
     /* Prevent content from being too small */
     min-width: 320px; /* Actual minimum iPhone width */
     padding: 2px;
+    /* Scale everything down */
+    transform: scale(0.65);
+    transform-origin: top center;
+  }
+  
+  /* Scale down deck area for mobile */
+  .deck-area {
+    width: 340px;
+    gap: 12px;
+  }
+  
+  /* Scale down tableau row for mobile */
+  .tableau-row {
+    width: 340px;
+    gap: 12px;
+  }
+  
+  /* Reduce tableau height for mobile */
+  .game-screen-root {
+    --tableau-row-height: 300px;
+  }
+  
+  /* Scale down cards and piles */
+  .deck-area .pile-cards,
+  .deck-area .card-outline,
+  .foundation-pile {
+    width: 38px;
+    height: 57px;
+  }
+  
+  .tableau-pile {
+    min-width: 38px;
+    width: 38px;
+  }
+  
+  .pile-cards-vertical {
+    width: 38px;
+  }
+  
+  .pile-cards-vertical > *:not(:last-child) {
+    margin-bottom: -28px; /* Reduced overlap for smaller cards */
   }
 }
 .game-screen-root[data-tableau-row-height] {
@@ -225,8 +266,8 @@
   }
   
   .hand-cards .card {
-    width: 40px !important;
-    height: 60px !important;
+    width: 32px !important;
+    height: 48px !important;
   }
 }
 .deck-area .foundation-area * {

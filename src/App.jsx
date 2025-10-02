@@ -5,6 +5,7 @@ import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
 import { setupCoronataEngine } from './core_engine/gameInitialization';
+import { startGameSession } from './core_engine/persistenceManager';
 // Removed unused imports: gameModeProfiles, reactLogo, vieLogo
 import './App.css';
 
@@ -75,6 +76,15 @@ function App() {
   const handleFortuneSelected = (fortune) => {
     setSelectedFortune(fortune);
     setShowFortuneSelection(false);
+    
+    // Start a new game session for persistence
+    try {
+      startGameSession();
+      console.log('New game session started');
+    } catch (error) {
+      console.error('Error starting game session:', error);
+    }
+    
     console.log('Fortune selected:', fortune);
   };
 
