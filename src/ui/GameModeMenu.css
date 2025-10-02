@@ -1,0 +1,47 @@
+.game-mode-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #222;
+  color: #fff;
+}
+.game-mode-title {
+  margin-bottom: 24px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.game-mode-list {
+  display: flex;
+  gap: 32px;
+}
+.game-mode-btn {
+  background: #444;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 18px 32px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #0006;
+  min-width: 180px;
+  transition: background 0.2s;
+}
+.game-mode-btn:hover {
+  background: #666;
+}
+.game-mode-name {
+  font-weight: 700;
+  font-size: 22px;
+}
+.game-mode-rules {
+  font-size: 15px;
+  color: #ccc;
+  margin-top: 8px;
+}
+.game-mode-details {
+  font-size: 13px;
+  color: #aaa;
+  margin-top: 4px;
+}

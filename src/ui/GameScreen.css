@@ -1,0 +1,464 @@
+/* Add support for dynamic tableau row height via data attribute */
+.game-screen-root {
+  /* Window-anchored positioning like HUD */
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+
+
+  /* Size and appearance */
+  --tableau-row-height: 400px;
+  background-color: #bfa76a;
+  min-height: calc(100vh - 16px); /* Account for top/bottom spacing */
+  width: calc(100vw - 16px); /* Account for left/right spacing */
+  padding: 0px;
+  
+  /* Center content within the container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.game-screen-root[data-tableau-row-height] {
+  --tableau-row-height: attr(data-tableau-row-height px);
+}
+
+.effect-hud-category-header.clickable {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+/* Effect HUD styles for registry-driven effects */
+/* Valid move destination highlighting */
+.pile.valid-destination {
+  border: 3px solid #4caf50 !important;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
+  animation: pulse-green 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { 
+    border-color: #4caf50;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+  }
+  50% { 
+    border-color: #8bc34a;
+    box-shadow: 0 0 18px rgba(139, 195, 74, 0.8);
+  }
+}
+
+.effect-hud {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  background: rgba(30,30,40,0.95);
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 220px;
+  max-width: 340px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.effect-hud-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+.effect-hud-empty {
+  font-style: italic;
+  color: #bbb;
+}
+.effect-hud-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.effect-hud-item {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+.effect-hud-icon {
+  margin-right: 8px;
+}
+.effect-hud-dot {
+  margin-right: 8px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.effect-hud-label {
+  font-weight: 600;
+}
+.effect-hud-type {
+  color: #aaa;
+  font-size: 13px;
+  margin-left: 6px;
+}
+.effect-hud-desc {
+  font-size: 13px;
+}
+.effect-hud-cond {
+  font-size: 12px;
+  color: #8cf;
+  margin-top: 2px;
+}
+.effect-hud-value {
+  font-size: 12px;
+  color: #fc8;
+  margin-top: 2px;
+}
+#root * {
+  border: 0 !important;
+}
+.deck-area .foundation-area .card-outline {
+  width: 48px !important;
+  height: 72px !important;
+}
+#root .card-outline {
+  width: 48px !important;
+  height: 72px !important;
+}
+.deck-tableau-gap {
+  height: 16px;
+  width: 100%;
+}
+.deck-area .foundation-area * {
+  margin: 0 !important;
+}
+.deck-area .pile-cards {
+  width: 48px;
+  height: 72px;
+}
+.deck-area .pile-cards .card.face-down {
+  width: 48px;
+  height: 72px;
+}
+.deck-area .pile-cards .card-outline {
+  width: 48px;
+  height: 72px;
+}
+.foundation-pile {
+  width: 48px;
+}
+body {
+  margin: 0;
+  padding: 0;
+
+
+#root {
+  width: 464px;
+  height: 592px;
+  margin: 0 !important;
+  padding: 0;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0 !important;
+}
+.deck-area .card,
+.deck-area .card-outline {
+  width: 48px !important;
+  height: 72px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.deck-area .card.face-down {
+  width: 48px !important;
+  height: 72px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.deck-area {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  width: 432px;
+  height: 72px;
+}
+
+.deck-area .pile-cards {
+  width: 48px;
+  height: 72px;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.deck-area .card-outline {
+  width: 48px;
+  height: 72px;
+}
+.foundation-pile {
+  width: 48px;
+}
+  display: flex;
+  gap: 16px;
+  margin: 0 !important;
+  border: 0 !important;
+  width: 432px;
+  height: 72px;
+}
+.deck-area * {
+  height: 72px !important;
+}
+.deck-area .pile-cards .card.face-down {
+  width: 48px;
+  height: 72px;
+}
+
+.foundation-area {
+  display: flex;
+  gap: 16px;
+  width: 240px;
+  min-width: 48px;
+  min-height: 72px;
+}
+
+
+.foundation-pile.first-foundation {
+  margin-left: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  height: 72px;
+}
+
+.foundation-pile .card-outline {
+  width: 48px;
+  height: 72px;
+  border: 2px dashed #bdbdbd;
+  border-radius: 8px;
+  background: #f5f5f5;
+  margin: 0 auto;
+}
+
+.waste .card-outline {
+  width: 48px;
+  height: 72px;
+  border: 2px dashed #bdbdbd;
+  border-radius: 8px;
+  background: #f5f5f5;
+  margin: 0 auto;
+}
+.tableau-row {
+  display: flex;
+  gap: 16px;
+  width: 432px;
+  height: var(--tableau-row-height);
+}
+.tableau-pile {
+  min-width: 48px;
+  width: 48px;
+  height: var(--tableau-row-height);
+}
+
+.tableau-pile.drag-over {
+  background: #e3f2fd;
+}
+
+.move-error {
+  color: red;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+.pile-cards-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0px;
+  width: 48px;
+}
+
+.pile-cards-vertical > *:not(:last-child) {
+  margin-bottom: -36px; /* Overlap by 50% of card height (72px) */
+}
+.piles-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pile-item {
+  margin: 0;
+  padding: 0;
+}
+.pile-cards {
+  display: flex;
+  gap: 16px;
+  width: calc(48px * 7 + 16px * 6);
+}
+
+.flip-card-btn {
+  margin: 0;
+  padding: 0;
+}
+
+.waste-foundation-gap {
+  width: 48px;
+  height: 100%;
+}
+
+/* Shuffle button styling */
+.shuffle-button {
+  width: 48px;
+  height: 72px;
+  border: 2px solid #333;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.shuffle-button:hover {
+  background: linear-gradient(145deg, #e8e8e8, #d8d8d8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.shuffle-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Game controls styling */
+.game-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 200;
+}
+
+.resign-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.resign-button:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.resign-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Move error display */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin: 0 0 16px 0;
+  color: #333;
+}
+
+.modal-content p {
+  margin: 0 0 24px 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-button {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.modal-button.cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.modal-button.cancel:hover {
+  background: #5a6268;
+}
+
+.modal-button.confirm {
+  background: #007bff;
+  color: white;
+}
+
+.modal-button.confirm:hover {
+  background: #0056b3;
+}
+
+/* Run recap modal specific styles */
+.modal-content.run-recap {
+  max-width: 500px;
+}
+
+.recap-stats {
+  text-align: left;
+  margin: 20px 0;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-item label {
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-item span {
+  color: #007bff;
+  font-weight: bold;
+}

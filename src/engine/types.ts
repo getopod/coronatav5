@@ -1,0 +1,74 @@
+// Core engine data structures for card games
+import type { EngineController } from './engineController';
+import type { EngineEvent } from './eventSystem';
+import type { EffectHandler } from './effectEngine';
+
+export type Suit = 'hearts' | 'diamonds' | 'clubs' | 'spades';
+
+export interface Card {
+  id: string;
+  suit: Suit;
+  value: number; // 1-13
+  faceUp: boolean;
+  design?: string; // e.g., asset key or CSS class
+  tags?: string[];
+  meta?: Record<string, any>;
+}
+
+export interface Pile {
+  id: string;
+  type: string; // 'deck', 'hand', 'tableau', 'foundation', 'discard', etc.
+  cards: Card[];
+  rules?: Record<string, any>; // pile-specific rules
+  meta?: Record<string, any>;
+}
+
+export interface PlayerState {
+  coins?: number;
+  shuffles?: number;
+  discards?: number;
+  [key: string]: any;
+}
+
+export interface PlayerProfile {
+  id: string;
+  name: string;
+  stats: PlayerStats;
+  settings?: Record<string, any>;
+}
+
+export interface PlayerStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  highestScore: number;
+  [key: string]: any;
+}
+
+export interface GameState {
+  piles: Record<string, Pile>;
+  player: PlayerState;
+  registry?: any; // will be typed later
+  history: Move[];
+  meta?: Record<string, any>;
+  profile?: PlayerProfile;
+}
+
+export interface Move {
+  from: string; // pile id
+  to: string;   // pile id
+  cardId: string;
+  type?: string; // e.g., 'normal', 'special'
+  stackSize?: number; // number of cards moved in this move
+  cardIds?: string[]; // all card IDs in the moved stack
+  meta?: Record<string, any>;
+}
+
+export interface EnginePlugin {
+  id: string;
+  name: string;
+  onRegister?: (engine: EngineController) => void;
+  onUnregister?: (engine: EngineController) => void;
+  onEvent?: (event: EngineEvent, engine: EngineController) => void;
+  effectHandlers?: Record<string, EffectHandler>;
+  uiConsumers?: ((event: EngineEvent) => void)[];
+}

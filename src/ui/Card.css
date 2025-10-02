@@ -1,0 +1,125 @@
+.card {
+  width: 48px;
+  height: 72px;
+  border-radius: 6px;
+  border: 2px solid #888;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  font-weight: bold;
+  font-size: 20px;
+  position: relative;
+  margin-right: 4px;
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1), opacity 0.3s cubic-bezier(.4,0,.2,1);
+  will-change: transform, opacity;
+  perspective: 400px;
+  padding: 0 !important;
+}
+
+.card.face-down {
+  background: #e53935;
+}
+
+/* Selected card outline always visible */
+.card.selected {
+  outline: 2px solid #1976d2 !important;
+  z-index: 2;
+}
+
+.card-red {
+  color: #e53935 !important;
+}
+.card-black {
+  color: #222 !important;
+}
+/* Corners row for label/suit */
+.card-corners-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  pointer-events: none;
+}
+.card-label {
+  font-size: 16px;
+  position: absolute;
+  top: 4px;
+  left: 6px;
+}
+.card-suit {
+  font-size: 18px;
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+}
+.card-back {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #888;
+}
+
+.card-back.coronata-back {
+  background-image: url('../assets/coronata-card-back.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.card-back.default-back {
+  background-image: url('../assets/back.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: transparent; /* Hide the 'BACK' text */
+}
+
+/* Flip animation */
+.card.flip {
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+  transform-style: preserve-3d;
+}
+.card.face-up.flip {
+  transform: rotateY(0deg);
+}
+.card.face-down.flip {
+  transform: rotateY(180deg);
+}
+
+/* Entry/exit move animation */
+.card.move-in {
+  animation: card-move-in 0.4s cubic-bezier(.4,0,.2,1);
+}
+.card.move-out {
+  animation: card-move-out 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes card-move-in {
+  from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes card-move-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(20px) scale(0.9); }
+}
+
+/* Shake animation for invalid moves */
+.card.shake {
+  animation: card-shake 0.6s ease-in-out;
+}
+
+@keyframes card-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}

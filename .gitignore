@@ -1,0 +1,34 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Mobile build artifacts (if any)
+mobile/Coronatafresh/android/.gradle/
+mobile/Coronatafresh/android/build/
+mobile/Coronatafresh/android/app/build/
+mobile/Coronatafresh/ios/build/
+mobile/Coronatafresh/ios/DerivedData/
+
+# Keep AI instructions for proper behavior
+# .github/instructions/ files should be committed
