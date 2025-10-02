@@ -5,20 +5,40 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
+  background: #1e293b;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 40px;
+  gap: 30px;
 }
 
 .welcome-logo {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.new-logo-image {
+  width: 200px;
+  height: auto;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
 }
 
 .logo-svg {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.coronata-title {
+  font-family: 'Georgia', serif;
+  font-size: 4rem;
+  font-weight: bold;
+  color: #fbbf24;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+  margin: 0;
 }
 
 .welcome-background {

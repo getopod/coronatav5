@@ -1,15 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'
 import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History } from './ui';
 import { EngineController } from './core_engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
 import { setupCoronataEngine } from './core_engine/gameInitialization';
+import { logInfo, logError } from './core_engine/persistentLogger';
 // Removed unused imports: gameModeProfiles, reactLogo, vieLogo
 import './App.css';
 
 
 function App() {
+  logInfo('App', 'Application starting up - Coronata Solitaire Engine');
+  
   const [selectedMode, setSelectedMode] = useState(null);
   const [showCoronataWelcome, setShowCoronataWelcome] = useState(false);
   const [showFortuneSelection, setShowFortuneSelection] = useState(false);
@@ -17,8 +20,21 @@ function App() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedFortune, setSelectedFortune] = useState(null);
+
+  // Log state changes for debugging
+  useEffect(() => {
+    logInfo('App', 'State changed', {
+      selectedMode,
+      showCoronataWelcome,
+      showFortuneSelection,
+      showHowToPlay,
+      showGlossary,
+      showHistory,
+      selectedFortune: selectedFortune ? selectedFortune.label : 'null'
+    });
+  }, [selectedMode, showCoronataWelcome, showFortuneSelection, showHowToPlay, showGlossary, showHistory, selectedFortune]);
   // Create engine instance for selected mode
-  const engine = React.useMemo(() => {
+  const engine = useMemo(() => {
     // For demo, use Klondike registry config for all modes (replace with correct config per mode)
     const config = makeKlondikeRegistryConfig();
     const engineController = new EngineController({
@@ -36,8 +52,10 @@ function App() {
           seed: Date.now().toString()
         });
         console.log('Coronata engine setup completed:', engineController.state);
+        logInfo('App', 'Coronata engine setup completed successfully');
       } catch (error) {
         console.error('Error setting up Coronata engine:', error);
+        logError('App', 'Failed to setup Coronata engine', error);
       }
     }
     
@@ -49,6 +67,7 @@ function App() {
 
   // Handle mode selection
   const handleModeSelect = (mode) => {
+    logInfo('App', `Game mode selected: ${mode}`);
     setSelectedMode(mode);
     if (mode === 'coronata') {
       setShowCoronataWelcome(true);
@@ -71,11 +90,32 @@ function App() {
     setShowHistory(false);
   };
 
-  // Handle Fortune Selection actions
+    // Handle Fortune Selection actions
   const handleFortuneSelected = (fortune) => {
+    logInfo('App', `Fortune selected: ${fortune.label}`, fortune);
+    logInfo('App', 'State before fortune selection', {
+      selectedMode,
+      showCoronataWelcome,
+      showFortuneSelection,
+      showHowToPlay,
+      showGlossary,
+      showHistory
+    });
     setSelectedFortune(fortune);
     setShowFortuneSelection(false);
-    console.log('Fortune selected:', fortune);
+    
+    // Add a timeout to log state after the update
+    setTimeout(() => {
+      logInfo('App', 'State after fortune selection', {
+        selectedMode,
+        showCoronataWelcome,
+        showFortuneSelection: false, // We know this will be false
+        showHowToPlay,
+        showGlossary,
+        showHistory,
+        selectedFortune: fortune
+      });
+    }, 100);
   };
 
   const handleFortuneBack = () => {
@@ -161,14 +201,40 @@ function App() {
   }
 
   // Show game screen
-  return (
-    <EngineEventProvider engine={engine}>
-      <GameScreen 
-        onNavigateToWelcome={handleGameToWelcome}
-        selectedFortune={selectedFortune}
-      />
-    </EngineEventProvider>
-  );
+  if (selectedMode && !showCoronataWelcome && !showFortuneSelection && !showHowToPlay && !showGlossary && !showHistory) {
+    logInfo('App', 'Showing game screen', { selectedMode, selectedFortune });
+    
+    // Temporary debug component
+    return (
+      <div style={{ padding: '20px', background: '#222', color: '#fff', minHeight: '100vh' }}>
+        <h1>DEBUG: Game Screen Reached!</h1>
+        <p>Selected Mode: {selectedMode}</p>
+        <p>Selected Fortune: {selectedFortune ? selectedFortune.label : 'None'}</p>
+        <p>Engine: {engine ? 'Available' : 'Missing'}</p>
+        <button onClick={handleGameToWelcome} style={{ padding: '10px 20px', margin: '10px' }}>
+          Back to Welcome
+        </button>
+        
+        {/* Try to render the actual game screen */}
+        <div style={{ marginTop: '20px', border: '2px solid #555', padding: '10px' }}>
+          <h3>Attempting to render GameScreen:</h3>
+          <EngineEventProvider engine={engine}>
+            <GameScreen 
+              onNavigateToWelcome={handleGameToWelcome}
+              selectedFortune={selectedFortune}
+            />
+          </EngineEventProvider>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback - should not reach here
+  logError('App', 'Unexpected app state', { 
+    selectedMode, showCoronataWelcome, showFortuneSelection, 
+    showHowToPlay, showGlossary, showHistory, selectedFortune 
+  });
+  return <div>Loading...</div>;
 }
 
 export default App
