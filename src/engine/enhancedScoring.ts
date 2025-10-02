@@ -119,18 +119,23 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 
   // Calculate encounter goal based on master doc formula and table
   calculateEncounterGoal(encounterNumber: number): number {
-    // Score Goal Table from master doc
+    // Score Goal Table from new balanced master doc (25% growth + danger modifiers)
     const scoreGoalTable: { [key: number]: number } = {
-      1: 112,
-      2: 149,
-      3: 224,
-      4: 769,
-      5: 878,
-      6: 988,
-      7: 3511,
-      8: 3830,
-      9: 4022,
-      10: 5107
+      1: 120,    // Fear
+      2: 150,    // Fear  
+      3: 225,    // Danger (188 * 1.2)
+      4: 234,    // Fear
+      5: 293,    // Fear
+      6: 439,    // Danger (366 * 1.2)
+      7: 458,    // Fear
+      8: 572,    // Fear
+      9: 858,    // Danger (715 * 1.2)
+      10: 894,   // Fear
+      11: 1118,  // Fear
+      12: 1676,  // Danger (1397 * 1.2)
+      13: 1746,  // Fear
+      14: 2183,  // Fear
+      15: 4092   // Usurper (2728 * 1.5)
     };
 
     // Return goal for encounter, default to first encounter if not in table
@@ -159,9 +164,21 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       // Mark encounter as completed
       if (state.run.encounter) {
         state.run.encounter.completed = true;
-        // Set state to show trade/wander/gamble choices
+        // Set state to show trade/wander choices (no more gamble)
         state.run.awaitingPlayerChoice = true;
-        state.run.availableChoices = ['trade', 'wander', 'gamble'];
+        
+        // After Fears: Trade + 2 Wander choices, After Dangers: Mandatory Fortune swap
+        const encounterType = state.run.encounter.type || 'fear';
+        if (encounterType === 'fear') {
+          state.run.availableChoices = ['trade', 'wander', 'wander'];
+        } else if (encounterType === 'danger') {
+          // After dangers: mandatory fortune swap then normal choices
+          state.run.availableChoices = ['fortune-swap'];
+        } else {
+          // Usurper or other: just trade/wander
+          state.run.availableChoices = ['trade', 'wander'];
+        }
+        
         console.log('Encounter completed! Awaiting player choice:', state.run.availableChoices);
       }
 
@@ -392,8 +409,8 @@ function initializeCoronataState(engineController: any) {
     state.run = {
       currentTrial: 1,
       currentEncounter: 1,
-      totalTrials: 3,
-      encountersPerTrial: 4,
+      totalTrials: 5,
+      encountersPerTrial: 3,
       difficulty: 1,
       completedEncounters: [],
       encounter: {

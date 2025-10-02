@@ -4,14 +4,12 @@ import './ChoiceSelectionScreen.css';
 interface ChoiceSelectionScreenProps {
   onTradeSelected: () => void;
   onWanderSelected: () => void;
-  onGambleSelected: () => void;
   onBack?: () => void;
 }
 
 const ChoiceSelectionScreen: React.FC<ChoiceSelectionScreenProps> = ({
   onTradeSelected,
   onWanderSelected,
-  onGambleSelected,
   onBack
 }) => {
   const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
@@ -44,20 +42,6 @@ const ChoiceSelectionScreen: React.FC<ChoiceSelectionScreenProps> = ({
       ],
       icon: '🗺️',
       action: onWanderSelected
-    },
-    {
-      id: 'gamble',
-      title: 'Gamble',
-      description: 'Skip directly to the next encounter and gain a 25% scoring bonus for that encounter only.',
-      details: [
-        '25% bonus scoring multiplier',
-        'Skip Trade and Wander opportunities',
-        'Quick progression option',
-        'Risk vs. reward choice',
-        'Bonus applies to next encounter only'
-      ],
-      icon: '🎲',
-      action: onGambleSelected
     }
   ];
 

@@ -57,7 +57,7 @@ export interface PlayerHUDProps {
   selectedFortune?: any;
   onNavigateToWelcome?: () => void;
   onShowRunRecap?: () => void;
-  onChoiceSelected?: (choice: 'trade' | 'wander' | 'gamble') => void;
+  onChoiceSelected?: (choice: 'trade' | 'wander' | 'fortune-swap') => void;
 }
 
 export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome, onShowRunRecap, onChoiceSelected }) => {
@@ -83,7 +83,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   console.log('PlayerHUD - selectedFortune:', selectedFortune);
 
   // Handle player choice after encounter completion
-  const handlePlayerChoice = (choice: 'trade' | 'wander' | 'gamble') => {
+  const handlePlayerChoice = (choice: 'trade' | 'wander' | 'fortune-swap') => {
     console.log('Player selected choice:', choice);
     if (onChoiceSelected) {
       onChoiceSelected(choice);
@@ -250,30 +250,36 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
             <p>Choose your next action:</p>
           </div>
           <div className="choice-buttons">
-            <button 
-              className="choice-btn trade"
-              onClick={() => handlePlayerChoice('trade')}
-            >
-              💰 Trade
-              <br />
-              <span className="choice-description">Exchange resources</span>
-            </button>
-            <button 
-              className="choice-btn wander"
-              onClick={() => handlePlayerChoice('wander')}
-            >
-              🚶 Wander
-              <br />
-              <span className="choice-description">Explore new paths</span>
-            </button>
-            <button 
-              className="choice-btn gamble"
-              onClick={() => handlePlayerChoice('gamble')}
-            >
-              🎲 Gamble
-              <br />
-              <span className="choice-description">Risk for reward</span>
-            </button>
+            {run.availableChoices?.includes('trade') && (
+              <button 
+                className="choice-btn trade"
+                onClick={() => handlePlayerChoice('trade')}
+              >
+                💰 Trade
+                <br />
+                <span className="choice-description">Exchange resources</span>
+              </button>
+            )}
+            {run.availableChoices?.includes('wander') && (
+              <button 
+                className="choice-btn wander"
+                onClick={() => handlePlayerChoice('wander')}
+              >
+                🚶 Wander
+                <br />
+                <span className="choice-description">Explore new paths</span>
+              </button>
+            )}
+            {run.availableChoices?.includes('fortune-swap') && (
+              <button 
+                className="choice-btn fortune"
+                onClick={() => handlePlayerChoice('fortune-swap')}
+              >
+                🔮 Fortune Swap
+                <br />
+                <span className="choice-description">Change your destiny</span>
+              </button>
+            )}
           </div>
         </div>
       )}

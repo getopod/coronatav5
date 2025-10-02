@@ -85,8 +85,9 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             <div className="feature-section">
               <h3>✨ Blessings</h3>
               <p>
-                Tactical, often one-time modifiers that attach to cards or trigger once. 
-                Provide temporary benefits like extra points or special movement options.
+                Permanent card upgrades that attach to specific cards. Purchase blessings in Trade, 
+                then apply them to individual cards in your deck. Blessed cards show sparkle effects 
+                and provide enhanced benefits when played.
               </p>
             </div>
 
@@ -117,8 +118,9 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             <div className="feature-section">
               <h3>🚶 Wanders</h3>
               <p>
-                Narrative events with choice-based outcomes. Present options like 
-                gaining coins, drawing cards, or receiving items with deterministic results.
+                Narrative events with choice-based outcomes. <strong>The game randomly selects 
+                which wander you encounter</strong> - you choose how to respond, not which event occurs.
+                Present options like gaining coins, drawing cards, or receiving items.
               </p>
             </div>
 
@@ -127,6 +129,18 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               <p>
                 Trackable achievements awarded for meeting specific objectives during runs. 
                 Each feat provides coin and score rewards when completed.
+              </p>
+            </div>
+          </section>
+
+          <section className="progression-flow">
+            <h2>⚠️ Important: Progression Flow</h2>
+            <div className="feature-section">
+              <p>
+                <strong>After each Fear encounter, you choose ONE path:</strong> Trade, Wander, or Gamble.{' '}
+                <strong>Once you leave the Trade window, you cannot return.</strong>{' '}
+                Wanders are randomly selected by the game - you choose how to respond, not which event.
+                Plan your purchases carefully before leaving Trade!
               </p>
             </div>
           </section>
@@ -170,7 +184,7 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                 <span className="resource-icon">🛒</span>
                 <div>
                   <strong>Trade</strong>
-                  <p>After Fears: buy Exploits, Blessings, upgrades. Remove Curses. Reroll shop inventory.</p>
+                  <p>Fixed inventory each visit: 4 Exploits, 3 Blessings, 2 Curses. Plus upgrades, curse removal, reroll options.</p>
                 </div>
               </div>
 
@@ -178,7 +192,7 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                 <span className="resource-icon">🎲</span>
                 <div>
                   <strong>Gamble</strong>
-                  <p>Skip Trade/Wander for 25% scoring bonus in next encounter. Risk vs reward.</p>
+                  <p>Skip Trade/Wander for 25% scoring bonus in next encounter. Risk vs reward - no shopping or narrative events.</p>
                 </div>
               </div>
             </div>

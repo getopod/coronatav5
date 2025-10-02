@@ -11,6 +11,7 @@ export interface CardProps {
   selected?: boolean;
   shake?: boolean;
   draggable?: boolean;
+  blessings?: string[]; // IDs of blessings attached to this card
   onClick?: (e: React.MouseEvent) => void;
   onDoubleClick?: (e: React.MouseEvent) => void;
   onDragStart?: (e: React.DragEvent) => void;
@@ -42,7 +43,7 @@ function getCardLabel(value: number) {
 }
 
 export function Card({ 
-  id, suit, value, faceUp, design, style, selected, shake, draggable, 
+  id, suit, value, faceUp, design, style, selected, shake, draggable, blessings,
   onClick, onDoubleClick, onDragStart, onDragEnd, onDrop 
 }: CardProps) {
   const [isFlipping, setIsFlipping] = useState(false);
@@ -87,12 +88,29 @@ export function Card({
       style={selected ? { outline: '2px solid #1976d2', zIndex: 2 } : {}}
     >
       {faceUp ? (
-        <div className="card-corners-row">
-          <span className={["card-label", colorClass].join(" ")}>{getCardLabel(value)}</span>
-          <span className={["card-suit", colorClass].join(" ")}>{suitSymbols[suit]}</span>
+        <div className="card-face">
+          <div className="card-corners-row">
+            <span className={["card-label", colorClass].join(" ")}>{getCardLabel(value)}</span>
+            <span className={["card-suit", colorClass].join(" ")}>{suitSymbols[suit]}</span>
+          </div>
+          {blessings && blessings.length > 0 && (
+            <div className="card-blessings">
+              {blessings.slice(0, 3).map((_, index) => (
+                <span key={index} className="blessing-indicator">✨</span>
+              ))}
+              {blessings.length > 3 && (
+                <span className="blessing-count">+{blessings.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className={`card-back default-back`}>
+          {blessings && blessings.length > 0 && (
+            <div className="card-blessings-back">
+              <span className="blessing-indicator-back">✨</span>
+            </div>
+          )}
         </div>
       )}
     </div>

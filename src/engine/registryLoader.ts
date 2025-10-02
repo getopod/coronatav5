@@ -72,10 +72,10 @@ export function loadRegistry(config: RegistryConfig): GameState {
     piles,
     player: {
       maxHandSize: 5,
-      coins: 0, // Initialize coins to 0
+      coins: 50, // Updated to new balance: 50 starting coins
       score: 0, // Initialize score to 0
       exploits: [], // Initialize empty arrays for registry items
-      blessings: [],
+      ownedBlessings: [], // Purchased blessings awaiting application to cards
       curses: [],
       fortunes: [],
       ...config.resources || {}

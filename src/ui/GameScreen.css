@@ -1,86 +1,178 @@
 /* Add support for dynamic tableau row height via data attribute */
 .game-screen-root {
-  /* Fixed to viewport center */
+  /* Mobile-first responsive positioning */
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 100;
 
   /* Size and appearance */
   --tableau-row-height: 400px;
   background-color: #bfa76a;
-  height: 100vh;
-  width: 100vw;
   padding: 0px;
   
-  /* Center content within the container */
+  /* Mobile-first layout: cards at top, HUD at bottom */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   
   /* Mobile responsive adjustments */
   min-width: 266px; /* Minimum width to ensure all cards are visible */
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Mobile viewport adjustments */
 @media (max-width: 768px) {
   .game-screen-root {
-    /* Ensure proper positioning on mobile */
-    top: 2px;
-    left: 2px;
-    width: calc(100vw - 4px);
-    min-height: calc(100vh - 4px);
+    /* Mobile-specific positioning */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    gap: 8px;
+    
+    /* Cards at top, HUD at bottom layout */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    
     /* Prevent content from being too small */
-    min-width: 266px; /* Ensure all cards remain visible */
-    padding: 2px;
-    /* Scale everything down */
-    transform: scale(0.65);
-    transform-origin: top center;
+    min-width: 266px;
+    --tableau-row-height: 250px;
   }
   
-  /* Scale down deck area for mobile */
+  /* Mobile deck area positioning */
   .deck-area {
-    width: 340px;
-    gap: 12px;
+    order: 1;
+    width: 100%;
+    max-width: 340px;
+    gap: 8px;
+    margin-top: 4px;
   }
   
-  /* Scale down tableau row for mobile */
+  /* Mobile player hand positioning */
+  .player-hand-area {
+    order: 2;
+    position: static !important;
+    transform: none !important;
+    margin: 8px 0;
+    max-width: 90vw;
+  }
+  
+  /* Mobile tableau positioning */
   .tableau-row {
-    width: 340px;
-    gap: 12px;
+    order: 3;
+    width: 100%;
+    max-width: 340px;
+    gap: 6px;
+    flex: 1;
+    min-height: 200px;
   }
   
-  /* Reduce tableau height for mobile */
-  .game-screen-root {
-    --tableau-row-height: 300px;
+  /* Mobile HUD positioning */
+  .player-hud {
+    order: 4;
+    position: static !important;
+    transform: none !important;
+    margin: 8px 0 0 0;
+    max-width: 90vw;
+    min-width: auto;
   }
   
-  /* Scale down cards and piles */
+  /* Scale down cards for mobile */
   .deck-area .pile-cards,
   .deck-area .card-outline,
   .foundation-pile {
-    width: 38px;
-    height: 57px;
+    width: 40px;
+    height: 60px;
   }
   
   .tableau-pile {
-    min-width: 38px;
-    width: 38px;
+    min-width: 40px;
+    width: 40px;
   }
   
   .pile-cards-vertical {
-    width: 38px;
+    width: 40px;
   }
   
   .pile-cards-vertical > *:not(:last-child) {
-    margin-bottom: -28px; /* Reduced overlap for smaller cards */
+    margin-bottom: -30px; /* Reduced overlap for smaller cards */
+  }
+  
+  /* Mobile hand cards */
+  .hand-cards .card {
+    width: 40px !important;
+    height: 60px !important;
   }
 }
-.game-screen-root[data-tableau-row-height] {
-  --tableau-row-height: attr(data-tableau-row-height px);
+
+/* Extra small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .game-screen-root {
+    padding: 4px;
+    gap: 4px;
+  }
+  
+  .deck-area {
+    gap: 6px;
+    max-width: 320px;
+  }
+  
+  .tableau-row {
+    gap: 4px;
+    max-width: 320px;
+  }
+  
+  .deck-area .pile-cards,
+  .deck-area .card-outline,
+  .foundation-pile {
+    width: 36px;
+    height: 54px;
+  }
+  
+  .tableau-pile {
+    min-width: 36px;
+    width: 36px;
+  }
+  
+  .pile-cards-vertical {
+    width: 36px;
+  }
+  
+  .hand-cards .card {
+    width: 36px !important;
+    height: 54px !important;
+  }
+}
+/* Deck Area Styles */
+.deck-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 10px 0;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Tableau Row Styles */
+.tableau-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  min-height: var(--tableau-row-height);
+  margin: 10px 0;
 }
 
 .effect-hud-category-header.clickable {
@@ -197,10 +289,7 @@
 
 /* Player Hand Area Styles */
 .player-hand-area {
-  position: fixed;
-  top: 112px; /* 20px (deck top) + 72px (deck height) + 20px (gap) = 112px */
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -209,6 +298,8 @@
   border-radius: 8px;
   min-height: 80px;
   z-index: 150;
+  width: 100%;
+  max-width: 800px;
 }
 
 .hand-label {

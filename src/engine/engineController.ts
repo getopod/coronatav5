@@ -142,20 +142,32 @@ export class EngineController {
   getActiveEffects(state?: GameState, context?: string, moveData?: any): Effect[] {
     const currentState = state || this.state;
     
-    // Get player's active exploits, curses, blessings
+    // Get player's active exploits, curses, fortunes
     const activeRegistryIds = [
       ...(currentState.player?.exploits || []),
       ...(currentState.player?.curses || []),
-      ...(currentState.player?.blessings || []),
       ...(currentState.player?.fortunes || [])
     ];
     
+    // Collect blessing IDs from all cards
+    const cardBlessingIds: string[] = [];
+    Object.values(currentState.piles || {}).forEach(pile => {
+      pile.cards.forEach(card => {
+        if (card.blessings) {
+          cardBlessingIds.push(...card.blessings);
+        }
+      });
+    });
+    
+    // Combine all active registry IDs
+    const allActiveIds = [...activeRegistryIds, ...cardBlessingIds];
+    
     // Filter registry entries to only active ones
     const activeEntries = this.registryEntries.filter(entry => 
-      activeRegistryIds.includes(entry.id)
+      allActiveIds.includes(entry.id)
     );
     
-    console.log('Active registry entries:', activeEntries.length, 'out of', this.registryEntries.length);
+    console.log('Active registry entries:', activeEntries.length, 'out of', this.registryEntries.length, '(including card blessings)');
     
     // Map RegistryEffect to Effect
     const allEffects = activeEntries.flatMap(entry =>

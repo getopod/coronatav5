@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { exploits, blessings, curses } from '../registry/registry';
 import type { RegistryEntry } from '../registry/index';
+import { BlessingApplicationModal } from './BlessingApplicationModal';
 import './TradeScreen.css';
 
 interface TradeScreenProps {
   onBack: () => void;
   onPurchase: (item: RegistryEntry, cost: number) => void;
   onSell: (item: RegistryEntry, value: number) => void;
+  onBlessingApplication?: (blessingId: string, cardId: string) => void;
   playerCoin: number;
   equippedExploits: RegistryEntry[];
+  gameState: any; // GameState for card selection
 }
 
 interface TradeItem {
@@ -38,13 +41,17 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   onBack,
   onPurchase,
   onSell,
+  onBlessingApplication,
   playerCoin,
-  equippedExploits
+  equippedExploits,
+  gameState
 }) => {
   const [tradeItems, setTradeItems] = useState<TradeItem[]>([]);
   const [selectedTab, setSelectedTab] = useState<'buy' | 'sell' | 'upgrades'>('buy');
   const [rerollCount, setRerollCount] = useState(0);
   const [curseRemovalCount, setCurseRemovalCount] = useState(0);
+  const [blessingModalOpen, setBlessingModalOpen] = useState(false);
+  const [selectedBlessing, setSelectedBlessing] = useState<RegistryEntry | null>(null);
 
   // Rarity weights for random selection
   const rarityWeights = {
@@ -54,37 +61,37 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
     'legendary': 5
   };
 
-  // Upgrades available for purchase
+  // Upgrades available for purchase (updated pricing: 30-250 range)
   const upgrades: Upgrade[] = [
     {
       id: 'upgrade-hand-size',
       label: '+1 Hand Size',
       description: 'Permanently increase your hand size by 1 for the rest of the run.',
-      cost: 150,
+      cost: 100, // Reduced from 150
       type: 'hand-size'
     },
     {
       id: 'upgrade-shuffle-count',
       label: '+1 Shuffle Count',
       description: 'Gain one additional shuffle resource for each encounter.',
-      cost: 100,
+      cost: 60, // Reduced from 100
       type: 'shuffle-count'
     },
     {
       id: 'upgrade-discard-count',
       label: '+1 Discard Count',
       description: 'Gain one additional discard resource for each encounter.',
-      cost: 100,
+      cost: 40, // Reduced from 100
       type: 'discard-count'
     }
   ];
 
-  // Calculate item cost based on rarity
+  // Calculate item cost based on rarity (updated balance: 30-250 coins)
   const calculateCost = (rarity: string, type: string): number => {
     const baseCosts = {
-      exploit: { common: 50, uncommon: 100, rare: 200, legendary: 500 },
-      blessing: { common: 75, uncommon: 150, rare: 300, legendary: 750 },
-      curse: { common: 25, uncommon: 50, rare: 100, legendary: 250 }
+      exploit: { common: 30, uncommon: 60, rare: 120, legendary: 250 },
+      blessing: { common: 35, uncommon: 70, rare: 140, legendary: 200 },
+      curse: { common: 15, uncommon: 30, rare: 60, legendary: 120 }
     };
     
     const costs = baseCosts[type as keyof typeof baseCosts] || baseCosts.exploit;
@@ -182,21 +189,46 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   // Handle purchase
   const handlePurchase = (item: TradeItem | Upgrade) => {
     if (playerCoin >= item.cost) {
-      // Convert to RegistryEntry format for the callback
-      const registryItem: RegistryEntry = {
-        id: item.id,
-        label: item.label,
-        description: item.description,
-        type: 'type' in item ? item.type : 'upgrade',
-        rarity: 'rarity' in item ? item.rarity : '',
-        category: '',
-        completed: false,
-        tags: 'tags' in item ? item.tags : [],
-        choices: [],
-        results: {},
-        effects: 'effects' in item ? item.effects : []
-      };
-      onPurchase(registryItem, item.cost);
+      // Check if it's a blessing - need to apply to card
+      if ('type' in item && item.type === 'blessing') {
+        // Convert to RegistryEntry format
+        const blessingItem: RegistryEntry = {
+          id: item.id,
+          label: item.label,
+          description: item.description,
+          type: item.type,
+          rarity: 'rarity' in item ? item.rarity : '',
+          category: '',
+          completed: false,
+          tags: 'tags' in item ? item.tags : [],
+          choices: [],
+          results: {},
+          effects: 'effects' in item ? item.effects : []
+        };
+        
+        // Purchase the blessing first (add to owned blessings)
+        onPurchase(blessingItem, item.cost);
+        
+        // Open modal for card application
+        setSelectedBlessing(blessingItem);
+        setBlessingModalOpen(true);
+      } else {
+        // Normal purchase for exploits, curses, upgrades
+        const registryItem: RegistryEntry = {
+          id: item.id,
+          label: item.label,
+          description: item.description,
+          type: 'type' in item ? item.type : 'upgrade',
+          rarity: 'rarity' in item ? item.rarity : '',
+          category: '',
+          completed: false,
+          tags: 'tags' in item ? item.tags : [],
+          choices: [],
+          results: {},
+          effects: 'effects' in item ? item.effects : []
+        };
+        onPurchase(registryItem, item.cost);
+      }
     }
   };
 
@@ -204,6 +236,21 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   const handleSell = (item: RegistryEntry) => {
     const sellValue = Math.floor(calculateCost(item.rarity, 'exploit') * 0.6); // 60% of purchase price
     onSell(item, sellValue);
+  };
+
+  // Handle blessing application to card
+  const handleApplyBlessing = (blessingId: string, cardId: string) => {
+    if (onBlessingApplication) {
+      onBlessingApplication(blessingId, cardId);
+    }
+    setBlessingModalOpen(false);
+    setSelectedBlessing(null);
+  };
+
+  // Handle blessing modal close
+  const handleBlessingModalClose = () => {
+    setBlessingModalOpen(false);
+    setSelectedBlessing(null);
   };
 
   const rerollCost = 50 + (rerollCount * 25);
@@ -362,6 +409,17 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
           Leave Shop
         </button>
       </div>
+
+      {/* Blessing Application Modal */}
+      {selectedBlessing && (
+        <BlessingApplicationModal
+          isOpen={blessingModalOpen}
+          onClose={handleBlessingModalClose}
+          blessing={selectedBlessing}
+          gameState={gameState}
+          onApplyBlessing={handleApplyBlessing}
+        />
+      )}
     </div>
   );
 };

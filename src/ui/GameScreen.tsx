@@ -193,17 +193,16 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   };
 
   // Handle player choice selection
-  const handleChoiceSelected = (choice: 'trade' | 'wander' | 'gamble') => {
+  const handleChoiceSelected = (choice: 'trade' | 'wander' | 'fortune-swap') => {
     console.log('Player chose:', choice);
     if (choice === 'trade') {
       setCurrentScreen('trade');
     } else if (choice === 'wander') {
       setCurrentScreen('wander');
-    } else if (choice === 'gamble') {
-      // Apply 25% bonus for next encounter and continue game
-      // (Gamble bonus logic removed)
+    } else if (choice === 'fortune-swap') {
+      // Force fortune swap after danger encounters (simplified for now)
       setCurrentScreen('game');
-      console.log('Gamble bonus activated - 25% scoring multiplier for next encounter');
+      console.log('Fortune swap required after danger encounter - continuing game');
     }
   };
 
@@ -241,6 +240,50 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     engine.emitEvent('trade_purchase', { item: item.id, cost, newCoinBalance: engine.state.player.coins });
     
     console.log('Purchase completed:', { item: item.id, newCoinBalance: engine.state.player.coins });
+  };
+
+  const handleBlessingApplication = (blessingId: string, cardId: string) => {
+    console.log('Applying blessing to card:', { blessingId, cardId });
+    
+    // Find the card in the appropriate pile
+    let targetCard = null;
+    let targetPile = null;
+    
+    // Check draw pile
+    if (gameState.piles.draw.cards.some((card: any) => card.id === cardId)) {
+      targetCard = gameState.piles.draw.cards.find((card: any) => card.id === cardId);
+      targetPile = 'draw';
+    }
+    // Check discard pile
+    else if (gameState.piles.discard.cards.some((card: any) => card.id === cardId)) {
+      targetCard = gameState.piles.discard.cards.find((card: any) => card.id === cardId);
+      targetPile = 'discard';
+    }
+    // Check hand
+    else if (gameState.piles.hand.cards.some((card: any) => card.id === cardId)) {
+      targetCard = gameState.piles.hand.cards.find((card: any) => card.id === cardId);
+      targetPile = 'hand';
+    }
+    
+    if (!targetCard || !targetPile) {
+      console.error('Card not found for blessing application:', cardId);
+      return;
+    }
+    
+    // Apply blessing to card through engine
+    const blessingEffect = {
+      type: 'apply_blessing_to_card',
+      target: cardId,
+      value: blessingId
+    };
+    
+    engine.state = engine.effectEngine.applyEffects([blessingEffect], engine.state);
+    
+    // Emit events for UI updates
+    engine.emitEvent('stateChange', engine.state);
+    engine.emitEvent('blessing_applied', { blessingId, cardId, pile: targetPile });
+    
+    console.log('Blessing application completed:', { blessingId, cardId, pile: targetPile });
   };
 
   const handleTradeSell = (item: any, value: number) => {
@@ -1119,7 +1162,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
           <ChoiceSelectionScreen
             onTradeSelected={() => setCurrentScreen('trade')}
             onWanderSelected={() => setCurrentScreen('wander')}
-            onGambleSelected={() => handleChoiceSelected('gamble')}
             onBack={() => setCurrentScreen('game')}
           />
         </div>
@@ -1131,9 +1173,11 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
             onBack={handleTradeBack}
             onPurchase={handleTradePurchase}
             onSell={handleTradeSell}
+            onBlessingApplication={handleBlessingApplication}
             playerCoin={gameState.player?.coins || 0}
             equippedExploits={gameState.player?.exploits?.map(id => 
               registry.exploit.find(e => e.id === id)).filter((item): item is any => item !== undefined) || []}
+            gameState={gameState}
           />
         </div>
       )}

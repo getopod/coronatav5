@@ -1,91 +1,218 @@
 # Coronata Master Doc
-#
-## Essential Implementation & Deployment Checklist
+**Version 3.0 (Complete Rebalanced Edition)**  
+*Last Updated: October 2, 2025*
 
-This section lists everything required to build, test, and deploy Coronata from scratch, ensuring no ambiguity or missing pieces for developers, designers, and AI agents.
+## The Complete Guide to Coronata
+This document contains every rule, mechanic, balance detail, and implementation specification for Coronata. It serves as the canonical reference for players, designers, developers, and AI agents.
 
----
-
-### 1. Game Design & Rules
-- Complete gameplay rules, win/loss conditions, and edge cases
-- Scoring system details, including formulas and encounter goals
-- Full glossary of terms and mechanics
-
-### 2. Registry Content
-- Schema for all registry types (exploits, blessings, curses, fortunes, fears, dangers, wanders, feats)
-- Example entries for each type
-- At least one full set of content for a playable run
-- Balancing guidelines for rarity, effect strength, and encounter difficulty
-
-### 3. Effect Engine Contract
-- Function signatures, context, and expected output for effects
-- List of supported actions and conditions
-- Example effect implementations and test cases
-
-### 4. Game State & Actions
-- TypeScript interfaces for all state objects
-- List and description of all reducer actions and payloads
-- Example state transitions for key actions
-
-### 5. UI/UX Specifications
-- Wireframes or mockups for all screens and modals
-- Component breakdowns and interaction flows
-- Accessibility requirements (contrast, ARIA, keyboard navigation)
-- Animation and feedback guidelines
-
-### 6. Asset Manifest
-- List of required images, icons, sounds, and fonts
-- File naming conventions and recommended formats
-- Licensing notes for third-party assets
-
-### 7. Agent System
-- Table of all agents, their responsibilities, and trigger points
-- Example agent output/report for code, docs, and registry validation
-- Instructions for adding new agents
-
-### 8. Testing & Validation
-- List of required unit, integration, and E2E tests
-- Acceptance criteria for each major feature
-- Manual QA steps for pre-release validation
-- Agent validation workflow
-
-### 9. Deployment Instructions
-- Step-by-step guide for building and deploying (Vite, hosting, environment variables, API keys)
-- Example `.env` file with all required keys and secrets
-- Production optimization notes
-
-### 10. Backend/API Contract (if needed)
-- API endpoints, payloads, and authentication for persistent features
-- Example server implementation or mock API responses
-
-### 11. Localization/Internationalization
-- How to add new languages (UI string files, agent translation workflow)
-- Example translation file and process
-
-### 12. Maintenance & Update Workflow
-- How to update registry content, agents, or game logic post-launch
-- Versioning and change log conventions
-
-### 13. Security & Privacy
-- Handling of user data, API keys, and agent fallbacks
-- Recommendations for securing deployment and agent API calls
-
-### 14. Troubleshooting & Support
-- Common setup/build/deployment errors and solutions
-- How to report bugs or request features
-
-### 15. Release & Change Log
-- Section for tracking major changes, releases, and migration notes
-
-### 16. Advanced Developer Notes
-- Performance optimization tips
-- Accessibility best practices
-- Security considerations
+**Coronata** is a solitaire-roguelike that transforms Klondike patience into a strategic campaign experience. Each run is a journey through 15 encounters across 5 trials, where narrative events and mechanical modifiers create unique challenges. The game features a comprehensive economy, ascension system, and data-driven registry that makes every run feel distinct.
 
 ---
 
-## Project Overview
-Coronata is a modular, AI-powered solitaire card game built with TypeScript and React. It features a robust agent system for automated validation, content registry, and a comprehensive CI/CD pipeline for game logic verification.
+## 🎯 Core Game Loop
+
+### **Run Structure (5 Trials)**
+```
+Trial 1: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
+Trial 2: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]  
+Trial 3: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
+Trial 4: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
+Trial 5: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade] → [Final Trade] → Usurper
+```
+
+**Total Encounters**: 15 (10 Fears + 4 Dangers + 1 Usurper)  
+**Trade Opportunities**: 5 guaranteed + up to 5 bonus = 5-10 total trades  
+**Progression**: Each encounter awards coins and items to build your loadout
+
+---
+
+## 💰 Complete Economy System
+
+### **Starting Resources**
+- **Coins**: 50 (immediate purchasing power)
+- **Hand Size**: 5 cards
+- **Shuffles**: 3 per encounter  
+- **Discards**: 3 per encounter
+
+### **Encounter Rewards**
+| Encounter Type | Coin Reward | Score Bonus |
+|---------------|-------------|-------------|
+| Fear          | 25 coins    | 50 points   |
+| Danger        | 40 coins    | 100 points  |
+| Usurper       | 60 coins    | 200 points  |
+
+### **Total Coin Flow Per Run**
+- Starting: 50 coins
+- 10 Fears: 250 coins  
+- 4 Dangers: 160 coins
+- 1 Usurper: 60 coins
+- **Total Available**: **520 coins per run**
+
+### **Item Pricing Structure**
+| Item Type | Cost Range | Examples |
+|-----------|------------|----------|
+| Common Exploits | 30-50 coins | Basic score bonuses |
+| Uncommon Exploits | 60-90 coins | Conditional effects |
+| Rare Exploits | 100-150 coins | Powerful synergies |
+| Legendary Exploits | 180-250 coins | Game-changing abilities |
+| Blessings | 15-40 coins | Tactical modifiers |
+| Curse Removal | 60-120 coins | Escalating cost |
+| Hand Size +1 | 80 coins | Permanent upgrade |
+| Shuffle +1 | 40 coins | Extra resource |
+| Discard +1 | 40 coins | Extra resource |
+
+### **Purchasing Power Analysis**
+
+**Trade 1** (after Fear 1): **75 coins available**
+- Can buy: 2-3 weak items OR 1 decent item OR save for later
+- Examples: 2 common exploits + blessing OR 1 uncommon exploit
+
+**Trade 2** (after Fear 3): **125 coins available**
+- Can buy: Mix of decent items OR save for amazing item  
+- Examples: 1 rare exploit OR 2 uncommon items
+
+**Trade 3** (after Danger 1): **165 coins available**
+- Can buy: 1 amazing item OR multiple decent upgrades
+- Examples: 1 legendary exploit OR hand size + rare exploit
+
+**Trade 4** (after Fear 6): **215 coins available**
+- Can buy: Build synergies and fine-tune loadout
+- Examples: Multiple rare items or legendary + utility
+
+**Trade 5** (after Fear 8): **275 coins available**
+- Can buy: Final power spike or complete build optimization
+- Examples: Top-tier legendary + support items
+
+---
+
+## 🎯 Scoring System
+
+### **Smoothed Score Goals**
+For encounter $i$:
+$$\text{ScoreGoal}_i = S_{base} \times (1.25)^{(i-1)} \times D_{mod}$$
+
+Where:
+- $S_{base}$: 120 (achievable base score)
+- Growth rate: 25% per encounter (smooth progression)
+- $D_{mod}$: Danger modifier (1.0 for Fear, 1.2 for Danger, 1.5 for Usurper)
+
+### **Score Goals Table**
+
+| Encounter | Type | Base Goal | Final Goal |
+|-----------|------|-----------|------------|
+| 1         | Fear | 120       | 120        |
+| 2         | Fear | 150       | 150        |
+| 3         | Danger| 188       | 225        |
+| 4         | Fear | 234       | 234        |
+| 5         | Fear | 293       | 293        |
+| 6         | Danger| 366       | 439        |
+| 7         | Fear | 458       | 458        |
+| 8         | Fear | 572       | 572        |
+| 9         | Danger| 715       | 858        |
+| 10        | Fear | 894       | 894        |
+| 11        | Fear | 1118      | 1118       |
+| 12        | Danger| 1397      | 1676       |
+| 13        | Fear | 1746      | 1746       |
+| 14        | Fear | 2183      | 2183       |
+| 15        | Usurper| 2728     | 4092       |
+
+### **Scoring Precedence**
+1. Compute base score (card face value or foundation multiplier)
+2. Apply additive modifiers (sum all +X bonuses)
+3. Apply multiplicative modifiers (product of all Nx bonuses)
+4. Evaluate special tokens (basePlusBeneath, etc.)
+
+**Foundation Multiplier**: Foundation plays score 2× base value by default
+
+---
+
+## 🎴 Core Vocabulary
+
+- **Deck**: Standard 52-card deck (A=1...K=13), face-down draw pile
+- **Hand**: Cards held between draws (default size 5)
+- **Discard**: Face-up pile for discarded cards
+- **Tableau**: 7 Klondike-style columns for card placement
+- **Foundation**: 4 suit-based scoring piles (Ace to King)
+- **Encounter**: Single gameplay challenge (Fear/Danger/Usurper)
+- **Trial**: Group of 3 encounters (Fear-Fear-Danger)
+- **Run**: Complete playthrough (5 trials + final Usurper)
+
+### **Registry Items**
+- **Fortune**: Persistent run-level modifier (choose 1, swap after Dangers)
+- **Exploit**: Powerful passive/triggered effects (max 4 equipped)
+- **Blessing**: Tactical one-time or limited-use modifiers
+- **Curse**: Negative modifiers affecting gameplay
+- **Fear**: Lightweight encounter modifiers
+- **Danger**: Heavyweight multi-effect encounter modifiers
+- **Wander**: Narrative choice-based events
+- **Feat**: Achievements awarded for completing objectives
+
+---
+
+## 🚀 Ascension System (9 Levels)
+
+### **Ascension Level Effects**
+
+**Level 0** (Base): Normal gameplay
+
+**Level 1 - "Merchant's Tax"**:
+- All item costs +20%
+- Coin rewards +10%
+
+**Level 2 - "Scarce Resources"**:
+- Item costs +40%, Coin rewards +15%
+- Starting shuffles: 2 (down from 3)
+
+**Level 3 - "Hostile Markets"**:
+- Item costs +60%, Coin rewards +20%
+- Trade reroll costs double, 1 less item per trade
+
+**Level 4 - "Cursed Luck"**:
+- Item costs +80%, Coin rewards +25%
+- Start with 1 random curse, Curse removal +50% cost
+
+**Level 5 - "Diminished Fortune"**:
+- Item costs +100%, Coin rewards +30%
+- Fortune effects -25%, Hand size starts at 4
+
+**Level 6 - "Twisted Trials"**:
+- Item costs +120%, Coin rewards +35%
+- Score goals +15%, Dangers gain extra effects
+
+**Level 7 - "Apex Challenge"**:
+- Item costs +150%, Coin rewards +40%
+- Score goals +30%, Start with 2 curses
+- Fortune swap every 2 encounters
+
+**Level 8 - "Master's Gauntlet"**:
+- Item costs +200%, Coin rewards +50%
+- Score goals +50%, All encounters gain Fear modifiers
+- Max hand size: 4
+
+**Level 9 - "Transcendent Ordeal"**:
+- Item costs +300%, Coin rewards +75%
+- Score goals +100%, Start with 3 curses
+- No blessing purchases, Usurper gains 2 extra effects
+
+---
+
+## 🎮 Technical Architecture
+
+### **Registry System**
+- **registry/registry.ts**: Unified content registry for all game items
+- Registry effects are processed by the effect engine
+- Each entry has `id`, `label`, `description`, `type`, `rarity`, `effects`
+
+### **Unified Engine Architecture**
+- **engineController.ts**: Central game state and logic dispatcher
+- **effectEngine.ts**: Processes all registry effects with built-in handlers
+- **moveLogic.ts**: Card movement validation and execution
+- **eventSystem.ts**: Event-driven registry effect triggers
+- **enhancedScoring.ts**: Implements scoring formula and modifiers
+
+### **UI Components**
+- **GameScreen.tsx**: Main game interface with card interactions
+- **Card.tsx**: Interactive card component with drag/drop
 
 ---
 

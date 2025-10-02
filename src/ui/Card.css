@@ -124,3 +124,55 @@
 .card.shake {
   animation: shake 0.3s ease-in-out;
 }
+
+/* Blessing indicators */
+.card-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.card-blessings {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.blessing-indicator {
+  font-size: 8px;
+  color: #9d7bea;
+  text-shadow: 0 0 2px rgba(157, 123, 234, 0.8);
+  animation: blessing-glow 2s ease-in-out infinite alternate;
+}
+
+.blessing-count {
+  font-size: 6px;
+  color: #9d7bea;
+  background: rgba(157, 123, 234, 0.3);
+  border-radius: 2px;
+  padding: 0 1px;
+  margin-left: 1px;
+}
+
+.card-blessings-back {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  pointer-events: none;
+}
+
+.blessing-indicator-back {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 0 3px rgba(157, 123, 234, 0.9);
+  animation: blessing-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes blessing-glow {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
