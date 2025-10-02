@@ -130,6 +130,45 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   // Choice screen states
   const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander'>('game');
   
+  // Responsive scaling effect
+  React.useEffect(() => {
+    const handleResize = () => {
+      const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
+      if (!gameScreen) return;
+
+      const minWidth = 266; // Minimum width to show all cards
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate scale factor to fit content while respecting minimum width
+      let scaleX = viewportWidth / minWidth;
+      let scaleY = viewportHeight / 600; // Approximate game height
+      let scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+      
+      // Ensure we don't go below minimum width
+      if (viewportWidth < minWidth) {
+        scale = viewportWidth / minWidth;
+      }
+      
+      // Apply scaling
+      if (scale < 1) {
+        gameScreen.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        gameScreen.style.transformOrigin = 'center center';
+      } else {
+        gameScreen.style.transform = 'translate(-50%, -50%)';
+      }
+    };
+
+    // Initial resize
+    handleResize();
+    
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   // Function to trigger shake animation for invalid moves
   const triggerShake = (cardId: string) => {
     console.log('Triggering shake for card:', cardId);

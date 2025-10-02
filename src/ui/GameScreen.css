@@ -21,7 +21,7 @@
   justify-content: center;
   
   /* Mobile responsive adjustments */
-  min-width: 320px; /* Minimum iPhone screen width */
+  min-width: 266px; /* Minimum width to ensure all cards are visible */
   box-sizing: border-box;
 }
 
@@ -34,7 +34,7 @@
     width: calc(100vw - 4px);
     min-height: calc(100vh - 4px);
     /* Prevent content from being too small */
-    min-width: 320px; /* Actual minimum iPhone width */
+    min-width: 266px; /* Ensure all cards remain visible */
     padding: 2px;
     /* Scale everything down */
     transform: scale(0.65);

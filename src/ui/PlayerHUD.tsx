@@ -213,6 +213,22 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
 
   return (
     <div className="player-hud">
+      {/* Full-width Progress Bar */}
+      {encounter && (
+        <div className="progress-container-full">
+          <div 
+            ref={progressBarRef}
+            className="full-progress-bar"
+            data-score={player.score || 0}
+            data-goal={encounter.scoreGoal || 0}
+          >
+            <span className="progress-text-centered">
+              {player.score || 0} / {encounter.scoreGoal || 0}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Player Choice Interface */}
       {run?.awaitingPlayerChoice && (
         <div className="choice-interface">
@@ -259,22 +275,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
             <span className="encounter-name">{encounter.name}</span>
           </div>
           <div className="encounter-description">{encounter.description}</div>
-          
-          {/* Score Display with Compact Progress Bar */}
-          <div className="score-display">
-            <div className="progress-container-compact">
-              <div 
-                ref={progressBarRef}
-                className="compact-progress-bar"
-                data-score={player.score || 0}
-                data-goal={encounter.scoreGoal || 0}
-              >
-                <span className="progress-text-centered">
-                  {player.score || 0} / {encounter.scoreGoal || 0}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -376,19 +376,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
         >
           🏳️ Resign
         </button>
-        <button 
-          className="toggle-button" 
-          title="Toggle HUD compact mode"
-          onClick={() => {
-            // Toggle compact mode
-            const hud = document.querySelector('.player-hud');
-            if (hud) {
-              hud.classList.toggle('compact-mode');
-            }
-          }}
-        >
-          📊
-        </button>
+
         <button 
           className="discard-button" 
           title="Discard selected cards from hand"

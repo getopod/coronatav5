@@ -304,6 +304,45 @@ function initializeCoronataState(engineController: any) {
     state.player.maxHandSize = state.player.maxHandSize || 5;
   }
   
+  // Ensure hand pile exists and initialize it with cards from deck
+  if (!state.piles.hand) {
+    state.piles.hand = {
+      id: 'hand',
+      type: 'hand',
+      cards: [],
+      rules: { faceUp: true },
+      meta: {}
+    };
+  }
+  
+  // Ensure waste pile exists (for Coronata's deck cycling)
+  if (!state.piles.waste) {
+    state.piles.waste = {
+      id: 'waste',
+      type: 'waste',
+      cards: [],
+      rules: { faceUp: true },
+      meta: {}
+    };
+  }
+  
+  // If hand is empty and deck has cards, deal initial hand
+  if (state.piles.hand.cards.length === 0 && state.piles.deck && state.piles.deck.cards.length > 0) {
+    const handSize = Math.min(state.player.maxHandSize || 5, state.piles.deck.cards.length);
+    console.log(`Dealing initial hand of ${handSize} cards from deck with ${state.piles.deck.cards.length} cards`);
+    
+    // Move cards from deck to hand
+    for (let i = 0; i < handSize; i++) {
+      const card = state.piles.deck.cards.pop();
+      if (card) {
+        card.faceUp = true; // Hand cards should be face up
+        state.piles.hand.cards.push(card);
+      }
+    }
+    
+    console.log(`Hand now has ${state.piles.hand.cards.length} cards, deck has ${state.piles.deck.cards.length} cards`);
+  }
+  
   // Initialize basic run state for Coronata
   if (!state.run) {
     state.run = {
@@ -334,4 +373,6 @@ function initializeCoronataState(engineController: any) {
   }
   
   console.log('Coronata state initialized:', state);
+  console.log('Final deck cards:', state.piles.deck?.cards?.length || 0);
+  console.log('Final hand cards:', state.piles.hand?.cards?.length || 0);
 }

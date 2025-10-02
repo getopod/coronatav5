@@ -114,4 +114,13 @@
   to { opacity: 0; transform: translateY(20px) scale(0.9); }
 }
 
-/* Shake animation disabled */
+/* Shake animation for invalid moves */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.card.shake {
+  animation: shake 0.3s ease-in-out;
+}
