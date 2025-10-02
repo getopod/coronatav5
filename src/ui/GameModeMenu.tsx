@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { gameModeProfiles } from '../engine/gameModeProfiles';
-import coronataCardBack from '../assets/coronata-card-back.png';
 import coronataLogo from '../assets/coronata_logo_compact.svg';
 
-export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void }) {
+export function GameModeMenu({ onSelect }: { readonly onSelect: (mode: string) => void }) {
   const [showingOtherModes, setShowingOtherModes] = useState(false);
 
   // Get all game modes except coronata for the "Other" submenu

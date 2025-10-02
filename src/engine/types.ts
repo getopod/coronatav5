@@ -33,6 +33,7 @@ export interface PlayerState {
   curses?: string[]; // IDs of active curses
   blessings?: string[]; // IDs of active blessings
   fortunes?: string[]; // IDs of active fortunes
+  coinMultiplier?: number; // Multiplier for coin rewards
   [key: string]: any;
 }
 

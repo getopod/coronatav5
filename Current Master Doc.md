@@ -92,14 +92,22 @@ Coronata is a modular, AI-powered solitaire card game built with TypeScript and 
 
 
 ### Registry System
-- **registry.ts (+ registry-new/part2/part3)**: Modular content registry for exploits, blessings, fears, curses, fortunes. Each entry has `id`, `name`, `description`, `rarity`, `effect`.
-- Registry effects are pure functions, explicit state return.
-- Registry content split across three files; always update all when adding content.
+- **registry/registry.ts**: Unified content registry for exploits, blessings, fears, curses, fortunes, wanders, feats. Each entry has `id`, `label`, `description`, `type`, `rarity`, `effects`.
+- Registry effects are pure functions processed by the unified engine architecture.
+- Registry entries include comprehensive effect definitions with conditions, actions, and targets.
 
-- **App.tsx**: Main app flow (welcome → fortune selection → game engine).
-- **GameEngine.tsx**: Main game UI, hosts HUD, modals (trade, shop, glossary), and encounter goal/progress bar.
-- **TableauColumn.tsx**: Drag-and-drop card interaction.
-- **Modal Components**: TradeModal.tsx, WanderModal.tsx, RunHistoryModal.tsx, RunStatsModal.tsx for trading, wandering, run history, and run stats.
+### Unified Engine Architecture
+- **src/engine/**: Single unified engine directory with auto-configuration
+- **engineController.ts**: Central game engine with registry effects processing and active effect filtering
+- **enhancedScoring.ts**: Coronata scoring system with registry integration
+- **effectEngine.ts**: Built-in handlers for registry effects (award_score, award_coin, modify_setting, etc.)
+- **App.jsx**: Main app flow, loads exploits from registry and initializes EngineController
+
+### UI Components
+- **GameScreen.tsx**: Main game interface with responsive design
+- **PlayerHUD.tsx**: Game status display with encounter info, progress bar, and resources
+- **TradeScreen.tsx, WanderScreen.tsx**: Trading and wandering interfaces
+- **HowToPlay.tsx**: Game tutorial and rules explanation
 
 ---
 - **engine.js**: Executes tasks, loads agents, integrates registry.
@@ -126,26 +134,30 @@ Coronata is a modular, AI-powered solitaire card game built with TypeScript and 
 ---
 
 ## Current State & Recommendations
-- **Trade, Wander, Run History, Run Stats**: Complete and integrated.
-- **Scoring goals**: Formula and HUD integration complete; UI testing blocked by reference errors.
-- **Run history logic**: Commented out due to type errors.
-- **Remaining**: Blessing indicators, HUD expansion, encounter progression, feat tracking.
-- **Recommendations**:
-  - Fix remaining reference errors in GameEngine.tsx to enable UI testing.
-  - Ensure all registry and effect logic remains pure and modular.
-  - Continue agent-driven validation for all major features.
+
+- **Registry Effects System**: Core implementation complete with active effect filtering and scoring integration
+- **UI Components**: PlayerHUD fixed with proper encounter info layout, GameScreen fixed for deck display
+- **Unified Engine**: Single /engine/ architecture with auto-configuration and registry processing
+- **Trade & Wander**: Existing screens available, may need updates to match current specifications
+- **Remaining**: Complete registry effects handlers, coin mechanics, encounter progression
+
+**Recommendations**:
+- Complete event-based effect handlers for registry system
+- Implement comprehensive coin earning and tracking
+- Ensure all registry effects are properly integrated and tested
+- Validate encounter progression and scoring mechanics
 
 ---
 
 ## File Patterns & Integration Points
-- Registry content: Always update all three registry files when adding game content.
-- Game logic: Changes to `heuristics.ts` automatically trigger ValidatorAgent.
-- State mutations: Only via reducer actions.
-- Effect handling: Registry effects must be pure functions with explicit state return.
-- Vite: Build system with React plugin and TypeScript support.
-- OpenAI API: All agents require `OPENAI_KEY` environment variable.
-- Git hooks: Husky integration for automated agent execution.
-- CLI: `cli/coronata.js` provides programmatic access to agent system.
+
+- Registry content: Unified registry in `src/registry/registry.ts` with comprehensive effect definitions
+- Game logic: Registry effects processed by unified engine architecture in `src/engine/`
+- State mutations: Handled by EngineController and effect engine
+- Effect handling: Registry effects processed with condition checking and active filtering
+- Build system: Vite with React plugin and TypeScript support
+- Registry loading: App.jsx imports and initializes exploits from registry
+- Engine integration: EngineController processes active effects and applies during gameplay
 
 ---
 

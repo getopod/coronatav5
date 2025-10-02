@@ -2,6 +2,9 @@ import { Card, Pile, GameState, Move } from './types';
 
 // Move a card or stack from one pile to another
 export function moveCard(state: GameState, move: Move): GameState {
+  console.log('=== MOVE CARD LOGIC ===');
+  console.log('Move:', move);
+  
   // Create a shallow copy of state with deep copied piles to avoid mutations
   const newState: GameState = {
     ...state,
@@ -19,14 +22,30 @@ export function moveCard(state: GameState, move: Move): GameState {
   
   const fromPile = newState.piles[move.from];
   const toPile = newState.piles[move.to];
-  if (!fromPile || !toPile) return state;
+  console.log('From pile:', fromPile ? `${fromPile.type} (${fromPile.cards.length} cards)` : 'NOT FOUND');
+  console.log('To pile:', toPile ? `${toPile.type} (${toPile.cards.length} cards)` : 'NOT FOUND');
+  
+  if (!fromPile || !toPile) {
+    console.log('MOVE LOGIC ERROR: Missing pile, returning original state');
+    return state;
+  }
   
   // Get the movable stack starting from the specified card (use original state for validation)
   const movableStack = getMovableStack(state.piles[move.from], move.cardId);
-  if (movableStack.length === 0) return state;
+  console.log('Movable stack length:', movableStack.length);
+  
+  if (movableStack.length === 0) {
+    console.log('MOVE LOGIC ERROR: No movable stack, returning original state');
+    return state;
+  }
   
   const cardIdx = fromPile.cards.findIndex(c => c.id === move.cardId);
-  if (cardIdx === -1) return state;
+  console.log('Card index in fromPile:', cardIdx);
+  
+  if (cardIdx === -1) {
+    console.log('MOVE LOGIC ERROR: Card not found in fromPile, returning original state');
+    return state;
+  }
   
   // Track card history for scoring - mark cards that have been played to tableau
   // Only apply this tag when cards are moved TO tableau by player moves, not during setup
@@ -69,52 +88,101 @@ export function moveCard(state: GameState, move: Move): GameState {
     stackSize: newMovableStack.length,
     cardIds: newMovableStack.map(c => c.id)
   });
+  
+  console.log('MOVE LOGIC SUCCESS: Returning new state');
   return newState;
 }
 
 // Klondike move validation (stacking, alternation, foundation)
 export function validateMove(move: Move, state: GameState): boolean {
+  console.log('=== VALIDATING MOVE ===');
+  console.log('Move:', move);
+  
   const fromPile = state.piles[move.from];
   const toPile = state.piles[move.to];
-  if (!fromPile || !toPile) return false;
+  console.log('From pile:', fromPile ? `${fromPile.type} (${fromPile.cards.length} cards)` : 'NOT FOUND');
+  console.log('To pile:', toPile ? `${toPile.type} (${toPile.cards.length} cards)` : 'NOT FOUND');
+  
+  if (!fromPile || !toPile) {
+    console.log('INVALID: Missing pile');
+    return false;
+  }
   
   // Get the movable stack and validate based on the bottom card (the clicked card)
   const movableStack = getMovableStack(fromPile, move.cardId);
-  if (movableStack.length === 0) return false;
+  console.log('Movable stack:', movableStack.length, 'cards');
+  
+  if (movableStack.length === 0) {
+    console.log('INVALID: No movable stack found');
+    return false;
+  }
   
   const card = movableStack[0]; // The bottom card of the stack being moved
+  console.log('Moving card:', `${card.value} of ${card.suit}`);
 
   // Example: tableau stacking (alternating color, descending value)
   if (toPile.type === 'tableau') {
+    console.log('Validating tableau move...');
     const top = toPile.cards[toPile.cards.length - 1];
     if (!top) {
       // Only Kings can be placed on empty tableau
-      return card.value === 13;
+      const isValid = card.value === 13;
+      console.log('Empty tableau - King required:', isValid, `(card is ${card.value})`);
+      return isValid;
     }
     const isAltColor = (isRed(card.suit) !== isRed(top.suit));
-    return isAltColor && card.value === top.value - 1;
+    const isDescending = card.value === top.value - 1;
+    console.log('Tableau validation:', { 
+      topCard: `${top.value} of ${top.suit}`, 
+      movingCard: `${card.value} of ${card.suit}`,
+      isAltColor, 
+      isDescending 
+    });
+    const result = isAltColor && isDescending;
+    console.log('Tableau result:', result);
+    return result;
   }
 
   // Example: foundation building (same suit, ascending value)
   if (toPile.type === 'foundation') {
+    console.log('Validating foundation move...');
     // Foundation piles only accept single cards, not stacks
-    if (movableStack.length > 1) return false;
+    if (movableStack.length > 1) {
+      console.log('INVALID: Foundation cannot accept stacks');
+      return false;
+    }
     
     const top = toPile.cards[toPile.cards.length - 1];
     if (!top) {
       // Only Aces can be placed on empty foundation
-      return card.value === 1;
+      const isValid = card.value === 1;
+      console.log('Empty foundation - Ace required:', isValid, `(card is ${card.value})`);
+      return isValid;
     }
-    return card.suit === top.suit && card.value === top.value + 1;
+    const sameSuit = card.suit === top.suit;
+    const ascending = card.value === top.value + 1;
+    console.log('Foundation validation:', { 
+      topCard: `${top.value} of ${top.suit}`, 
+      movingCard: `${card.value} of ${card.suit}`,
+      sameSuit, 
+      ascending 
+    });
+    const result = sameSuit && ascending;
+    console.log('Foundation result:', result);
+    return result;
   }
 
   // Waste pile restrictions: Only deck cards can go to waste pile
   if (toPile.type === 'waste') {
+    console.log('Validating waste move...');
     // Cards can only go to waste from the deck (during dealing)
-    return move.from === 'deck';
+    const result = move.from === 'deck';
+    console.log('Waste result:', result, `(from: ${move.from})`);
+    return result;
   }
 
   // Prevent invalid moves to other pile types
+  console.log('INVALID: Unknown pile type or invalid destination');
   return false;
 }
 

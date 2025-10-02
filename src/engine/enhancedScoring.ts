@@ -31,11 +31,45 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       console.log('Applied foundation multiplier: base score', baseScore / 2, '→', baseScore);
     }
     
-    // Step 3: The actual exploit/curse bonuses should be handled by the effect engine
-    // when processing registry effects with "award_score" actions.
-    // This method calculates the base move score only.
+    // Step 3: Apply registry effects if engine controller is available
+    let finalScore = baseScore;
+    if (state.registry?.engineController) {
+      const engineController = state.registry.engineController;
+      const card = this.findCard(state, move.cardId);
+      const toPile = state.piles[move.to];
+      
+      if (card && toPile) {
+        const moveData = { card, toPile, move };
+        const effects = engineController.getActiveEffects(state, 'move', moveData);
+        
+        console.log('Applying', effects.length, 'move effects for card', card.value, 'to', toPile.type);
+        
+        // Apply score-related effects
+        for (const effect of effects) {
+          if (effect.type === 'award_score') {
+            console.log(`Registry effect: +${effect.value} points from ${effect.meta?.sourceLabel}`);
+            finalScore += effect.value || 0;
+          } else if (effect.type === 'score_multiplier') {
+            console.log(`Registry effect: ${effect.value}x multiplier from ${effect.meta?.sourceLabel}`);
+            finalScore *= effect.value || 1;
+          }
+        }
+      }
+    }
     
-    return Math.max(0, Math.floor(baseScore));
+    return Math.max(0, Math.floor(finalScore));
+  }
+  
+  // Helper to find card by ID across all piles
+  private findCard(state: GameState, cardId?: string): any {
+    if (!cardId) return null;
+    for (const pile of Object.values(state.piles)) {
+      if (Array.isArray(pile.cards)) {
+        const card = pile.cards.find((c: any) => c.id === cardId);
+        if (card) return card;
+      }
+    }
+    return null;
   }
 
   // Helper method to get card face value
@@ -302,6 +336,16 @@ function initializeCoronataState(engineController: any) {
     state.player.blessings = state.player.blessings || [];
     state.player.fortunes = state.player.fortunes || [];
     state.player.maxHandSize = state.player.maxHandSize || 5;
+    
+    // For testing: Give player some exploits to demonstrate effects
+    if (state.player.exploits.length === 0) {
+      state.player.exploits = [
+        "exploit-scholars-eye",      // 5/10 cards get +5 points
+        "exploit-chronomancer",      // +1 shuffle per encounter
+        "exploit-whispering-gale"    // See top deck card
+      ];
+      console.log('Demo exploits added to player:', state.player.exploits);
+    }
   }
   
   // Ensure hand pile exists and initialize it with cards from deck

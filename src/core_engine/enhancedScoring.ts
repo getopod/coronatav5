@@ -15,28 +15,91 @@ export interface EnhancedScoringSystem {
 }
 
 export class CoronataScoringSystem implements EnhancedScoringSystem {
-  private variant: string;
+  private readonly variant: string;
 
   constructor(variant: string = 'coronata') {
     this.variant = variant;
   }
 
   calculateMoveScore(move: Move, state: GameState): number {
+    // Master Doc scoring formula:
+    // 1. Compute base score (card face value or foundation multiplier)
+    // 2. Apply additive modifiers (sum all additive deltas)
+    // 3. Apply multiplicative modifiers (product of all multiplicative factors)
+    // 4. Evaluate special tokens (e.g., basePlusBeneath)
+    
     // Step 1: Calculate base score (card face value)
     let baseScore = this.getCardValue(move.from, state, move.cardId);
+    console.log('Base card value:', baseScore);
     
-    // Step 2: Apply foundation multiplier (default 2x for foundation moves)
-    console.log('Move destination:', move.to, 'includes foundation?', move.to?.includes('foundation'));
-    if (move.to && move.to.includes('foundation')) {
+    // Step 2: Apply foundation multiplier first (part of base calculation)
+    const isFoundationMove = move.to?.includes('foundation');
+    if (isFoundationMove) {
       baseScore *= 2; // Foundation multiplier from master doc
       console.log('Applied foundation multiplier: base score', baseScore / 2, '→', baseScore);
     }
     
-    // Step 3: The actual exploit/curse bonuses should be handled by the effect engine
-    // when processing registry effects with "award_score" actions.
-    // This method calculates the base move score only.
+    // Step 3: Calculate additive modifiers from active registry effects
+    let additiveBonus = 0;
+    const activeRegistryIds = [
+      ...(state.player?.exploits || []),
+      ...(state.player?.blessings || []),
+      ...(state.player?.fortunes || [])
+    ];
     
-    return Math.max(0, Math.floor(baseScore));
+    // Check for additive score bonuses in registry entries
+    // Note: This is a simplified check - full implementation would use effect engine
+    if (move.to?.includes('tableau')) {
+      additiveBonus += this.getAdditiveBonus(activeRegistryIds, 'tableau');
+    } else if (isFoundationMove) {
+      additiveBonus += this.getAdditiveBonus(activeRegistryIds, 'foundation');
+    }
+    
+    // Step 4: Apply additive modifiers
+    const scoreAfterAdditive = baseScore + additiveBonus;
+    console.log('Score after additive modifiers:', baseScore, '+', additiveBonus, '=', scoreAfterAdditive);
+    
+    // Step 5: Calculate multiplicative modifiers
+    let multiplier = 1.0;
+    multiplier *= this.getMultiplicativeBonus(activeRegistryIds, move.to || '');
+    
+    // Step 6: Apply multiplicative modifiers
+    const finalScore = scoreAfterAdditive * multiplier;
+    console.log('Final score calculation:', scoreAfterAdditive, '×', multiplier, '=', finalScore);
+    
+    return Math.max(0, Math.floor(finalScore));
+  }
+  
+  // Helper to calculate additive bonuses from registry
+  private getAdditiveBonus(registryIds: string[], target: string): number {
+    // This would integrate with the registry to find additive score bonuses
+    // For now, return a simple bonus based on common patterns
+    let bonus = 0;
+    
+    // Example bonuses from common registry patterns
+    if (registryIds.includes('exploit-merchants-guild') && target === 'hand') {
+      bonus += 2; // Example from registry
+    }
+    if (registryIds.includes('blessing-foundation-mastery') && target === 'foundation') {
+      bonus += 5; // Example foundation bonus
+    }
+    
+    return bonus;
+  }
+  
+  // Helper to calculate multiplicative bonuses from registry
+  private getMultiplicativeBonus(registryIds: string[], target: string): number {
+    let multiplier = 1.0;
+    
+    // Example multipliers from registry patterns
+    if (registryIds.includes('exploit-tableau-master') && target.includes('tableau')) {
+      multiplier *= 1.5; // 50% bonus
+    }
+    if (registryIds.includes('blessing-golden-touch')) {
+      multiplier *= 1.2; // 20% global bonus
+    }
+    
+    return multiplier;
   }
 
   // Handle player choice after encounter completion
@@ -174,7 +237,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Award bonus points for special achievements
-  awardBonus(state: GameState, bonusType: string, amount: number): GameState {
+  awardBonus(state: GameState, _bonusType: string, amount: number): GameState {
     let bonus = amount;
 
     // Apply blessing multipliers
@@ -196,7 +259,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Special scoring for completing card sequences
-  scoreSequence(state: GameState, sequenceLength: number): number {
+  scoreSequence(_state: GameState, sequenceLength: number): number {
     let score = sequenceLength * 5; // Base 5 points per card in sequence
 
     // Exponential bonus for longer sequences
@@ -208,7 +271,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Penalty system for negative actions
-  applyPenalty(state: GameState, penaltyType: string, amount: number): GameState {
+  applyPenalty(state: GameState, _penaltyType: string, amount: number): GameState {
     let penalty = amount;
 
     // Fortune can reduce penalties
@@ -222,7 +285,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 }
 
 // Factory function for creating scoring systems
-export function createScoringSystem(variant: string): EnhancedScoringSystem {
+export function createScoringSystem(_variant: string): EnhancedScoringSystem {
   // For now, always return CoronataScoringSystem
   // Future variants can be added here
   return new CoronataScoringSystem();

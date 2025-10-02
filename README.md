@@ -56,18 +56,28 @@ npm run preview
 
 ```
 src/
-├── core_engine/          # Enhanced game engine with Coronata features
-├── engine/              # Base solitaire engine
-├── ui/                  # React components
-│   ├── GameScreen.tsx   # Main game interface
-│   ├── Card.tsx         # Card component
-│   └── CoronataWelcome.tsx # Welcome screen
-├── registry/            # Game content registry
-└── assets/             # Static assets
+├── engine/                  # Unified game engine with auto-configuration
+│   ├── engineController.ts  # Central game state management
+│   ├── gameModeProfiles.ts  # Game mode configurations (Klondike, Coronata)
+│   ├── enhancedScoring.ts   # Enhanced scoring system with Coronata features
+│   ├── effectEngine.ts      # Registry effect processing system
+│   ├── eventSystem.ts       # Event-driven architecture
+│   ├── moveLogic.ts         # Card movement validation
+│   └── types.ts            # Unified type definitions
+├── ui/                      # React components
+│   ├── GameScreen.tsx       # Main game interface with responsive scaling
+│   ├── PlayerHUD.tsx        # Enhanced HUD with encounter info & progress
+│   ├── Card.tsx            # Card component with shake animations
+│   ├── CoronataWelcome.tsx  # Welcome screen with navigation
+│   └── GameModeMenu.tsx     # Mode selection interface
+├── registry/                # Game content registry
+│   ├── registry.ts         # Exploits, curses, blessings, fortunes
+│   └── index.ts            # Registry type definitions
+└── assets/                 # Static assets
 
-mobile/                  # React Native mobile app
-├── Coronatafresh/      # Mobile implementation
-└── README.md           # Mobile-specific documentation
+mobile/                      # React Native mobile app
+├── Coronatafresh/          # Mobile implementation
+└── README.md               # Mobile-specific documentation
 ```
 
 ## 🎯 Game Mechanics
@@ -106,10 +116,13 @@ mobile/                  # React Native mobile app
 - **Component Architecture**: Modular, reusable component design
 
 ### Key Components
-- **EngineController**: Core game state management
-- **GameScreen**: Main game interface with card interactions
-- **Card**: Individual card component with drag/drop support
-- **Modal System**: Reusable overlay components for UI
+- **EngineController**: Unified game engine with auto-configuration based on game mode
+- **GameModeProfiles**: Configuration system that automatically enables features per mode
+- **EnhancedScoring**: Auto-integrating scoring system for Coronata features
+- **EffectEngine**: Registry-driven effect processing for exploits, curses, and blessings
+- **GameScreen**: Main game interface with responsive scaling and 266px minimum width
+- **PlayerHUD**: Enhanced HUD showing encounter info, progress bar, and player resources
+- **Card**: Individual card component with shake animations for invalid moves
 
 ## 🎮 Game Modes
 
@@ -147,9 +160,10 @@ VITE_BUILD_TARGET=web
 
 ### Game Configuration
 Game modes and mechanics can be configured through:
-- `src/engine/gameModeProfiles.ts` - Game mode definitions
-- `src/registry/registry.ts` - Content registry management
-- `src/core_engine/gameInitialization.ts` - Coronata setup
+- `src/engine/gameModeProfiles.ts` - Unified game mode definitions with auto-configuration
+- `src/registry/registry.ts` - Content registry with exploits, curses, blessings, fortunes
+- `src/engine/enhancedScoring.ts` - Auto-integrating Coronata scoring system
+- `src/App.jsx` - Main application with simplified engine initialization
 
 ## 🤝 Contributing
 
@@ -184,18 +198,24 @@ Please use the [GitHub Issues](https://github.com/[your-username]/fresh-game/iss
 ## 📊 Current Status
 
 ### ✅ Completed Features
-- Core solitaire mechanics with enhanced card movement
+- Unified engine architecture with auto-configuration based on game mode
+- Core solitaire mechanics with enhanced card movement and validation
 - Foundation auto-selection and smart card placement
-- Advanced scoring system with multipliers
+- Responsive design with automatic scaling (266px minimum width)
+- PlayerHUD with encounter info, full-width progress bar, and resource tracking
+- Shake animations for invalid move feedback
+- Enhanced scoring system with auto-integration for Coronata mode
+- Proper deck initialization and card dealing for hand management
 - Complete resign functionality with run recap
 - Modal system for UI interactions
-- Proper navigation between game screens
 
 ### 🚧 In Development
+- Registry item effects system (exploits, curses, blessings, fortunes)
+- Coin earning mechanics and balance tracking system
+- Complete Trade Screen with all upgrade options
+- Wander mechanics for exploration gameplay
+- Encounter progression and scoring system
 - Fortune Selection Screen implementation
-- Post-Fear Choice Selection system
-- Complete Trade Screen with all options
-- Exploration and Wander mechanics
 - Mobile app optimization and testing
 
 ---

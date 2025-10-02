@@ -167,7 +167,7 @@ export const History: React.FC<HistoryProps> = ({ onBack }) => {
                 ) : (
                   gameHistory
                     .sort((a, b) => b.timestamp - a.timestamp)
-                    .map((session, index) => (
+                    .map((session, _index) => (
                       <div key={session.id} className="session-card">
                         <div className="session-header">
                           <div className="session-outcome">

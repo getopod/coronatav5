@@ -1,8 +1,16 @@
 // Coronata scoring stub
 export function calculateCoronataScore(state: GameState): number {
-  // TODO: Implement Coronata-specific scoring logic
-  // For now, return a fixed score
-  return 0;
+  // Basic Coronata scoring: 10 points per card in foundations
+  const foundations = Object.values(state.piles).filter(pile => pile.type === 'foundation');
+  
+  let score = 0;
+  foundations.forEach(foundation => {
+    if (foundation.cards) {
+      score += foundation.cards.length * 10;
+    }
+  });
+  
+  return score;
 }
 // Scoring System for Card Game Engine
 import { GameState, Move } from './types';

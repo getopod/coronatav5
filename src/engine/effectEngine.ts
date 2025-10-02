@@ -26,13 +26,14 @@ export class EffectEngine {
   }
 
   applyEffect(effect: Effect, state: GameState): GameState {
-    // Check condition
+    // Check condition (skip 'event' conditions as they're handled at the calling level)
     if (effect.condition) {
       if (typeof effect.condition === 'function') {
         if (!effect.condition(state)) return state;
       } else {
-        // Simple key/value match
+        // Simple key/value match (skip event conditions)
         for (const key in effect.condition) {
+          if (key === 'event') continue; // Event conditions are handled by applyEventBasedEffects
           if ((state as any)[key] !== effect.condition[key]) return state;
         }
       }
@@ -56,16 +57,84 @@ export class EffectEngine {
   registerHandler(type: string, handler: EffectHandler) {
     this.handlers[type] = handler;
   }
+
+  getAvailableHandlers(): string[] {
+    return Object.keys(this.handlers);
+  }
 }
 
 // Example built-in effect handlers
 export const builtInHandlers: Record<string, EffectHandler> = {
   award_score: (effect, state) => {
-    state.player.score = (state.player.score ?? 0) + (effect.value ?? 0);
+    const oldScore = state.player.score ?? 0;
+    state.player.score = oldScore + (effect.value ?? 0);
+    
+    // Import and trigger encounter progression if scoring system is available
+    // Note: We need to be careful about circular imports here
+    const newScore = state.player.score;
+    console.log(`Award score effect: ${effect.value} points (${oldScore} → ${newScore})`);
+    
     return state;
   },
   award_coin: (effect, state) => {
-    state.player.coins = (state.player.coins ?? 0) + (effect.value ?? 0);
+    const oldCoins = state.player.coins ?? 0;
+    state.player.coins = oldCoins + (effect.value ?? 0);
+    return state;
+  },
+  add_item: (effect, state) => {
+    const itemType = effect.target as string;
+    const itemId = effect.value as string;
+    
+    if (itemType === 'exploit') {
+      state.player.exploits = [...(state.player.exploits || []), itemId];
+    } else if (itemType === 'blessing') {
+      state.player.blessings = [...(state.player.blessings || []), itemId];
+    } else if (itemType === 'curse') {
+      state.player.curses = [...(state.player.curses || []), itemId];
+    }
+    
+    return state;
+  },
+  remove_item: (effect, state) => {
+    const itemType = effect.target as string;
+    const itemId = effect.value as string;
+    
+    if (itemType === 'exploit') {
+      state.player.exploits = (state.player.exploits || []).filter(id => id !== itemId);
+    } else if (itemType === 'blessing') {
+      state.player.blessings = (state.player.blessings || []).filter(id => id !== itemId);
+    } else if (itemType === 'curse') {
+      state.player.curses = (state.player.curses || []).filter(id => id !== itemId);
+    }
+    
+    return state;
+  },
+  score_multiplier: (effect, state) => {
+    const target = effect.target as string;
+    const multiplier = effect.value ?? 1;
+    
+    // Store multiplier for later use in scoring
+    state.activeMultipliers ??= [];
+    
+    state.activeMultipliers.push({
+      target,
+      multiplier,
+      source: effect.meta?.sourceEntry || 'unknown'
+    });
+    
+    console.log(`Added score multiplier: ${multiplier}x for ${target}`);
+    return state;
+  },
+  coin_multiplier: (effect, state) => {
+    const multiplier = effect.value ?? 1;
+    
+    // Apply coin multiplier to player
+    if (!state.player.coinMultiplier) {
+      state.player.coinMultiplier = 1;
+    }
+    state.player.coinMultiplier *= multiplier;
+    
+    console.log(`Applied coin multiplier: ${multiplier}x (total: ${state.player.coinMultiplier}x)`);
     return state;
   },
   modify_setting: (effect, state) => {
@@ -110,20 +179,9 @@ export const builtInHandlers: Record<string, EffectHandler> = {
     }
     return state;
   },
-  score_multiplier: (effect, state) => {
-    // This should be handled during scoring, not as immediate effect
-    // Store multiplier in temporary state for scoring system to use
-    if (!state.activeMultipliers) {
-      state.activeMultipliers = [];
-    }
-    state.activeMultipliers.push(effect);
-    return state;
-  },
   allow_move: (effect, state) => {
     // Store special move permissions for move validation to check
-    if (!state.movePermissions) {
-      state.movePermissions = [];
-    }
+    state.movePermissions ??= [];
     state.movePermissions.push(effect);
     return state;
   },

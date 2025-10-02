@@ -1,13 +1,18 @@
 // Coronata win/loss detection stub
 export const coronataWinCondition: WinCondition = (state) => {
-  // TODO: Implement Coronata win condition
-  // For now, always return false
-  return false;
+  // Coronata wins when all cards are moved to foundations
+  const foundations = Object.values(state.piles).filter(pile => pile.type === 'foundation');
+  
+  // Check if all foundation piles have 13 cards (complete suit)
+  return foundations.every(foundation => 
+    foundation.cards && foundation.cards.length === 13
+  );
 };
 
-export const coronataLossCondition: LossCondition = (state) => {
-  // TODO: Implement Coronata loss condition
-  // For now, always return false
+export const coronataLossCondition: LossCondition = (_state) => {
+  // Coronata loss occurs when no more moves are possible
+  // This is a simplified implementation - in a real game you'd check for valid moves
+  // For now, never declare a loss to keep the game playable
   return false;
 };
 // Win/Loss Detection Module for Card Game Engine
@@ -22,8 +27,8 @@ export interface WinLossConfig {
 }
 
 export class WinLossDetector {
-  private winCondition: WinCondition;
-  private lossCondition?: LossCondition;
+  private readonly winCondition: WinCondition;
+  private readonly lossCondition?: LossCondition;
 
   constructor(config: WinLossConfig) {
     this.winCondition = config.winCondition;
@@ -49,7 +54,7 @@ export const klondikeWinCondition: WinCondition = (state) => {
 };
 
 // Example: Standard Klondike loss condition (no moves left)
-export const klondikeLossCondition: LossCondition = (state) => {
+export const klondikeLossCondition: LossCondition = (_state) => {
   // Could check for no valid moves, empty stock, etc.
   // For now, always false (to be implemented per game)
   return false;

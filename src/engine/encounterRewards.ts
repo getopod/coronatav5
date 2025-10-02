@@ -24,7 +24,7 @@ export const encounterRewards: Record<string, EncounterConfig> = {
     id: 'fear-encounter',
     type: 'fear',
     baseRewards: [
-      { type: 'coin', amount: 3 },
+      { type: 'coin', amount: 10 }, // Increased from 3
       { type: 'score', amount: 50 }
     ]
   },
@@ -32,7 +32,7 @@ export const encounterRewards: Record<string, EncounterConfig> = {
     id: 'danger-encounter', 
     type: 'danger',
     baseRewards: [
-      { type: 'coin', amount: 5 },
+      { type: 'coin', amount: 20 }, // Increased from 5
       { type: 'score', amount: 100 }
     ]
   },
@@ -40,7 +40,7 @@ export const encounterRewards: Record<string, EncounterConfig> = {
     id: 'usurper-encounter',
     type: 'usurper',
     baseRewards: [
-      { type: 'coin', amount: 10 },
+      { type: 'coin', amount: 50 }, // Increased from 10
       { type: 'score', amount: 200 }
     ]
   }

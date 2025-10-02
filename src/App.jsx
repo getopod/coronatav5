@@ -5,6 +5,7 @@ import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
 import { startGameSession } from './core_engine/persistenceManager';
+import { exploits } from './registry/registry'; // Import registry items
 // Removed unused imports: gameModeProfiles, reactLogo, vieLogo, setupCoronataEngine
 import './App.css';
 
@@ -23,11 +24,12 @@ function App() {
     const config = makeKlondikeRegistryConfig();
     const engineController = new EngineController({
       registryConfig: config,
-      registryEntries: [],
+      registryEntries: exploits, // Use actual exploits from registry
       customHandlers: {}
     }, selectedMode || 'klondike'); // Engine will auto-configure based on game mode
     
     console.log(`${selectedMode || 'klondike'} engine initialized with profile:`, engineController.config);
+    console.log('Registry entries loaded:', exploits.length, 'exploits');
     
     // Expose engine to window for debugging
     window.gameEngine = engineController;
