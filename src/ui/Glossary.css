@@ -1,4 +1,7 @@
 .glossary {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   background: linear-gradient(135deg, #2d1b69 0%, #11998e 100%);
@@ -16,8 +19,8 @@
 @media (max-width: 768px) {
   .glossary {
     padding: 8px;
-    align-items: flex-start;
-    padding-top: 20px;
+    align-items: safe center;
+    padding-top: max(20px, env(safe-area-inset-top));
   }
 }
 

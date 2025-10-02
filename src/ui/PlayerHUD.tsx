@@ -302,6 +302,14 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
             </div>
             <span className="effect-label">Discards</span>
           </div>
+          
+          <div className="effect-count has-items">
+            <div className="resource-header">
+              <span className="effect-icon">✋</span>
+              <span className="effect-value">{gameState.piles?.hand?.cards?.length || 0}</span>
+            </div>
+            <span className="effect-label">Hand Size</span>
+          </div>
         </div>
       </div>
 

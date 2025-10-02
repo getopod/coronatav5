@@ -35,7 +35,9 @@ export function moveCard(state: GameState, move: Move): GameState {
   toPile.cards.push(...movableStack);
   
   // Coronata: Auto-refill hand when cards are played from hand to tableau or foundation
+  console.log('Move details:', { from: move.from, to: move.to, toPileType: toPile.type });
   if (move.from === 'hand' && (toPile.type === 'tableau' || toPile.type === 'foundation')) {
+    console.log('Triggering hand refill from moveCard');
     refillHandFromDeck(state);
   }
   
@@ -145,7 +147,7 @@ export function validateCoronataMove(move: Move, state: GameState): boolean {
 export type MoveValidator = (move: Move, state: GameState) => boolean;
 
 // Coronata: Auto-refill hand from deck when cards are played
-function refillHandFromDeck(state: GameState): void {
+export function refillHandFromDeck(state: GameState): void {
   const handPile = state.piles.hand;
   const deckPile = state.piles.deck;
   
