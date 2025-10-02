@@ -1,89 +1,66 @@
 /* Add support for dynamic tableau row height via data attribute */
 .game-screen-root {
-  /* Mobile-first responsive positioning */
+  /* Fixed positioning like other working screens */
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 100;
-
-  /* Size and appearance */
-  --tableau-row-height: 400px;
-  background-color: #bfa76a;
-  padding: 0px;
   
-  /* Mobile-first layout: cards at top, HUD at bottom */
+  /* Centered layout like FortuneSelectionScreen */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   
-  /* Mobile responsive adjustments */
-  min-width: 266px; /* Minimum width to ensure all cards are visible */
+  /* Size and appearance */
+  --tableau-row-height: 400px;
+  background-color: #bfa76a;
+  padding: 20px;
   box-sizing: border-box;
-  overflow: hidden;
+  z-index: 1000;
 }
 
 /* Mobile viewport adjustments */
 @media (max-width: 768px) {
   .game-screen-root {
-    /* Mobile-specific positioning */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    /* Mobile-friendly spacing and layout */
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     gap: 8px;
     
-    /* Cards at top, HUD at bottom layout */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
+    /* On mobile, use flex-start to put content at top */
+    justify-content: flex-start;
     
     /* Prevent content from being too small */
-    min-width: 266px;
     --tableau-row-height: 250px;
   }
   
   /* Mobile deck area positioning */
   .deck-area {
-    order: 1;
     width: 100%;
     max-width: 340px;
     gap: 8px;
-    margin-top: 4px;
+    margin: 4px 0;
   }
   
   /* Mobile player hand positioning */
   .player-hand-area {
-    order: 2;
-    position: static !important;
-    transform: none !important;
     margin: 8px 0;
     max-width: 90vw;
   }
   
   /* Mobile tableau positioning */
   .tableau-row {
-    order: 3;
     width: 100%;
     max-width: 340px;
     gap: 6px;
-    flex: 1;
-    min-height: 200px;
+    margin: 8px 0;
   }
   
   /* Mobile HUD positioning */
   .player-hud {
-    order: 4;
-    position: static !important;
-    transform: none !important;
-    margin: 8px 0 0 0;
+    margin: 8px 0;
     max-width: 90vw;
-    min-width: auto;
   }
   
   /* Scale down cards for mobile */
