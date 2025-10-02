@@ -11,8 +11,8 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
       <div className="how-to-play-container">
         <header className="how-to-play-header">
           <h1>How to Play Coronata</h1>
-          <button className="back-button" onClick={onBack}>
-            ← Back
+          <button className="close-button" onClick={onBack}>
+            ✕
           </button>
         </header>
 

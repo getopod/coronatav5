@@ -5,11 +5,20 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+  background: linear-gradient(180deg, #0066cc 0%, #004499 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 40px;
+}
+
+.welcome-logo {
+  margin-bottom: 20px;
+}
+
+.logo-svg {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .welcome-background {
@@ -37,7 +46,6 @@
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  margin-top: 60px; /* Position buttons below the title instead of overlapping */
 }
 
 .welcome-button {
@@ -111,9 +119,17 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .button-overlay {
-    padding-top: 200px;
-    gap: 15px;
+  .coronata-welcome-screen {
+    gap: 30px;
+  }
+  
+  .welcome-logo {
+    margin-bottom: 10px;
+  }
+  
+  .logo-svg {
+    width: 250px;
+    height: 170px;
   }
   
   .welcome-button.primary {
@@ -136,8 +152,20 @@
 }
 
 @media (max-height: 800px) {
+  .coronata-welcome-screen {
+    gap: 20px;
+  }
+  
+  .welcome-logo {
+    margin-bottom: 5px;
+  }
+  
+  .logo-svg {
+    width: 200px;
+    height: 130px;
+  }
+  
   .button-overlay {
-    padding-top: 300px;
     gap: 10px;
   }
   
@@ -154,6 +182,5 @@
   .welcome-button.back {
     height: 45px;
     font-size: 18px;
-    margin-top: 10px;
   }
 }

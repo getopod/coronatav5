@@ -277,30 +277,30 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
       )}
 
       {/* Player Resources */}
-      <div className="resources-section">
-        <div className="resource-grid">
-          <div className="resource-item">
+      <div className="effects-section">
+        <div className="effects-grid">
+          <div className="effect-count has-items">
             <div className="resource-header">
-              <span className="resource-icon">🪙</span>
-              <span className="resource-value">{player.coins || 0}</span>
+              <span className="effect-icon">🪙</span>
+              <span className="effect-value">{player.coins || 0}</span>
             </div>
-            <span className="resource-label">Coin</span>
+            <span className="effect-label">Coin</span>
           </div>
           
-          <div className="resource-item">
+          <div className="effect-count has-items">
             <div className="resource-header">
-              <span className="resource-icon">🔄</span>
-              <span className="resource-value">{player.shuffles || 0}</span>
+              <span className="effect-icon">🔄</span>
+              <span className="effect-value">{player.shuffles || 0}</span>
             </div>
-            <span className="resource-label">Shuffles</span>
+            <span className="effect-label">Shuffles</span>
           </div>
           
-          <div className="resource-item">
+          <div className="effect-count has-items">
             <div className="resource-header">
-              <span className="resource-icon">🗑️</span>
-              <span className="resource-value">{player.discards || 0}</span>
+              <span className="effect-icon">🗑️</span>
+              <span className="effect-value">{player.discards || 0}</span>
             </div>
-            <span className="resource-label">Discards</span>
+            <span className="effect-label">Discards</span>
           </div>
         </div>
       </div>

@@ -6,7 +6,6 @@
   left: 8px;
   z-index: 100;
 
-
   /* Size and appearance */
   --tableau-row-height: 400px;
   background-color: #bfa76a;
@@ -18,6 +17,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  
+  /* Mobile responsive adjustments */
+  min-width: 320px; /* Minimum iPhone screen width */
+  box-sizing: border-box;
+}
+
+/* Mobile viewport adjustments */
+@media (max-width: 768px) {
+  .game-screen-root {
+    /* Ensure proper positioning on mobile */
+    top: 4px;
+    left: 4px;
+    width: calc(100vw - 8px);
+    min-height: calc(100vh - 8px);
+    /* Prevent content from being too small */
+    min-width: 375px; /* iPhone standard width */
+  }
 }
 .game-screen-root[data-tableau-row-height] {
   --tableau-row-height: attr(data-tableau-row-height px);

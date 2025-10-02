@@ -27,6 +27,36 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: #bfa76a;
+  
+  /* Prevent zoom on mobile */
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  
+  /* Mobile adjustments */
+  min-width: 375px; /* iPhone standard width */
+  position: relative;
+}
+
+/* Mobile viewport optimization */
+@media (max-width: 768px) {
+  #root {
+    padding: 0.5rem;
+    min-width: 320px; /* Minimum for very small devices */
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 h1 {

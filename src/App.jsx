@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen } from './ui';
+import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History } from './ui';
 import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
@@ -13,6 +13,9 @@ function App() {
   const [selectedMode, setSelectedMode] = useState(null);
   const [showCoronataWelcome, setShowCoronataWelcome] = useState(false);
   const [showFortuneSelection, setShowFortuneSelection] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [selectedFortune, setSelectedFortune] = useState(null);
   // Create engine instance for selected mode
   const engine = React.useMemo(() => {
@@ -63,6 +66,9 @@ function App() {
     setSelectedMode(null);
     setShowCoronataWelcome(false);
     setShowFortuneSelection(false);
+    setShowHowToPlay(false);
+    setShowGlossary(false);
+    setShowHistory(false);
   };
 
   // Handle Fortune Selection actions
@@ -86,6 +92,30 @@ function App() {
     }
   };
 
+  // Handle navigation to different screens from welcome
+  const handleShowHowToPlay = () => {
+    setShowCoronataWelcome(false);
+    setShowHowToPlay(true);
+  };
+
+  const handleShowGlossary = () => {
+    setShowCoronataWelcome(false);
+    setShowGlossary(true);
+  };
+
+  const handleShowHistory = () => {
+    setShowCoronataWelcome(false);
+    setShowHistory(true);
+  };
+
+  // Handle back navigation from sub-screens
+  const handleBackToWelcome = () => {
+    setShowHowToPlay(false);
+    setShowGlossary(false);
+    setShowHistory(false);
+    setShowCoronataWelcome(true);
+  };
+
   // Show game mode menu
   if (!selectedMode) {
     return <GameModeMenu onSelect={handleModeSelect} />;
@@ -96,13 +126,28 @@ function App() {
     return (
       <CoronataWelcomeScreen 
         onStart={handleCoronataStart}
-        onHowToPlay={() => alert('How to Play guide will be implemented soon!')}
-        onGlossary={() => alert('Glossary of registry items will be implemented soon!')}
-        onHistory={() => alert('Run history will be implemented soon!')}
+        onHowToPlay={handleShowHowToPlay}
+        onGlossary={handleShowGlossary}
+        onHistory={handleShowHistory}
         onOptions={() => alert('Options will be implemented soon!')}
         onBack={handleCoronataBack}
       />
     );
+  }
+
+  // Show HowToPlay screen
+  if (selectedMode === 'coronata' && showHowToPlay) {
+    return <HowToPlay onBack={handleBackToWelcome} />;
+  }
+
+  // Show Glossary screen
+  if (selectedMode === 'coronata' && showGlossary) {
+    return <Glossary onBack={handleBackToWelcome} />;
+  }
+
+  // Show History screen
+  if (selectedMode === 'coronata' && showHistory) {
+    return <History onBack={handleBackToWelcome} />;
   }
 
   // Show Fortune Selection screen

@@ -98,13 +98,94 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
     return description;
   };
 
+  // New concise effect description with icons
+  const getConciseEffectDescription = (effect: any): string => {
+    const action = effect.action;
+    const value = effect.value || 1;
+    const target = effect.target;
+    
+    // Map actions to icons and concise descriptions
+    const effectMap: { [key: string]: { icon: string; text: string } } = {
+      'modify_setting': {
+        icon: getSettingIcon(target),
+        text: getSettingText(target, value)
+      },
+      'add_cards': {
+        icon: '🃏',
+        text: `+${value} cards`
+      },
+      'draw_cards': {
+        icon: '🎴',
+        text: `Draw ${value}`
+      },
+      'gain_coins': {
+        icon: '🪙',
+        text: `+${value} coins`
+      },
+      'increase_score': {
+        icon: '⭐',
+        text: `+${value} score`
+      },
+      'heal': {
+        icon: '💚',
+        text: `+${value} health`
+      },
+      'damage': {
+        icon: '💥',
+        text: `${value} damage`
+      }
+    };
+
+    const effectInfo = effectMap[action];
+    if (effectInfo) {
+      return `${effectInfo.icon} ${effectInfo.text}`;
+    }
+
+    // Fallback to original description for unknown effects
+    return getEffectDescription(effect);
+  };
+
+  const getSettingIcon = (target: string): string => {
+    const iconMap: { [key: string]: string } = {
+      'shufflesLeft': '🔄',
+      'shuffles': '🔄', 
+      'discardsLeft': '🗑️',
+      'discards': '🗑️',
+      'coins': '🪙',
+      'health': '💚',
+      'mana': '💙',
+      'energy': '⚡',
+      'strength': '💪',
+      'defense': '🛡️'
+    };
+    return iconMap[target] || '⚙️';
+  };
+
+  const getSettingText = (target: string, value: number): string => {
+    const sign = value > 0 ? '+' : '';
+    const textMap: { [key: string]: string } = {
+      'shufflesLeft': 'shuffles',
+      'shuffles': 'shuffles',
+      'discardsLeft': 'discards', 
+      'discards': 'discards',
+      'coins': 'coins',
+      'health': 'health',
+      'mana': 'mana',
+      'energy': 'energy',
+      'strength': 'strength',
+      'defense': 'defense'
+    };
+    const text = textMap[target] || target.replace(/_/g, ' ');
+    return `${sign}${value} ${text}`;
+  };
+
   return (
     <div className="glossary">
       <div className="glossary-container">
         <header className="glossary-header">
           <h1>Coronata Glossary</h1>
-          <button className="back-button" onClick={onBack}>
-            ← Back
+          <button className="close-button" onClick={onBack}>
+            ✕
           </button>
         </header>
 
@@ -146,6 +227,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
             {availableRarities.length > 0 && (
               <select 
                 className="rarity-filter"
+                title="Filter by rarity"
                 value={selectedRarity}
                 onChange={(e) => setSelectedRarity(e.target.value)}
               >
@@ -186,18 +268,10 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
                   <div className="item-effects">
                     <h4>Effects:</h4>
                     <ul>
-                      {item.effects.map((effect, index) => (
-                        <li key={index}>{getEffectDescription(effect)}</li>
+                      {item.effects.map((effect, effectIndex) => (
+                        <li key={`${item.id}-effect-${effectIndex}-${effect.action || 'unknown'}`}>{getConciseEffectDescription(effect)}</li>
                       ))}
                     </ul>
-                  </div>
-                )}
-                
-                {item.tags && item.tags.length > 0 && (
-                  <div className="item-tags">
-                    {item.tags.map((tag, index) => (
-                      <span key={index} className="tag">{tag}</span>
-                    ))}
                   </div>
                 )}
               </div>

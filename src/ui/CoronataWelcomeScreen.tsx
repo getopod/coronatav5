@@ -20,22 +20,10 @@ export function CoronataWelcomeScreen({
 }: CoronataWelcomeScreenProps) {
   return (
     <div className="coronata-welcome-screen">
-      {/* SVG Background with logo */}
-      <div className="welcome-background">
-        <svg viewBox="0 0 800 1200" className="welcome-svg" preserveAspectRatio="xMidYMid slice">
-          {/* Background */}
+      {/* Simplified Logo positioned above buttons */}
+      <div className="welcome-logo">
+        <svg width="300" height="200" viewBox="0 0 300 200" className="logo-svg">
           <defs>
-            <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#1a1a2e', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#0f0f1a', stopOpacity:1}} />
-            </linearGradient>
-            
-            <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" style={{stopColor:'#ffffff', stopOpacity:1}} />
-              <stop offset="50%" style={{stopColor:'#f8f8f8', stopOpacity:1}} />
-              <stop offset="100%" style={{stopColor:'#e8e8e8', stopOpacity:1}} />
-            </linearGradient>
-            
             <linearGradient id="crownGrad" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" style={{stopColor:'#ffed4e', stopOpacity:1}} />
               <stop offset="30%" style={{stopColor:'#ffd700', stopOpacity:1}} />
@@ -44,7 +32,7 @@ export function CoronataWelcomeScreen({
             </linearGradient>
             
             <filter id="glow">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
               <feMerge>
                 <feMergeNode in="coloredBlur"/>
                 <feMergeNode in="SourceGraphic"/>
@@ -52,46 +40,25 @@ export function CoronataWelcomeScreen({
             </filter>
           </defs>
           
-          <rect width="800" height="1200" fill="url(#bgGrad)"/>
-          
-          {/* Decorative corner elements */}
-          <g filter="url(#glow)">
-            <circle cx="60" cy="60" r="15" fill="#ffd700" opacity="0.3"/>
-            <circle cx="740" cy="60" r="15" fill="#ffd700" opacity="0.3"/>
-            <circle cx="60" cy="1140" r="15" fill="#ffd700" opacity="0.3"/>
-            <circle cx="740" cy="1140" r="15" fill="#ffd700" opacity="0.3"/>
+          {/* Crown Logo */}
+          <g transform="translate(150, 60)" filter="url(#glow)">
+            <path d="M -60 35 L -50 15 L -35 30 L -20 5 L -10 30 L 0 0 L 10 30 L 20 5 L 35 30 L 50 15 L 60 35 L 60 50 L -60 50 Z" 
+                  fill="url(#crownGrad)" stroke="#b8860b" strokeWidth="2"/>
+            <rect x="-60" y="50" width="120" height="15" fill="#f4c430"/>
+            <circle cx="-30" cy="22" r="8" fill="#cc0000"/>
+            <circle cx="0" cy="15" r="10" fill="#0066cc"/>
+            <circle cx="30" cy="22" r="8" fill="#00cc66"/>
           </g>
           
-          {/* Logo */}
-          <g id="logo" transform="translate(400, 300)">
-            {/* Cards and Crown - simplified for inline SVG */}
-            <g transform="rotate(-12)" filter="url(#shadow)">
-              <rect x="-70" y="-100" width="140" height="200" rx="12" fill="url(#cardGrad)" stroke="#2a2a2a" strokeWidth="2"/>
-              <text x="0" y="-10" textAnchor="middle" fontSize="48" fill="#cc0000" fontFamily="Georgia">A</text>
-              <path d="M -25 -5 C -25 -20, -8 -28, 10 -10 C 28 -28, 45 -20, 45 -5 C 45 20, 10 45, 10 65 C 10 45, -25 20, -25 -5 Z" 
-                    fill="#cc0000" stroke="#990000" strokeWidth="2"/>
-            </g>
-            
-            {/* Crown */}
-            <g transform="translate(0, -180)" filter="url(#glow)">
-              <path d="M -80 50 L -65 25 L -50 45 L -30 15 L -15 45 L 0 5 L 15 45 L 30 15 L 50 45 L 65 25 L 80 50 L 80 70 L -80 70 Z" 
-                    fill="url(#crownGrad)" stroke="#b8860b" strokeWidth="3"/>
-              <rect x="-80" y="70" width="160" height="20" fill="#f4c430"/>
-              <circle cx="-45" cy="35" r="12" fill="#cc0000"/>
-              <circle cx="0" cy="25" r="15" fill="#0066cc"/>
-              <circle cx="45" cy="35" r="12" fill="#00cc66"/>
-            </g>
-          </g>
-          
-          {/* Game title */}
-          <text x="400" y="580" fontSize="96" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="8" filter="url(#glow)">CORONATA</text>
+          {/* Game Title */}
+          <text x="150" y="120" fontSize="36" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
           
           {/* Subtitle */}
-          <text x="400" y="640" fontSize="32" textAnchor="middle" fill="#999" letterSpacing="4">SOLITAIRE ROGUELIKE</text>
+          <text x="150" y="145" fontSize="14" textAnchor="middle" fill="#cccccc" letterSpacing="2">SOLITAIRE ROGUELIKE</text>
         </svg>
       </div>
 
-      {/* Interactive buttons positioned over the SVG */}
+      {/* Interactive buttons positioned below the logo */}
       <div className="button-overlay">
         <button className="welcome-button primary" onClick={onStart}>
           Start Game
