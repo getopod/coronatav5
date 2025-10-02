@@ -47,7 +47,7 @@ function getDiscardedState(gameState: any, handPile: any, deckPile: any, player:
   };
 }
 import React from 'react';
-import { GameState } from '../core_engine/types';
+import { GameState } from '../engine/types'; // Changed from core_engine to engine
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
 import './PlayerHUD.css';

@@ -4,9 +4,8 @@ import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectio
 import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
-import { setupCoronataEngine } from './core_engine/gameInitialization';
 import { startGameSession } from './core_engine/persistenceManager';
-// Removed unused imports: gameModeProfiles, reactLogo, vieLogo
+// Removed unused imports: gameModeProfiles, reactLogo, vieLogo, setupCoronataEngine
 import './App.css';
 
 
@@ -26,21 +25,9 @@ function App() {
       registryConfig: config,
       registryEntries: [],
       customHandlers: {}
-    }, selectedMode || 'klondike'); // Changed from 'string' to 'klondike'
+    }, selectedMode || 'klondike'); // Engine will auto-configure based on game mode
     
-    // Initialize Coronata-specific features if mode is coronata
-    if (selectedMode === 'coronata') {
-      try {
-        setupCoronataEngine(engineController, {
-          variant: 'coronata',
-          difficulty: 1,
-          seed: Date.now().toString()
-        });
-        console.log('Coronata engine setup completed:', engineController.state);
-      } catch (error) {
-        console.error('Error setting up Coronata engine:', error);
-      }
-    }
+    console.log(`${selectedMode || 'klondike'} engine initialized with profile:`, engineController.config);
     
     // Expose engine to window for debugging
     window.gameEngine = engineController;

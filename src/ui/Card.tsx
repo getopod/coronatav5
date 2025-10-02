@@ -78,7 +78,6 @@ export function Card({
   return (
     <div
       className={cardClass}
-      title={id}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       draggable={draggable}

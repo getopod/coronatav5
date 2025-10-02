@@ -4,7 +4,7 @@ import { useEngineEvent } from './EngineEventProvider';
 import { Card } from './Card';
 import { getMovableStack, validateMove } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
-import { GameState } from '../core_engine/types';
+import { GameState } from '../engine/types'; // Changed from core_engine to engine
 import ChoiceSelectionScreen from './ChoiceSelectionScreen';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';

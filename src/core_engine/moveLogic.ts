@@ -51,12 +51,12 @@ export function moveCard(state: GameState, move: Move): GameState {
   // Add the entire stack to toPile
   toPile.cards.push(...newMovableStack);
   
-  // Coronata: Auto-refill hand when cards are played from hand to tableau or foundation
+  // Coronata: Auto-refill hand when cards are played from hand to any destination
   console.log('Move details:', { from: move.from, to: move.to, toPileType: toPile.type });
   console.log('Hand pile before refill:', newState.piles.hand?.cards?.length || 0, 'cards');
   console.log('Deck pile before refill:', newState.piles.deck?.cards?.length || 0, 'cards');
   
-  if (move.from === 'hand' && (toPile.type === 'tableau' || toPile.type === 'foundation')) {
+  if (move.from === 'hand') {
     console.log('Triggering hand refill from moveCard');
     refillHandFromDeck(newState);
     console.log('Hand pile after refill:', newState.piles.hand?.cards?.length || 0, 'cards');

@@ -7,6 +7,7 @@ import { RegistryEntry } from '../registry/index';
 import { validateMove, moveCard as moveCardLogic } from './moveLogic';
 import { gameModeProfiles } from './gameModeProfiles';
 import type { GameModeProfile } from './gameModeProfiles';
+import { integrateEnhancedScoring, EnhancedScoringSystem } from './enhancedScoring';
 
 export interface EngineControllerConfig {
   registryConfig: RegistryConfig;
@@ -93,6 +94,7 @@ export class EngineController {
   public state: GameState;
   public effectEngine: EffectEngine;
   public eventEmitter: EventEmitter;
+  public scoringSystem?: EnhancedScoringSystem;
   private registryEntries: RegistryEntry[];
   public plugins: EnginePlugin[] = [];
 
@@ -112,6 +114,20 @@ export class EngineController {
       handlers: { ...builtInHandlers, ...(config.customHandlers || {}) }
     });
     this.eventEmitter = new EventEmitter();
+    
+    // Auto-integrate enhanced features based on game mode profile
+    if (this.config.enableEnhancedScoring) {
+      console.log(`Auto-integrating enhanced scoring for ${mode} mode`);
+      integrateEnhancedScoring(this, mode);
+    }
+    
+    // Set up player defaults based on game mode
+    if (this.config.enableHandManagement && this.config.defaultMaxHandSize) {
+      if (this.state.player) {
+        this.state.player.maxHandSize = this.config.defaultMaxHandSize;
+      }
+    }
+    
     this.wireEvents();
   }
 
@@ -237,12 +253,11 @@ export class EngineController {
     });
   }
   // Optional: attach scoring, win/loss, undo/redo, and UI consumers
-  public scoringSystem?: any;
   public winLossDetector?: any;
   public undoRedoManager?: any;
   public uiConsumers: ((event: EngineEvent) => void)[] = [];
 
-  attachScoringSystem(scoringSystem: any) {
+  attachScoringSystem(scoringSystem: EnhancedScoringSystem) {
     this.scoringSystem = scoringSystem;
   }
   attachWinLossDetector(winLossDetector: any) {

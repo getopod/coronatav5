@@ -9,6 +9,14 @@ export interface GameModeProfile {
   tableauCount: number;
   deckType: string;
   rules: string;
+  
+  // Enhanced features (optional - used by advanced game modes like Coronata)
+  enableEnhancedScoring?: boolean;
+  enableEffectSystem?: boolean;
+  enableHandManagement?: boolean;
+  defaultMaxHandSize?: number;
+  enableEncounterSystem?: boolean;
+  enableRegistryEffects?: boolean;
 }
 
 export interface GameModeProfiles {
@@ -51,6 +59,15 @@ export const gameModeProfiles: GameModeProfiles = {
     tableauCount: 7,
     deckType: 'standard',
     rules: 'coronata',
+    
+    // Enable Coronata-specific features
+    enableEnhancedScoring: true,
+    enableEffectSystem: true,
+    enableHandManagement: true,
+    defaultMaxHandSize: 5,
+    enableEncounterSystem: true,
+    enableRegistryEffects: true,
+    
     // Asset references for Coronata (for use in UI/registry)
     // cardBack: require('../assets/coronata-card-back.txt'),
     // background: require('../assets/coronata-background.txt'),
