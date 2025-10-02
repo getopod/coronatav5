@@ -15,11 +15,11 @@ export interface EncounterConfig {
 }
 
 export const defaultCoronataConfig: EncounterConfig = {
-  totalTrials: 5, // Updated to 5 trials
-  encountersPerTrial: 3, // Fear, Fear, Danger per trial
+  totalTrials: 3,
+  encountersPerTrial: 4,
   baseScoreGoal: 500,
   scoreGoalIncrease: 200,
-  fearWeight: 0.67, // 2 Fear + 1 Danger per trial = 66.7% Fear
+  fearWeight: 0.7, // 70% fear, 30% danger
 };
 
 /**

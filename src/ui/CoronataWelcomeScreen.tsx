@@ -20,51 +20,42 @@ export function CoronataWelcomeScreen({
 }: CoronataWelcomeScreenProps) {
   return (
     <div className="coronata-welcome-screen">
-      {/* New Logo and Branding */}
+      {/* Simplified Logo positioned above buttons */}
       <div className="welcome-logo">
-        {/* New Logo Image - placeholder for now, will be replaced with actual image */}
-        <div className="new-logo-container">
-          <svg width="200" height="150" viewBox="0 0 200 150" className="new-logo-image">
-            <defs>
-              <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style={{stopColor:'#fbbf24', stopOpacity:1}} />
-                <stop offset="50%" style={{stopColor:'#f59e0b', stopOpacity:1}} />
-                <stop offset="100%" style={{stopColor:'#d97706', stopOpacity:1}} />
-              </linearGradient>
-              
-              <filter id="newGlow">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-            </defs>
+        <svg width="300" height="200" viewBox="0 0 300 200" className="logo-svg">
+          <defs>
+            <linearGradient id="crownGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style={{stopColor:'#ffed4e', stopOpacity:1}} />
+              <stop offset="30%" style={{stopColor:'#ffd700', stopOpacity:1}} />
+              <stop offset="70%" style={{stopColor:'#f4c430', stopOpacity:1}} />
+              <stop offset="100%" style={{stopColor:'#d4a700', stopOpacity:1}} />
+            </linearGradient>
             
-            {/* Crown with Cards Logo */}
-            <g transform="translate(100, 50)" filter="url(#newGlow)">
-              {/* Crown Base */}
-              <path d="M -60 35 L -50 15 L -35 30 L -20 5 L -10 30 L 0 0 L 10 30 L 20 5 L 35 30 L 50 15 L 60 35 L 60 50 L -60 50 Z" 
-                    fill="url(#cardGrad)" stroke="#92400e" strokeWidth="2"/>
-              <rect x="-60" y="50" width="120" height="12" fill="#f59e0b"/>
-              
-              {/* Gems */}
-              <circle cx="-30" cy="22" r="6" fill="#dc2626"/>
-              <circle cx="0" cy="15" r="8" fill="#1d4ed8"/>
-              <circle cx="30" cy="22" r="6" fill="#16a34a"/>
-              
-              {/* Playing Cards */}
-              <g transform="translate(-15, 60)">
-                <rect x="0" y="0" width="30" height="40" rx="3" fill="white" stroke="#374151" strokeWidth="1"/>
-                <text x="15" y="20" textAnchor="middle" fill="#dc2626" fontSize="16" fontWeight="bold">A</text>
-                <text x="15" y="32" textAnchor="middle" fill="#dc2626" fontSize="12">♥</text>
-              </g>
-            </g>
-          </svg>
-        </div>
-        
-        {/* Coronata Title */}
-        <h1 className="coronata-title">CORONATA</h1>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          
+          {/* Crown Logo */}
+          <g transform="translate(150, 60)" filter="url(#glow)">
+            <path d="M -60 35 L -50 15 L -35 30 L -20 5 L -10 30 L 0 0 L 10 30 L 20 5 L 35 30 L 50 15 L 60 35 L 60 50 L -60 50 Z" 
+                  fill="url(#crownGrad)" stroke="#b8860b" strokeWidth="2"/>
+            <rect x="-60" y="50" width="120" height="15" fill="#f4c430"/>
+            <circle cx="-30" cy="22" r="8" fill="#cc0000"/>
+            <circle cx="0" cy="15" r="10" fill="#0066cc"/>
+            <circle cx="30" cy="22" r="8" fill="#00cc66"/>
+          </g>
+          
+          {/* Game Title */}
+          <text x="150" y="120" fontSize="36" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
+          
+          {/* Subtitle */}
+          <text x="150" y="145" fontSize="14" textAnchor="middle" fill="#cccccc" letterSpacing="2">SOLITAIRE ROGUELIKE</text>
+        </svg>
       </div>
 
       {/* Interactive buttons positioned below the logo */}

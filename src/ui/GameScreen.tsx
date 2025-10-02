@@ -2,16 +2,14 @@ import React from 'react';
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
 import { Card } from './Card';
-import { EngineController } from '../core_engine/engineController';
-import { getMovableStack, validateMove } from '../core_engine/moveLogic';
+import { EngineController } from '../engine/engineController';
+import { getMovableStack, validateMove } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
 import { GameState } from '../core_engine/types';
 import ChoiceSelectionScreen from './ChoiceSelectionScreen';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
 import './GameScreen.css';
-import { persistenceManager } from '../core_engine/persistenceManager';
-import { AscensionManager } from '../core_engine/ascensionSystem';
 
 interface GameScreenProps {
   onNavigateToWelcome?: () => void;
@@ -746,6 +744,152 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       </div>
       
       {/* Resign confirmation modal */}
+      {showResignModal && (
+        <div className="modal-overlay" onClick={() => setShowResignModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Resign Run?</h2>
+            <p>Are you sure you want to end this run? Your progress will be lost.</p>
+            <div className="modal-buttons">
+              <button 
+                className="modal-button cancel"
+                onClick={() => setShowResignModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="modal-button confirm"
+                onClick={() => {
+                  setShowResignModal(false);
+                  setShowRunRecap(true);
+                }}
+              >
+                Resign
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Run recap modal */}
+      {showRunRecap && (
+        <div className="modal-overlay">
+          <div className="modal-content run-recap">
+            <h2>Run Summary</h2>
+            <div className="recap-stats">
+              <div className="stat-item">
+                <label>Final Score:</label>
+                <span>{gameState.player?.score || 0}</span>
+              </div>
+              <div className="stat-item">
+                <label>Coins Earned:</label>
+                <span>{gameState.player?.coins || 0}</span>
+              </div>
+              <div className="stat-item">
+                <label>Cards Moved:</label>
+                <span>{gameState.history?.length || 0}</span>
+              </div>
+              <div className="stat-item">
+                <label>Shuffles Used:</label>
+                <span>{3 - (gameState.player?.shuffles || 3)}</span>
+              </div>
+            </div>
+            <div className="modal-buttons">
+              <button 
+                className="modal-button confirm"
+                onClick={() => {
+                  // Navigate back to welcome screen
+                  if (onNavigateToWelcome) {
+                    onNavigateToWelcome();
+                  } else {
+                    window.location.reload(); // Fallback for non-Coronata modes
+                  }
+                }}
+              >
+                Return to Main Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Spacer for gap between deck-area and tableau-row */}
+  <div className="deck-tableau-gap" />
+      
+      {/* Player Hand Area (only for Coronata) */}
+      {isCoronata && handPile && (
+        <div className="player-hand-area">
+          <div className="hand-cards">
+            {handPile.cards.length > 0 ? (
+              handPile.cards.map((card: any, index: number) => (
+                <Card
+                  key={card.id}
+                  id={card.id}
+                  suit={card.suit}
+                  value={card.value}
+                  faceUp={card.faceUp}
+                  design={card.faceUp ? card.design : 'coronata'}
+                  selected={selectedCardId === card.id}
+                  shake={shakeCardId === card.id}
+                  draggable={card.faceUp}
+                  onClick={() => handleCardClick(card.id, handPile.id)}
+                  onDoubleClick={() => handleCardDoubleClick(card.id)}
+                  onDragStart={e => handleDragStart(card.id)}
+                  onDragEnd={handleDragEnd}
+                  style={{ 
+                    marginLeft: index > 0 ? '-20px' : '0',
+                    zIndex: index + 1,
+                    position: 'relative'
+                  }}
+                />
+              ))
+            ) : (
+              <div className="hand-empty">No cards in hand</div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Tableau row */}
+  <div className="tableau-row">
+        {tableauPiles.map((pile: any) => (
+          <div
+            key={pile.id}
+            className={[
+              dragOverPileId === pile.id ? 'tableau-pile drag-over' : 'tableau-pile',
+              highlightedDestinations.includes(pile.id) ? 'pile valid-destination' : 'pile'
+            ].join(' ')}
+            onDragOver={e => handleDragOver(pile.id, e)}
+            onDrop={() => handleDrop(pile.id)}
+            onClick={() => handlePileClick(pile.id)}
+          >
+            <div className="pile-cards-vertical">
+              {pile.cards.length > 0 ? (
+                pile.cards.map((card: any) => (
+                  <Card
+                    key={card.id}
+                    id={card.id}
+                    suit={card.suit}
+                    value={card.value}
+                    faceUp={card.faceUp}
+                    design={isCoronata && !card.faceUp ? 'coronata' : card.design}
+                    selected={selectedCardId === card.id || isCardInMovableStack(card.id, pile.id)}
+                    shake={shakeCardId === card.id}
+                    draggable={card.faceUp}
+                    onClick={() => handleCardClick(card.id, pile.id)}
+                    onDoubleClick={() => handleCardDoubleClick(card.id)}
+                    onDragStart={e => handleDragStart(card.id)}
+                    onDragEnd={handleDragEnd}
+                  />
+                ))
+              ) : (
+                <div className="card-outline" onClick={() => handlePileClick(pile.id)} />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Player HUD */}
+      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} onChoiceSelected={handleChoiceSelected} />}
       
       {/* Move error display */}
       {moveError && (
@@ -808,31 +952,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
               <button 
                 className="modal-button confirm"
                 onClick={() => {
-                  // Save completed run to history
-                  const gameSession = {
-                    id: `session-${Date.now()}`,
-                    timestamp: Date.now(),
-                    duration: 0, // TODO: Track actual duration
-                    score: gameState.player?.score || 0,
-                    encountersCompleted: 0, // TODO: Track from run state
-                    finalOutcome: 'victory' as const, // TODO: Determine actual outcome
-                    exploitsGained: gameState.player?.exploits || [],
-                    blessingsGained: gameState.player?.blessings || [],
-                    fearsGained: [], // TODO: Track encountered fears
-                    coinsEarned: gameState.player?.coins || 0,
-                    selectedFortune: gameState.player?.fortunes?.[0]
-                  };
-                  
-                  persistenceManager.addGameSession(gameSession);
-                  
-                  // Unlock next ascension level if applicable
-                  const currentAscension = gameState.player?.ascensionLevel || 0;
-                  const unlocked = AscensionManager.unlockNextLevel(currentAscension);
-                  
-                  if (unlocked) {
-                    console.log(`Ascension level ${currentAscension + 1} unlocked!`);
-                  }
-                  
                   // Navigate back to welcome screen
                   if (onNavigateToWelcome) {
                     onNavigateToWelcome();

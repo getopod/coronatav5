@@ -1,29 +1,7 @@
 import React, { useState } from 'react';
-import { gameModeProfiles } from '../core_engine/gameModeProfiles';
+import { gameModeProfiles } from '../engine/gameModeProfiles';
 import coronataCardBack from '../assets/coronata-card-back.png';
 import coronataLogo from '../assets/coronata_logo_compact.svg';
-
-// Game information for display
-function getGameInfo(gameKey: string): { name: string; description: string } {
-  const gameInfoMap: { [key: string]: { name: string; description: string } } = {
-    klondike: { name: 'Klondike', description: 'Classic solitaire with building sequences' },
-    spider: { name: 'Spider', description: 'Two-deck game with suit sequences' },
-    freecell: { name: 'FreeCell', description: 'All cards visible, uses free cells' },
-    pyramid: { name: 'Pyramid', description: 'Remove pairs that add to 13' },
-    tripeaks: { name: 'Tri Peaks', description: 'Clear three overlapping peaks' },
-    golf: { name: 'Golf', description: 'Clear tableau by building up or down' },
-    yukon: { name: 'Yukon', description: 'Like Klondike but no stock pile' },
-    aces_up: { name: 'Aces Up', description: 'Remove cards until only aces remain' },
-    clock: { name: 'Clock', description: 'Turn over cards in clock formation' },
-    forty_thieves: { name: 'Forty Thieves', description: 'Two-deck challenge solitaire' },
-    canfield: { name: 'Canfield', description: 'Fast-paced foundation building' },
-    baker_dozen: { name: "Baker's Dozen", description: 'Build foundations from 13 columns' },
-    scorpion: { name: 'Scorpion', description: 'Build suit sequences in tableau' },
-    wasp: { name: 'Wasp', description: 'Spider variant with different rules' }
-  };
-  
-  return gameInfoMap[gameKey] || { name: gameKey.charAt(0).toUpperCase() + gameKey.slice(1), description: 'Classic solitaire variant' };
-}
 
 export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void }) {
   const [showingOtherModes, setShowingOtherModes] = useState(false);
@@ -49,10 +27,7 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
         color: '#fff',
         zIndex: 1000
       }}>
-        <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Classic Solitaire Games</h2>
-        <p style={{ textAlign: 'center', color: '#ccc', marginBottom: 32, maxWidth: '600px' }}>
-          Choose from {otherGameModes.length} different solitaire variants, each with unique rules and challenges.
-        </p>
+        <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Other Game Modes</h2>
         
         {/* Back button */}
         <button
@@ -87,45 +62,40 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
           justifyContent: 'center',
           alignItems: 'center'
         }}>
-          {otherGameModes.map(([key, profile]) => {
-            // Create proper display names and descriptions
-            const gameInfo = getGameInfo(key);
-            
-            return (
-              <button
-                key={key}
-                style={{
-                  background: '#444', 
-                  color: '#fff', 
-                  border: 'none', 
-                  borderRadius: 8, 
-                  padding: '18px 24px', 
-                  fontSize: 18, 
-                  cursor: 'pointer', 
-                  boxShadow: '0 2px 8px #0006', 
-                  minWidth: 200,
-                  maxWidth: 250,
-                  transition: 'all 0.2s ease',
-                  textAlign: 'left'
-                }}
-                onClick={() => onSelect(key)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#555';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px #0008';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#444';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px #0006';
-                }}
-              >
-                <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{gameInfo.name}</div>
-                <div style={{ fontSize: 14, color: '#ccc', marginBottom: 6, lineHeight: '1.3' }}>{gameInfo.description}</div>
-                <div style={{ fontSize: 12, color: '#aaa' }}>Tableau: {profile.tableauCount} • Foundation: {profile.foundationCount}</div>
-              </button>
-            );
-          })}
+          {otherGameModes.map(([key, profile]) => (
+            <button
+              key={key}
+              style={{
+                background: '#444', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: 8, 
+                padding: '18px 32px', 
+                fontSize: 20, 
+                cursor: 'pointer', 
+                boxShadow: '0 2px 8px #0006', 
+                minWidth: 180,
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => onSelect(key)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#555';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px #0008';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#444';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px #0006';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontWeight: 700, fontSize: 22 }}>{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+              </div>
+              <div style={{ fontSize: 15, color: '#ccc', marginTop: 8 }}>{profile.rules}</div>
+              <div style={{ fontSize: 13, color: '#aaa', marginTop: 4 }}>Tableau: {profile.tableauCount}, Foundation: {profile.foundationCount}</div>
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -182,9 +152,9 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
             e.currentTarget.style.borderColor = '#ffd700';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-            <img src={coronataLogo} alt="Coronata Logo" style={{ width: 48, height: 72, filter: 'drop-shadow(0 4px 8px #0008)' }} />
-            <span style={{ fontWeight: 700, fontSize: 32, color: '#ffd700', textShadow: '0 2px 4px #0008' }}>CORONATA</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <img src={coronataLogo} alt="Coronata Logo" style={{ width: 24, height: 36, filter: 'drop-shadow(0 2px 4px #0004)' }} />
+            <span style={{ fontWeight: 700, fontSize: 28, color: '#ffd700', textShadow: '0 2px 4px #0008' }}>CORONATA</span>
           </div>
           <div style={{ fontSize: 16, color: '#ccc', marginTop: 4, fontStyle: 'italic' }}>Solitaire Roguelike</div>
           <div style={{ fontSize: 14, color: '#aaa', marginTop: 6 }}>Tableau: {coronataProfile.tableauCount}, Foundation: {coronataProfile.foundationCount}</div>

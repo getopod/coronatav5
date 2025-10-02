@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { EngineController } from '../core_engine/engineController';
-import { EngineEvent } from '../core_engine/eventSystem';
+import { EngineController } from '../engine/engineController';
+import { EngineEvent } from '../engine/eventSystem';
 
 type EngineEventContextType = {
   event: EngineEvent | null;

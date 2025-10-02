@@ -152,7 +152,7 @@
   height: 72px !important;
 }
 .deck-tableau-gap {
-  height: 0px;
+  height: 16px;
   width: 100%;
 }
 
@@ -280,9 +280,9 @@ body {
 
 .deck-area {
   display: flex;
-  gap: 8px;
+  gap: 16px;
   margin: 0;
-  width: 376px;
+  width: 432px;
   height: 72px;
 }
 
@@ -310,8 +310,8 @@ body {
 
 .foundation-area {
   display: flex;
-  gap: 8px;
-  width: 216px;
+  gap: 16px;
+  width: 240px;
   min-width: 48px;
   min-height: 72px;
 }
@@ -345,8 +345,8 @@ body {
 }
 .tableau-row {
   display: flex;
-  gap: 8px;
-  width: 376px;
+  gap: 16px;
+  width: 432px;
   height: var(--tableau-row-height);
 }
 .tableau-pile {

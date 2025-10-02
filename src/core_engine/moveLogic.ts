@@ -1,34 +1,5 @@
 import { GameState, Move } from './types';
 
-// Helper function to check if a suit is red
-function isRed(suit: string): boolean {
-  return suit === 'hearts' || suit === 'diamonds';
-}
-
-// Get all cards that can move together with the selected card
-export function getMovableStack(cardId: string, pileId: string, state: GameState): string[] {
-  const pile = state.piles[pileId];
-  if (!pile || pile.type !== 'tableau') return [cardId];
-  
-  const cardIndex = pile.cards.findIndex(c => c.id === cardId);
-  if (cardIndex === -1) return [cardId];
-  
-  // Get all cards from the selected card to the top
-  const movableCards = pile.cards.slice(cardIndex);
-  
-  // Verify it's a valid stack (alternating colors, descending values)
-  for (let i = 0; i < movableCards.length - 1; i++) {
-    const current = movableCards[i];
-    const next = movableCards[i + 1];
-    
-    if (!current.faceUp || !next.faceUp) return [cardId];
-    if (current.value !== next.value + 1) return [cardId];
-    if (isRed(current.suit) === isRed(next.suit)) return [cardId];
-  }
-  
-  return movableCards.map(c => c.id);
-}
-
 // Move a card from one pile to another
 export function moveCard(state: GameState, move: Move): GameState {
   const fromPile = state.piles[move.from];
@@ -82,4 +53,8 @@ export function validateMove(move: Move, state: GameState): boolean {
 
   // Default: allow move
   return true;
+}
+
+function isRed(suit: string) {
+  return suit === 'hearts' || suit === 'diamonds';
 }
