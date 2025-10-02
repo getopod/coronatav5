@@ -30,10 +30,6 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
         <div className="welcome-header">
           <h1 className="game-title">🌀 CORONATA</h1>
           <p className="game-subtitle">A Solitaire Adventure</p>
-          <div className="game-description">
-            <p>Face your fears, overcome dangers, and confront the ultimate boss.</p>
-            <p>Trade, wander, and gamble your way through endless encounters.</p>
-          </div>
         </div>
 
         {/* Menu Buttons */}
@@ -42,8 +38,7 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
             className="menu-btn primary"
             onClick={onStart}
           >
-            🚀 Start Run
-            <span className="btn-description">Begin a new adventure</span>
+            🚀 Start
           </button>
 
           <div className="menu-grid">
@@ -51,8 +46,7 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
               className="menu-btn secondary"
               onClick={handleHowToPlay}
             >
-              📖 How to Play
-              <span className="btn-description">Learn the rules</span>
+              📖 How to
             </button>
 
             <button 
@@ -60,7 +54,6 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
               onClick={handleGlossary}
             >
               📚 Glossary
-              <span className="btn-description">Registry items guide</span>
             </button>
 
             <button 
@@ -68,7 +61,6 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
               onClick={handleHistory}
             >
               📊 History
-              <span className="btn-description">Past run records</span>
             </button>
 
             <button 
@@ -76,7 +68,6 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
               onClick={handleOptions}
             >
               ⚙️ Options
-              <span className="btn-description">Game settings</span>
             </button>
           </div>
 
@@ -84,13 +75,8 @@ export const CoronataWelcome: React.FC<CoronataWelcomeProps> = ({ onStart, onBac
             className="menu-btn back"
             onClick={onBack}
           >
-            ← Back to Game Selection
+            ← Back
           </button>
-        </div>
-
-        {/* Footer */}
-        <div className="welcome-footer">
-          <p>Prepare yourself for the challenge ahead...</p>
         </div>
       </div>
     </div>

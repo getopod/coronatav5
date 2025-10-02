@@ -126,11 +126,22 @@ export function createDefaultCoronataPiles() {
     }
   }
   
+  // Deal 5 cards to player hand (face up)
+  const handCards: Card[] = [];
+  for (let i = 0; i < 5; i++) {
+    if (deckIndex < deck.length) {
+      const card = deck[deckIndex++];
+      card.faceUp = true; // Hand cards are always face up
+      handCards.push(card);
+    }
+  }
+  
   const stockCards = deck.slice(deckIndex);
 
   return {
     stock: { id: 'stock', type: 'stock', cards: stockCards, rules: { faceDown: true }, meta: {} },
     waste: { id: 'waste', type: 'waste', cards: [], rules: { faceUp: true }, meta: {} },
+    hand: { id: 'hand', type: 'hand', cards: handCards, rules: { faceUp: true }, meta: {} },
     foundation1: { id: 'foundation1', type: 'foundation', cards: [], rules: { suit: 'hearts', faceUp: true }, meta: {} },
     foundation2: { id: 'foundation2', type: 'foundation', cards: [], rules: { suit: 'diamonds', faceUp: true }, meta: {} },
     foundation3: { id: 'foundation3', type: 'foundation', cards: [], rules: { suit: 'clubs', faceUp: true }, meta: {} },

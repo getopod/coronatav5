@@ -122,19 +122,55 @@ export class EngineController {
     this.emitEvent('modeChange', { mode, config: this.config });
   }
 
-  // Collect all active effects from registry entries
-  getActiveEffects(): Effect[] {
+  // Collect all active effects from registry entries, optionally filtered by context
+  getActiveEffects(state?: GameState, context?: string, moveData?: any): Effect[] {
     // Map RegistryEffect to Effect
-    return this.registryEntries.flatMap(entry =>
+    const allEffects = this.registryEntries.flatMap(entry =>
       (entry.effects || []).map(eff => ({
         type: eff.action, // map 'action' to 'type'
         target: eff.target,
         value: eff.value,
         condition: eff.condition,
-        meta: {},
+        meta: { context, moveData }, // Include context for effect handlers
         // Add other fields as needed
       }))
     );
+    
+    // If no context filtering requested, return all effects
+    if (!context || !state || !moveData) {
+      return allEffects;
+    }
+    
+    // Filter effects for move context
+    if (context === 'move') {
+      return allEffects.filter(effect => this.checkMoveEffectConditions(effect, moveData));
+    }
+    
+    return allEffects;
+  }
+
+  // Helper method to check move effect conditions
+  private checkMoveEffectConditions(effect: Effect, moveData: any): boolean {
+    if (!effect.condition || typeof effect.condition === 'function') return true;
+    
+    const { card, toPile } = moveData;
+    
+    // Check target pile type
+    if (effect.target && !effect.target.split('|').includes(toPile.type)) return false;
+    
+    // Check card conditions
+    if (card) {
+      if (effect.condition.value) {
+        const values = Array.isArray(effect.condition.value) ? effect.condition.value : [effect.condition.value];
+        if (!values.includes(card.value)) return false;
+      }
+      if (effect.condition.suit) {
+        const suits = Array.isArray(effect.condition.suit) ? effect.condition.suit : [effect.condition.suit];
+        if (!suits.includes(card.suit)) return false;
+      }
+    }
+    
+    return true;
   }
 
   // Apply all active effects to the current state, warn/log for unhandled actions

@@ -30,7 +30,22 @@
 }
 /* Effect HUD styles for registry-driven effects */
 /* Valid move destination highlighting */
-.pile.valid-destination {
+/* Foundation piles - highlight the entire pile since only one card is visible */
+.foundation-pile.valid-destination {
+  border: 3px solid #4caf50 !important;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
+  animation: pulse-green 1.5s ease-in-out infinite;
+}
+
+/* Tableau piles - highlight only the bottom card that can accept the move */
+.tableau-pile.valid-destination .pile-cards-vertical > .card:last-child {
+  border: 3px solid #4caf50 !important;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
+  animation: pulse-green 1.5s ease-in-out infinite;
+}
+
+/* For empty tableau piles, highlight the card outline */
+.tableau-pile.valid-destination .card-outline {
   border: 3px solid #4caf50 !important;
   box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
   animation: pulse-green 1.5s ease-in-out infinite;
@@ -123,6 +138,80 @@
   height: 16px;
   width: 100%;
 }
+
+/* Player Hand Area Styles */
+.player-hand-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-height: 80px;
+}
+
+.hand-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hand-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  flex-wrap: wrap;
+  max-width: 800px; /* Prevent hand from becoming too wide */
+}
+
+.hand-cards .card {
+  width: 48px !important;
+  height: 72px !important;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.hand-cards .card:hover {
+  transform: translateY(-4px);
+  z-index: 100 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.hand-cards .card.selected {
+  transform: translateY(-8px);
+  z-index: 101 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  border: 2px solid #ffd700;
+}
+
+.hand-empty {
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+  text-align: center;
+  border: 2px dashed #999;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  min-width: 200px;
+}
+
+/* Responsive adjustments for hand */
+@media (max-width: 768px) {
+  .hand-cards {
+    max-width: 90vw;
+  }
+  
+  .hand-cards .card {
+    width: 40px !important;
+    height: 60px !important;
+  }
+}
 .deck-area .foundation-area * {
   margin: 0 !important;
 }
@@ -190,22 +279,16 @@ body {
   width: 48px;
   height: 72px;
 }
+
 .foundation-pile {
   width: 48px;
-}
   display: flex;
-  gap: 16px;
-  margin: 0 !important;
-  border: 0 !important;
-  width: 432px;
+  flex-direction: column;
+  align-items: center;
   height: 72px;
 }
 .deck-area * {
   height: 72px !important;
-}
-.deck-area .pile-cards .card.face-down {
-  width: 48px;
-  height: 72px;
 }
 
 .foundation-area {

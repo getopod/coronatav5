@@ -10,9 +10,10 @@ import './GameScreen.css';
 
 interface GameScreenProps {
   onNavigateToWelcome?: () => void;
+  selectedFortune?: any;
 }
 
-export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
+export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenProps = {}) {
   // Always declare hooks and variables at the top level
   const ctx = useEngineEvent();
   if (!ctx) return <div>No engine context</div>;
@@ -27,6 +28,7 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
   console.log('GameScreen rendering with engine state:', gameState);
   console.log('Engine config:', config);
   console.log('Last engine event:', event);
+  console.log('Selected fortune:', selectedFortune);
   
   // Detect if Coronata mode is active
   const isCoronata = (config.rules === 'coronata');
@@ -110,8 +112,22 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
       });
     }
     
+    // Get effects from selected fortune (passed from App.jsx)
+    if (selectedFortune && selectedFortune.effects) {
+      selectedFortune.effects.forEach((eff: any) => {
+        effects.push({
+          ...eff,
+          label: selectedFortune.label,
+          description: selectedFortune.description,
+          type: selectedFortune.type,
+          id: selectedFortune.id,
+          source: 'fortune'
+        });
+      });
+    }
+    
     return effects;
-  }, [gameState.player]);
+  }, [gameState.player, selectedFortune]);
 
   // Collapsible state for effect categories
   const [collapsedCategories, setCollapsedCategories] = React.useState<{ [key: string]: boolean }>({});
@@ -321,76 +337,82 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
 
   // Enhanced card double-click handler (auto-move with intelligent destination detection)
   const handleCardDoubleClick = (cardId: string) => {
-    // Clear any existing highlights
-    setHighlightedDestinations([]);
-    
-    // Find all valid moves for this card
-    const validMoves = findValidMoves(cardId);
-    
-    if (validMoves.length === 0) {
-      // No valid moves - show error and shake
-      setMoveError('No valid moves available for this card.');
-      triggerShake(cardId);
-      setTimeout(() => setMoveError(null), 3000);
-      return;
-    }
-    
-    // Special case for aces: if multiple foundation moves are available, just pick the first one
-    const foundationMoves = validMoves.filter(pileId => {
-      const pile = Object.values(engine.state.piles).find((p: any) => p.id === pileId);
-      return pile?.type === 'foundation';
-    });
-    
-    const card = Object.values(engine.state.piles)
-      .flatMap((pile: any) => pile.cards)
-      .find((c: any) => c.id === cardId);
-    
-    if (card?.value === 1 && foundationMoves.length > 0) {
-      // Ace with available foundation(s) - auto-place on first available foundation
-      const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
-        Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
-      )?.id;
+    // Prevent double-click interference with normal selection by adding a small delay
+    setTimeout(() => {
+      // Clear any existing highlights
+      setHighlightedDestinations([]);
       
-      if (fromPileId) {
-        try {
-          console.log('Auto-moving ace', cardId, 'from', fromPileId, 'to first available foundation', foundationMoves[0]);
-          engine.moveCard({ from: fromPileId, to: foundationMoves[0], cardId });
-          setSelectedCardId(null);
-        } catch (e) {
-          console.error('Ace auto-move failed:', e);
+      // Find all valid moves for this card
+      const validMoves = findValidMoves(cardId);
+      
+      if (validMoves.length === 0) {
+        // No valid moves - show error but only shake if card was not recently selected
+        // This prevents shaking when user is just trying to select a card
+        if (selectedCardId !== cardId) {
+          setMoveError('No valid moves available for this card.');
           triggerShake(cardId);
+          setTimeout(() => setMoveError(null), 3000);
         }
+        return;
       }
-      return;
-    }
     
-    if (validMoves.length === 1) {
-      // Single valid move - auto-move there
-      const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
-        Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
-      )?.id;
+      // Special case for aces: if multiple foundation moves are available, just pick the first one
+      const foundationMoves = validMoves.filter(pileId => {
+        const pile = Object.values(engine.state.piles).find((p: any) => p.id === pileId);
+        return pile?.type === 'foundation';
+      });
       
-      if (fromPileId) {
-        try {
-          console.log('Auto-moving card', cardId, 'from', fromPileId, 'to', validMoves[0]);
-          engine.moveCard({ from: fromPileId, to: validMoves[0], cardId });
-          setSelectedCardId(null);
-        } catch (e) {
-          console.error('Auto-move failed:', e);
-          triggerShake(cardId);
+      const card = Object.values(engine.state.piles)
+        .flatMap((pile: any) => pile.cards)
+        .find((c: any) => c.id === cardId);
+      
+      if (card?.value === 1 && foundationMoves.length > 0) {
+        // Ace with available foundation(s) - auto-place on first available foundation
+        const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+          Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
+        )?.id;
+        
+        if (fromPileId) {
+          try {
+            console.log('Auto-moving ace', cardId, 'from', fromPileId, 'to first available foundation', foundationMoves[0]);
+            engine.moveCard({ from: fromPileId, to: foundationMoves[0], cardId });
+            setSelectedCardId(null);
+          } catch (e) {
+            console.error('Ace auto-move failed:', e);
+            triggerShake(cardId);
+          }
         }
+        return;
       }
-    } else {
-      // Multiple valid moves - highlight destinations for user selection
-      console.log('Multiple valid moves found:', validMoves.length, 'destinations');
-      setHighlightedDestinations(validMoves);
-      setSelectedCardId(cardId); // Select the card so user can click destination
       
-      // Clear highlights after 5 seconds if no action taken
-      setTimeout(() => {
-        setHighlightedDestinations([]);
-      }, 5000);
-    }
+      if (validMoves.length === 1) {
+        // Single valid move - auto-move there
+        const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+          Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
+        )?.id;
+        
+        if (fromPileId) {
+          try {
+            console.log('Auto-moving card', cardId, 'from', fromPileId, 'to', validMoves[0]);
+            engine.moveCard({ from: fromPileId, to: validMoves[0], cardId });
+            setSelectedCardId(null);
+          } catch (e) {
+            console.error('Auto-move failed:', e);
+            triggerShake(cardId);
+          }
+        }
+      } else {
+        // Multiple valid moves - highlight destinations for user selection
+        console.log('Multiple valid moves found:', validMoves.length, 'destinations');
+        setHighlightedDestinations(validMoves);
+        setSelectedCardId(cardId); // Select the card so user can click destination
+        
+        // Clear highlights after 5 seconds if no action taken
+        setTimeout(() => {
+          setHighlightedDestinations([]);
+        }, 5000);
+      }
+    }, 100); // Small delay to prevent interference with single clicks
   };
 
   // Drag handlers
@@ -456,9 +478,12 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
     .sort((a: any, b: any) => a.id.localeCompare(b.id));
   const deckPile = Object.values(piles).find((pile: any) => pile.type === 'stock');
   const wastePile = Object.values(piles).find((pile: any) => pile.type === 'waste');
+  const handPile = Object.values(piles).find((pile: any) => pile.type === 'hand');
   
   console.log('GameScreen - deckPile found:', deckPile);
   console.log('GameScreen - deckPile cards:', deckPile?.cards?.length || 0);
+  console.log('GameScreen - handPile found:', handPile);
+  console.log('GameScreen - handPile cards:', handPile?.cards?.length || 0);
   const foundationPiles = Object.values(piles)
     .filter((pile: any) => pile.type === 'foundation')
     .sort((a: any, b: any) => a.id.localeCompare(b.id));
@@ -740,6 +765,42 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
       )}
       {/* Spacer for gap between deck-area and tableau-row */}
   <div className="deck-tableau-gap" />
+      
+      {/* Player Hand Area (only for Coronata) */}
+      {isCoronata && handPile && (
+        <div className="player-hand-area">
+          <div className="hand-label">Player Hand</div>
+          <div className="hand-cards">
+            {handPile.cards.length > 0 ? (
+              handPile.cards.map((card: any, index: number) => (
+                <Card
+                  key={card.id}
+                  id={card.id}
+                  suit={card.suit}
+                  value={card.value}
+                  faceUp={card.faceUp}
+                  design={card.faceUp ? card.design : 'coronata'}
+                  selected={selectedCardId === card.id}
+                  shake={shakeCardId === card.id}
+                  draggable={card.faceUp}
+                  onClick={() => handleCardClick(card.id, handPile.id)}
+                  onDoubleClick={() => handleCardDoubleClick(card.id)}
+                  onDragStart={e => handleDragStart(card.id)}
+                  onDragEnd={handleDragEnd}
+                  style={{ 
+                    marginLeft: index > 0 ? '-20px' : '0',
+                    zIndex: index + 1,
+                    position: 'relative'
+                  }}
+                />
+              ))
+            ) : (
+              <div className="hand-empty">No cards in hand</div>
+            )}
+          </div>
+        </div>
+      )}
+      
       {/* Tableau row */}
   <div className="tableau-row">
         {tableauPiles.map((pile: any) => (
@@ -781,7 +842,7 @@ export function GameScreen({ onNavigateToWelcome }: GameScreenProps = {}) {
       </div>
       
       {/* Player HUD */}
-      {isCoronata && <PlayerHUD gameState={gameState} />}
+      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} />}
       
       {/* Game controls and resign button */}
       <div className="game-controls">

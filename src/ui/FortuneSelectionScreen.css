@@ -1,0 +1,211 @@
+.fortune-selection-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #bfa76a;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  z-index: 2000;
+}
+
+.fortune-selection-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.fortune-selection-header h1 {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+}
+
+.fortune-selection-header p {
+  font-size: 1.2rem;
+  color: #b8c5d6;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.fortune-selection-content {
+  max-width: 1200px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.fortunes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.fortune-card {
+  background: linear-gradient(145deg, #2a2a40, #1e1e30);
+  border: 2px solid #3a3a5c;
+  border-radius: 15px;
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  min-height: 180px;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+}
+
+.fortune-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+}
+
+.fortune-card.selected {
+  border-color: #ffd700;
+  background: linear-gradient(145deg, #3a3a50, #2e2e40);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.fortune-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ffd700;
+  color: #1a1a2e;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.fortune-card-header {
+  margin-bottom: 1rem;
+}
+
+.fortune-card-header h3 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin: 0;
+}
+
+.fortune-card-body {
+  flex: 1;
+  margin-bottom: 1rem;
+}
+
+.fortune-card-body p {
+  color: #e0e0e0;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fortune-selection-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-back {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #ffd700, #ffed4e);
+  color: #1a1a2e;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(45deg, #ffed4e, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+}
+
+.btn-primary:disabled {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: linear-gradient(45deg, #4a90e2, #357abd);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(45deg, #357abd, #4a90e2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+}
+
+.btn-back {
+  background: linear-gradient(45deg, #666, #555);
+  color: white;
+}
+
+.btn-back:hover {
+  background: linear-gradient(45deg, #555, #666);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 102, 102, 0.4);
+}
+
+@media (max-width: 768px) {
+  .fortune-selection-screen {
+    padding: 1rem;
+  }
+
+  .fortune-selection-header h1 {
+    font-size: 2rem;
+  }
+
+  .fortunes-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .fortune-selection-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-back {
+    width: 100%;
+    max-width: 300px;
+  }
+}

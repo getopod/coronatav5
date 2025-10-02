@@ -257,11 +257,27 @@ export function integrateEnhancedScoring(engineController: any, variant: string)
       // Process any registry effects that should trigger on moves
       // This will handle effects like "exploit-scholars-eye" that award bonus points
       if (engineController.effectEngine && state.player.exploits) {
-        // Trigger move-based effects from equipped exploits
-        const moveEffects = engineController.getActiveEffects(state, 'move');
+        // Get card and pile information for effect filtering
+        const movedCard = move.card || Object.values(state.piles)
+          .flatMap((pile: any) => pile.cards)
+          .find((card: any) => card.id === move.cardId);
+        const toPile = Object.values(state.piles).find((pile: any) => pile.id === move.to);
+        
+        const moveData = {
+          card: movedCard,
+          toPile: toPile,
+          move: move
+        };
+        
+        // Trigger move-based effects from equipped exploits with proper filtering
+        const moveEffects = engineController.getActiveEffects(state, 'move', moveData);
+        console.log('Enhanced scoring: Found', moveEffects.length, 'applicable move effects');
+        
         if (moveEffects.length > 0) {
           // Apply effects and update state
+          console.log('Enhanced scoring: Applying effects:', moveEffects);
           engineController.state = engineController.effectEngine.applyEffects(moveEffects, state);
+          console.log('Enhanced scoring: Player score after effects:', engineController.state.player?.score || 0);
         }
       }
       

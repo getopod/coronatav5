@@ -34,6 +34,11 @@ export function moveCard(state: GameState, move: Move): GameState {
   // Add the entire stack to toPile
   toPile.cards.push(...movableStack);
   
+  // Coronata: Auto-refill hand when cards are played from hand to tableau or foundation
+  if (move.from === 'hand' && (toPile.type === 'tableau' || toPile.type === 'foundation')) {
+    refillHandFromDeck(state);
+  }
+  
   // Record move in history with stack information
   state.history.push({
     ...move,
@@ -138,3 +143,27 @@ export function validateCoronataMove(move: Move, state: GameState): boolean {
 }
 // Modular: allow swapping out validateMove for other games
 export type MoveValidator = (move: Move, state: GameState) => boolean;
+
+// Coronata: Auto-refill hand from deck when cards are played
+function refillHandFromDeck(state: GameState): void {
+  const handPile = state.piles.hand;
+  const deckPile = state.piles.deck;
+  
+  if (!handPile || !deckPile) return;
+  
+  // Refill to hand size 5 (or as many cards as available in deck)
+  const targetHandSize = 5;
+  const cardsNeeded = targetHandSize - handPile.cards.length;
+  
+  if (cardsNeeded > 0 && deckPile.cards.length > 0) {
+    const cardsToTake = Math.min(cardsNeeded, deckPile.cards.length);
+    const drawnCards = deckPile.cards.splice(0, cardsToTake);
+    
+    // Make sure drawn cards are face up in hand
+    drawnCards.forEach(card => card.faceUp = true);
+    
+    handPile.cards.push(...drawnCards);
+    
+    console.log(`Hand refilled: drew ${cardsToTake} cards, hand now has ${handPile.cards.length} cards`);
+  }
+}

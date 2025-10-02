@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { EngineEventProvider, GameScreen, CoronataWelcome } from './ui';
+import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen } from './ui';
 import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
@@ -12,6 +12,8 @@ import './App.css';
 function App() {
   const [selectedMode, setSelectedMode] = useState(null);
   const [showCoronataWelcome, setShowCoronataWelcome] = useState(false);
+  const [showFortuneSelection, setShowFortuneSelection] = useState(false);
+  const [selectedFortune, setSelectedFortune] = useState(null);
   // Create engine instance for selected mode
   const engine = React.useMemo(() => {
     // For demo, use Klondike registry config for all modes (replace with correct config per mode)
@@ -54,11 +56,25 @@ function App() {
   // Handle Coronata welcome actions
   const handleCoronataStart = () => {
     setShowCoronataWelcome(false);
+    setShowFortuneSelection(true);
   };
 
   const handleCoronataBack = () => {
     setSelectedMode(null);
     setShowCoronataWelcome(false);
+    setShowFortuneSelection(false);
+  };
+
+  // Handle Fortune Selection actions
+  const handleFortuneSelected = (fortune) => {
+    setSelectedFortune(fortune);
+    setShowFortuneSelection(false);
+    console.log('Fortune selected:', fortune);
+  };
+
+  const handleFortuneBack = () => {
+    setShowCoronataWelcome(true);
+    setShowFortuneSelection(false);
   };
 
   // Handle navigation back to welcome from game
@@ -78,9 +94,23 @@ function App() {
   // Show Coronata welcome screen
   if (selectedMode === 'coronata' && showCoronataWelcome) {
     return (
-      <CoronataWelcome 
+      <CoronataWelcomeScreen 
         onStart={handleCoronataStart}
+        onHowToPlay={() => alert('How to Play guide will be implemented soon!')}
+        onGlossary={() => alert('Glossary of registry items will be implemented soon!')}
+        onHistory={() => alert('Run history will be implemented soon!')}
+        onOptions={() => alert('Options will be implemented soon!')}
         onBack={handleCoronataBack}
+      />
+    );
+  }
+
+  // Show Fortune Selection screen
+  if (selectedMode === 'coronata' && showFortuneSelection) {
+    return (
+      <FortuneSelectionScreen
+        onFortuneSelected={handleFortuneSelected}
+        onBack={handleFortuneBack}
       />
     );
   }
@@ -88,7 +118,10 @@ function App() {
   // Show game screen
   return (
     <EngineEventProvider engine={engine}>
-      <GameScreen onNavigateToWelcome={handleGameToWelcome} />
+      <GameScreen 
+        onNavigateToWelcome={handleGameToWelcome}
+        selectedFortune={selectedFortune}
+      />
     </EngineEventProvider>
   );
 }

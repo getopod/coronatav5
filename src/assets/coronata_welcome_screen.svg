@@ -1,0 +1,229 @@
+<svg viewBox="0 0 800 1200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background with subtle gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f1a;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f8f8f8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8e8e8;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crownGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffed4e;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#f4c430;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d4a700;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="crownBand" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fff;stop-opacity:0.4" />
+      <stop offset="50%" style="stop-color:#f4c430;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="rubyGrad" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#ff6666;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#cc0000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#880000;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="sapphireGrad" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#99ccff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0066cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#003380;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="emeraldGrad" cx="30%" cy="30%">
+      <stop offset="0%" style="stop-color:#66ff99;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00cc66;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#008844;stop-opacity:1" />
+    </radialGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="1200" fill="url(#bgGrad)"/>
+  
+  <!-- Decorative corner elements with glow -->
+  <g filter="url(#glow)">
+    <circle cx="60" cy="60" r="15" fill="#ffd700" opacity="0.3"/>
+    <circle cx="740" cy="60" r="15" fill="#ffd700" opacity="0.3"/>
+    <circle cx="60" cy="1140" r="15" fill="#ffd700" opacity="0.3"/>
+    <circle cx="740" cy="1140" r="15" fill="#ffd700" opacity="0.3"/>
+  </g>
+  
+  <!-- HIGH RESOLUTION LOGO -->
+  <g id="logo" transform="translate(400, 300)">
+    
+    <!-- Fourth card (furthest back) -->
+    <g transform="rotate(-20)" filter="url(#shadow)">
+      <rect x="-70" y="-100" width="140" height="200" rx="12" fill="#404040" opacity="0.3"/>
+    </g>
+    
+    <!-- Third card -->
+    <g transform="rotate(-16)" filter="url(#shadow)">
+      <rect x="-70" y="-100" width="140" height="200" rx="12" fill="#606060" opacity="0.5"/>
+      <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#808080" opacity="0.3"/>
+    </g>
+    
+    <!-- Second card -->
+    <g transform="rotate(-12)" filter="url(#shadow)">
+      <rect x="-70" y="-100" width="140" height="200" rx="12" fill="#c0c0c0"/>
+      <rect x="-65" y="-95" width="130" height="190" rx="10" fill="#d8d8d8"/>
+      <rect x="-62" y="-92" width="124" height="184" rx="8" fill="#f0f0f0"/>
+      <!-- Faint pattern -->
+      <circle cx="0" cy="0" r="8" fill="#bbb" opacity="0.2"/>
+    </g>
+    
+    <!-- Main card (Ace of Hearts) -->
+    <g transform="rotate(-8)" filter="url(#shadow)">
+      <!-- Card body -->
+      <rect x="-70" y="-100" width="140" height="200" rx="12" fill="#e0e0e0" stroke="#2a2a2a" stroke-width="3"/>
+      <rect x="-65" y="-95" width="130" height="190" rx="10" fill="url(#cardGrad)"/>
+      
+      <!-- Inner border detail -->
+      <rect x="-62" y="-92" width="124" height="184" rx="8" fill="none" stroke="#ddd" stroke-width="2"/>
+      
+      <!-- Top left corner: Rank "A" -->
+      <text x="-52" y="-62" font-family="Georgia, serif" font-size="42" font-weight="bold" fill="#cc0000">A</text>
+      
+      <!-- Top left corner: Small heart -->
+      <path d="M -52 -45 C -52 -50, -47 -53, -42 -47 C -37 -53, -32 -50, -32 -45 C -32 -38, -42 -30, -42 -22 C -42 -30, -52 -38, -52 -45 Z" 
+            fill="#cc0000" stroke="#990000" stroke-width="1" transform="scale(0.5) translate(-50, -40)"/>
+      
+      <!-- Center: Large heart -->
+      <path d="M -35 -15 C -35 -30, -18 -38, 0 -20 C 18 -38, 35 -30, 35 -15 C 35 10, 0 35, 0 55 C 0 35, -35 10, -35 -15 Z" 
+            fill="#cc0000" stroke="#990000" stroke-width="2"/>
+      
+      <!-- Heart highlight -->
+      <ellipse cx="-12" cy="-8" rx="8" ry="6" fill="#ff6666" opacity="0.6"/>
+      <ellipse cx="12" cy="-8" rx="8" ry="6" fill="#ff6666" opacity="0.6"/>
+      
+      <!-- Bottom right corner: Rank "A" (inverted) -->
+      <g transform="rotate(180)">
+        <text x="-52" y="-62" font-family="Georgia, serif" font-size="42" font-weight="bold" fill="#cc0000">A</text>
+        <path d="M -52 -45 C -52 -50, -47 -53, -42 -47 C -37 -53, -32 -50, -32 -45 C -32 -38, -42 -30, -42 -22 C -42 -30, -52 -38, -52 -45 Z" 
+              fill="#cc0000" stroke="#990000" stroke-width="1" transform="scale(0.5) translate(-50, -40)"/>
+      </g>
+    </g>
+    
+    <!-- CROWN (above cards) -->
+    <g transform="translate(0, -180)" filter="url(#glow)">
+      <!-- Crown shadow -->
+      <ellipse cx="0" cy="95" rx="90" ry="15" fill="#000" opacity="0.3"/>
+      
+      <!-- Crown points (5 peaks) -->
+      <path d="M -80 50 L -65 25 L -50 45 L -30 15 L -15 45 L 0 5 L 15 45 L 30 15 L 50 45 L 65 25 L 80 50 L 80 70 L -80 70 Z" 
+            fill="url(#crownGrad)" stroke="#b8860b" stroke-width="3"/>
+      
+      <!-- Crown highlights (light reflection) -->
+      <path d="M -78 52 L -66 28 L -52 46 L -32 18 L -17 46 L 0 8 L 17 46 L 32 18 L 52 46 L 66 28 L 78 52 L 78 60 L -78 60 Z" 
+            fill="#fff" opacity="0.15"/>
+      
+      <!-- Crown band (3D effect) -->
+      <rect x="-80" y="70" width="160" height="20" fill="url(#crownBand)"/>
+      <rect x="-80" y="70" width="160" height="5" fill="#fff" opacity="0.3"/>
+      <rect x="-80" y="85" width="160" height="5" fill="#000" opacity="0.2"/>
+      
+      <!-- Crown engravings/details -->
+      <line x1="-70" y1="72" x2="-70" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="-50" y1="72" x2="-50" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="-30" y1="72" x2="-30" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="-10" y1="72" x2="-10" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="10" y1="72" x2="10" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="30" y1="72" x2="30" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="50" y1="72" x2="50" y2="88" stroke="#d4a700" stroke-width="2"/>
+      <line x1="70" y1="72" x2="70" y2="88" stroke="#d4a700" stroke-width="2"/>
+      
+      <!-- Crown jewels (with gradients and highlights) -->
+      
+      <!-- Left ruby -->
+      <circle cx="-45" cy="35" r="12" fill="url(#rubyGrad)" stroke="#660000" stroke-width="2"/>
+      <circle cx="-48" cy="32" r="4" fill="#ffcccc" opacity="0.8"/>
+      <path d="M -45 28 L -42 35 L -45 42 L -48 35 Z" fill="#ff9999" opacity="0.6"/>
+      
+      <!-- Center sapphire (largest) -->
+      <circle cx="0" cy="25" r="15" fill="url(#sapphireGrad)" stroke="#002266" stroke-width="2"/>
+      <circle cx="-4" cy="21" r="5" fill="#cce5ff" opacity="0.9"/>
+      <path d="M 0 15 L 5 25 L 0 35 L -5 25 Z" fill="#6699ff" opacity="0.7"/>
+      
+      <!-- Right emerald -->
+      <circle cx="45" cy="35" r="12" fill="url(#emeraldGrad)" stroke="#004422" stroke-width="2"/>
+      <circle cx="42" cy="32" r="4" fill="#ccffdd" opacity="0.8"/>
+      <path d="M 45 28 L 48 35 L 45 42 L 42 35 Z" fill="#99ffbb" opacity="0.6"/>
+      
+      <!-- Small accent jewels on outer peaks -->
+      <circle cx="-65" cy="30" r="6" fill="url(#rubyGrad)" stroke="#660000" stroke-width="1"/>
+      <circle cx="65" cy="30" r="6" fill="url(#emeraldGrad)" stroke="#004422" stroke-width="1"/>
+    </g>
+  </g>
+  
+  <!-- Game title -->
+  <text x="400" y="580" font-family="Georgia, serif" font-size="96" font-weight="bold" 
+        text-anchor="middle" fill="#ffd700" letter-spacing="8" filter="url(#glow)">CORONATA</text>
+  
+  <!-- Subtitle -->
+  <text x="400" y="640" font-family="Arial, sans-serif" font-size="32" 
+        text-anchor="middle" fill="#999" letter-spacing="4">SOLITAIRE ROGUELIKE</text>
+  
+  <!-- Button placeholders (dashed outlines for your engine to replace) -->
+  
+  <!-- Start Button -->
+  <rect x="250" y="720" width="300" height="70" rx="12" 
+        fill="none" stroke="#ffd700" stroke-width="3" stroke-dasharray="10,5" opacity="0.6"/>
+  <text x="400" y="762" font-family="Arial, sans-serif" font-size="28" font-weight="bold"
+        text-anchor="middle" fill="#666">[START BUTTON]</text>
+  
+  <!-- How to Play Button -->
+  <rect x="250" y="810" width="300" height="60" rx="10" 
+        fill="none" stroke="#999" stroke-width="2" stroke-dasharray="8,4" opacity="0.6"/>
+  <text x="400" y="847" font-family="Arial, sans-serif" font-size="24"
+        text-anchor="middle" fill="#555">[HOW TO PLAY]</text>
+  
+  <!-- Glossary Button -->
+  <rect x="250" y="890" width="300" height="60" rx="10" 
+        fill="none" stroke="#999" stroke-width="2" stroke-dasharray="8,4" opacity="0.6"/>
+  <text x="400" y="927" font-family="Arial, sans-serif" font-size="24"
+        text-anchor="middle" fill="#555">[GLOSSARY]</text>
+  
+  <!-- History Button -->
+  <rect x="250" y="970" width="300" height="60" rx="10" 
+        fill="none" stroke="#999" stroke-width="2" stroke-dasharray="8,4" opacity="0.6"/>
+  <text x="400" y="1007" font-family="Arial, sans-serif" font-size="24"
+        text-anchor="middle" fill="#555">[HISTORY]</text>
+  
+  <!-- Options Button -->
+  <rect x="250" y="1050" width="300" height="60" rx="10" 
+        fill="none" stroke="#999" stroke-width="2" stroke-dasharray="8,4" opacity="0.6"/>
+  <text x="400" y="1087" font-family="Arial, sans-serif" font-size="24"
+        text-anchor="middle" fill="#555">[OPTIONS]</text>
+  
+  <!-- Back Button -->
+  <rect x="300" y="1130" width="200" height="50" rx="10" 
+        fill="none" stroke="#777" stroke-width="2" stroke-dasharray="8,4" opacity="0.5"/>
+  <text x="400" y="1162" font-family="Arial, sans-serif" font-size="20"
+        text-anchor="middle" fill="#444">[BACK]</text>
+</svg>
