@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { exploits, blessings, fears } from '../registry/registry';
+import { exploits, blessings, fears, curses, dangers, wanders, feats } from '../registry/registry';
 import './Glossary.css';
 
 export interface GlossaryProps {
   onBack: () => void;
 }
 
-type TabType = 'exploits' | 'blessings' | 'fears';
+type TabType = 'exploits' | 'blessings' | 'fears' | 'curses' | 'dangers' | 'wanders' | 'feats';
 
 interface RegistryEntry {
   id: string;
@@ -34,16 +34,19 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
                            item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesRarity = selectedRarity === 'all' || item.rarity === selectedRarity;
+      // Only apply rarity filter for exploits
+      const matchesRarity = activeTab !== 'exploits' || selectedRarity === 'all' || item.rarity === selectedRarity;
       
       return matchesSearch && matchesRarity;
     });
   };
 
-  // Get unique rarities for filter
+  // Get unique rarities for filter (only for exploits)
   const getRarities = (items: RegistryEntry[]) => {
+    // Only show rarities for exploits
+    if (activeTab !== 'exploits') return [];
     const rarities = [...new Set(items.map(item => item.rarity).filter(Boolean))];
-    return rarities.sort();
+    return rarities.sort((a, b) => a.localeCompare(b));
   };
 
   // Get current items based on active tab
@@ -52,6 +55,10 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       case 'exploits': return exploits;
       case 'blessings': return blessings;
       case 'fears': return fears;
+      case 'curses': return curses;
+      case 'dangers': return dangers;
+      case 'wanders': return wanders;
+      case 'feats': return feats;
       default: return [];
     }
   };
@@ -103,13 +110,33 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
         icon: getSettingIcon(target),
         text: getSettingText(target, value)
       },
-      'add_cards': {
-        icon: '🃏',
-        text: `+${value} cards`
+      'award_score': {
+        icon: '⭐',
+        text: `+${value} score`
+      },
+      'award_coin': {
+        icon: '🪙',
+        text: `+${value} coins`
+      },
+      'score_multiplier': {
+        icon: '✨',
+        text: getScoreMultiplierDescription(effect)
       },
       'draw_cards': {
         icon: '🎴',
         text: `Draw ${value}`
+      },
+      'reveal': {
+        icon: '👁️',
+        text: `Reveal ${value}`
+      },
+      'allow_move': {
+        icon: '🔄',
+        text: 'Special move allowed'
+      },
+      'add_cards': {
+        icon: '🃏',
+        text: `+${value} cards`
       },
       'gain_coins': {
         icon: '🪙',
@@ -127,9 +154,21 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
         icon: '💥',
         text: `${value} damage`
       },
-      'score_multiplier': {
+      'unlock': {
+        icon: '🔓',
+        text: 'Unlock feature'
+      },
+      'block': {
+        icon: '⛔',
+        text: 'Block action'
+      },
+      'curse': {
+        icon: '🩸',
+        text: 'Apply curse'
+      },
+      'bless': {
         icon: '✨',
-        text: getScoreMultiplierDescription(effect)
+        text: 'Apply blessing'
       }
     };
 
@@ -202,12 +241,16 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       'shuffles': '🔄', 
       'discardsLeft': '🗑️',
       'discards': '🗑️',
+      'handSize': '✋',
       'coins': '🪙',
       'health': '💚',
       'mana': '💙',
       'energy': '⚡',
       'strength': '💪',
-      'defense': '🛡️'
+      'defense': '🛡️',
+      'score': '⭐',
+      'lives': '❤️',
+      'moves': '📋'
     };
     return iconMap[target] || '⚙️';
   };
@@ -261,6 +304,30 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
             >
               😨 Fears ({fears.length})
             </button>
+            <button 
+              className={`tab-button ${activeTab === 'curses' ? 'active' : ''}`}
+              onClick={() => setActiveTab('curses')}
+            >
+              🩸 Curses ({curses.length})
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'dangers' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dangers')}
+            >
+              ⚡ Dangers ({dangers.length})
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'wanders' ? 'active' : ''}`}
+              onClick={() => setActiveTab('wanders')}
+            >
+              🌟 Wanders ({wanders.length})
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'feats' ? 'active' : ''}`}
+              onClick={() => setActiveTab('feats')}
+            >
+              🏆 Feats ({feats.length})
+            </button>
           </div>
 
           {/* Search and Filter */}
@@ -303,7 +370,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
               <div key={item.id} className="item-card">
                 <div className="item-header">
                   <h3 className="item-title">{item.label}</h3>
-                  {item.rarity && (
+                  {activeTab === 'exploits' && item.rarity && (
                     <span 
                       className={`rarity-badge ${item.rarity.toLowerCase()}`}
                     >

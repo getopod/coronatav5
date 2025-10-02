@@ -153,8 +153,8 @@ export function refillHandFromDeck(state: GameState): void {
   
   if (!handPile || !deckPile) return;
   
-  // Refill to hand size 5 (or as many cards as available in deck)
-  const targetHandSize = 5;
+  // Get max hand size from player state (default 5 if not set)
+  const targetHandSize = state.player?.maxHandSize || 5;
   const cardsNeeded = targetHandSize - handPile.cards.length;
   
   if (cardsNeeded > 0 && deckPile.cards.length > 0) {
@@ -166,6 +166,6 @@ export function refillHandFromDeck(state: GameState): void {
     
     handPile.cards.push(...drawnCards);
     
-    console.log(`Hand refilled: drew ${cardsToTake} cards, hand now has ${handPile.cards.length} cards`);
+    console.log(`Hand refilled: drew ${cardsToTake} cards to reach max hand size ${targetHandSize}, hand now has ${handPile.cards.length} cards`);
   }
 }

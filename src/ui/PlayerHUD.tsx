@@ -8,9 +8,11 @@ export interface PlayerHUDProps {
   gameState: GameState;
   selectedFortune?: any;
   onNavigateToWelcome?: () => void;
+  onShowRunRecap?: () => void;
+  onChoiceSelected?: (choice: 'trade' | 'wander' | 'gamble') => void;
 }
 
-export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome }) => {
+export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome, onShowRunRecap, onChoiceSelected }) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
   const progressBarRef = React.useRef<HTMLDivElement>(null);
@@ -35,9 +37,11 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   // Handle player choice after encounter completion
   const handlePlayerChoice = (choice: 'trade' | 'wander' | 'gamble') => {
     console.log('Player selected choice:', choice);
-    // Call scoring system to progress after choice
-    // This will be connected to the engine controller's scoring system
-    alert(`Choice "${choice}" selected! (Progression logic to be implemented)`);
+    if (onChoiceSelected) {
+      onChoiceSelected(choice);
+    } else {
+      alert(`Choice "${choice}" selected! (Progression logic to be implemented)`);
+    }
   };
 
   // Handle discard action - move hand cards back to deck, shuffle, and redraw
@@ -306,9 +310,9 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
           <div className="effect-count has-items">
             <div className="resource-header">
               <span className="effect-icon">✋</span>
-              <span className="effect-value">{gameState.piles?.hand?.cards?.length || 0}</span>
+              <span className="effect-value">{player.maxHandSize || 5}</span>
             </div>
-            <span className="effect-label">Hand Size</span>
+            <span className="effect-label">Max Hand Size</span>
           </div>
         </div>
       </div>
@@ -374,11 +378,13 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
       <div className="hud-controls">
         <button 
           className="resign-button" 
-          title="Resign and return to menu"
+          title="Resign and view run summary"
           onClick={() => {
-            if (confirm('Are you sure you want to resign and return to the menu?')) {
-              console.log('Player resigned');
-              if (onNavigateToWelcome) {
+            if (confirm('Are you sure you want to resign and view the run recap?')) {
+              console.log('Player resigned - showing run recap');
+              if (onShowRunRecap) {
+                onShowRunRecap();
+              } else if (onNavigateToWelcome) {
                 onNavigateToWelcome();
               }
             }

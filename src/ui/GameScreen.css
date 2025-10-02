@@ -27,12 +27,13 @@
 @media (max-width: 768px) {
   .game-screen-root {
     /* Ensure proper positioning on mobile */
-    top: 4px;
-    left: 4px;
-    width: calc(100vw - 8px);
-    min-height: calc(100vh - 8px);
+    top: 2px;
+    left: 2px;
+    width: calc(100vw - 4px);
+    min-height: calc(100vh - 4px);
     /* Prevent content from being too small */
-    min-width: 375px; /* iPhone standard width */
+    min-width: 320px; /* Actual minimum iPhone width */
+    padding: 2px;
   }
 }
 .game-screen-root[data-tableau-row-height] {
@@ -48,33 +49,33 @@
 /* Valid move destination highlighting */
 /* Foundation piles - highlight the entire pile since only one card is visible */
 .foundation-pile.valid-destination {
-  border: 3px solid #4caf50 !important;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
-  animation: pulse-green 1.5s ease-in-out infinite;
+  border: 4px solid #00ff00 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 0, 0.8) !important;
+  animation: pulse-green 1.2s ease-in-out infinite;
 }
 
 /* Tableau piles - highlight only the bottom card that can accept the move */
 .tableau-pile.valid-destination .pile-cards-vertical > .card:last-child {
-  border: 3px solid #4caf50 !important;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
-  animation: pulse-green 1.5s ease-in-out infinite;
+  border: 4px solid #00ff00 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 0, 0.8) !important;
+  animation: pulse-green 1.2s ease-in-out infinite;
 }
 
 /* For empty tableau piles, highlight the card outline */
 .tableau-pile.valid-destination .card-outline {
-  border: 3px solid #4caf50 !important;
-  box-shadow: 0 0 12px rgba(76, 175, 80, 0.6) !important;
-  animation: pulse-green 1.5s ease-in-out infinite;
+  border: 4px solid #00ff00 !important;
+  box-shadow: 0 0 16px rgba(0, 255, 0, 0.8) !important;
+  animation: pulse-green 1.2s ease-in-out infinite;
 }
 
 @keyframes pulse-green {
   0%, 100% { 
-    border-color: #4caf50;
-    box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+    border-color: #00ff00;
+    box-shadow: 0 0 16px rgba(0, 255, 0, 0.8);
   }
   50% { 
-    border-color: #8bc34a;
-    box-shadow: 0 0 18px rgba(139, 195, 74, 0.8);
+    border-color: #66ff66;
+    box-shadow: 0 0 24px rgba(102, 255, 102, 1.0);
   }
 }
 
@@ -560,4 +561,24 @@ body {
 .stat-item span {
   color: #007bff;
   font-weight: bold;
+}
+
+/* Choice Screen Overlay Styles */
+.screen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-overlay > * {
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
 }

@@ -51,14 +51,14 @@
 .glossary-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 25px 30px;
+  padding: 15px 30px;
   text-align: center;
   position: relative;
 }
 
 .glossary-header h1 {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

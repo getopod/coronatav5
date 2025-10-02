@@ -24,6 +24,7 @@ export interface PlayerState {
   shuffles?: number;
   discards?: number;
   score?: number;
+  maxHandSize?: number; // Maximum cards in hand (default 5, can be increased by effects)
   exploits?: string[]; // IDs of equipped exploits
   curses?: string[]; // IDs of active curses
   blessings?: string[]; // IDs of active blessings

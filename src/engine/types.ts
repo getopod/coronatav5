@@ -51,6 +51,9 @@ export interface GameState {
   history: Move[];
   meta?: Record<string, any>;
   profile?: PlayerProfile;
+  activeMultipliers?: any[]; // Store active score multipliers
+  movePermissions?: any[]; // Store special move permissions
+  run?: any; // Coronata run state
 }
 
 export interface Move {

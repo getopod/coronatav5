@@ -70,7 +70,10 @@ export function loadRegistry(config: RegistryConfig): GameState {
   // Build initial game state
   const state: GameState = {
     piles,
-    player: config.resources || {},
+    player: {
+      maxHandSize: 5,
+      ...config.resources || {}
+    },
     registry: config,
     history: [],
     meta: config.meta,

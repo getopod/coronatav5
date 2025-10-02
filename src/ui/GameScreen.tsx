@@ -6,6 +6,9 @@ import { EngineController } from '../engine/engineController';
 import { getMovableStack, validateMove } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
 import { GameState } from '../core_engine/types';
+import ChoiceSelectionScreen from './ChoiceSelectionScreen';
+import TradeScreen from './TradeScreen';
+import WanderScreen from './WanderScreen';
 import './GameScreen.css';
 
 interface GameScreenProps {
@@ -162,6 +165,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
   const [showResignModal, setShowResignModal] = React.useState(false);
   const [showRunRecap, setShowRunRecap] = React.useState(false);
+  
+  // Choice screen states
+  const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander'>('game');
+  const [gambleBonus, setGambleBonus] = React.useState(false);
 
   // Force re-render when engine events occur (especially for score updates)
   React.useEffect(() => {
@@ -179,6 +186,47 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       console.log('Clearing shake for card:', cardId);
       setShakeCardId(null);
     }, 600);
+  };
+
+  // Handle player choice selection
+  const handleChoiceSelected = (choice: 'trade' | 'wander' | 'gamble') => {
+    console.log('Player chose:', choice);
+    if (choice === 'trade') {
+      setCurrentScreen('trade');
+    } else if (choice === 'wander') {
+      setCurrentScreen('wander');
+    } else if (choice === 'gamble') {
+      // Apply 25% bonus for next encounter and continue game
+      setGambleBonus(true);
+      setCurrentScreen('game');
+      console.log('Gamble bonus activated - 25% scoring multiplier for next encounter');
+    }
+  };
+
+  // Handle trade screen actions
+  const handleTradeBack = () => {
+    setCurrentScreen('choice');
+  };
+
+  const handleTradePurchase = (item: any, cost: number) => {
+    console.log('Purchased item:', item, 'for', cost, 'coins');
+    // TODO: Implement purchase logic with engine
+  };
+
+  const handleTradeSell = (item: any, value: number) => {
+    console.log('Sold item:', item, 'for', value, 'coins');
+    // TODO: Implement sell logic with engine
+  };
+
+  // Handle wander screen actions
+  const handleWanderBack = () => {
+    setCurrentScreen('choice');
+  };
+
+  const handleWanderChoice = (wanderId: string, choice: string, outcome: string) => {
+    console.log('Wander choice made:', { wanderId, choice, outcome });
+    // TODO: Apply wander outcome effects through engine
+    setCurrentScreen('game');
   };
 
   // Function to find all valid move destinations for a card
@@ -841,18 +889,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       </div>
       
       {/* Player HUD */}
-      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} />}
-      
-      {/* Game controls and resign button */}
-      <div className="game-controls">
-        <button 
-          className="resign-button"
-          onClick={() => setShowResignModal(true)}
-          title="End current run and return to main menu"
-        >
-          Resign
-        </button>
-      </div>
+      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} onChoiceSelected={handleChoiceSelected} />}
       
       {/* Move error display */}
       {moveError && (
@@ -927,6 +964,40 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Choice Screens - overlay when not in game mode */}
+      {currentScreen === 'choice' && (
+        <div className="screen-overlay">
+          <ChoiceSelectionScreen
+            onTradeSelected={() => setCurrentScreen('trade')}
+            onWanderSelected={() => setCurrentScreen('wander')}
+            onGambleSelected={() => handleChoiceSelected('gamble')}
+            onBack={() => setCurrentScreen('game')}
+          />
+        </div>
+      )}
+
+      {currentScreen === 'trade' && (
+        <div className="screen-overlay">
+          <TradeScreen
+            onBack={handleTradeBack}
+            onPurchase={handleTradePurchase}
+            onSell={handleTradeSell}
+            playerCoin={gameState.player?.coin || 0}
+            equippedExploits={gameState.player?.exploits?.map(id => 
+              registry.exploit.find(e => e.id === id)).filter((item): item is any => item !== undefined) || []}
+          />
+        </div>
+      )}
+
+      {currentScreen === 'wander' && (
+        <div className="screen-overlay">
+          <WanderScreen
+            onChoiceMade={handleWanderChoice}
+            onBack={handleWanderBack}
+          />
         </div>
       )}
     </div>
