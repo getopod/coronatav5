@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { gameModeProfiles } from '../engine/gameModeProfiles';
+import { gameModeProfiles } from '../core_engine/gameModeProfiles';
 import coronataCardBack from '../assets/coronata-card-back.png';
 import coronataLogo from '../assets/coronata_logo_compact.svg';
 

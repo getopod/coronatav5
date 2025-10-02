@@ -139,7 +139,7 @@ export function createDefaultCoronataPiles() {
   const stockCards = deck.slice(deckIndex);
 
   return {
-    stock: { id: 'stock', type: 'stock', cards: stockCards, rules: { faceDown: true }, meta: {} },
+    deck: { id: 'deck', type: 'stock', cards: stockCards, rules: { faceDown: true }, meta: {} },
     waste: { id: 'waste', type: 'waste', cards: [], rules: { faceUp: true }, meta: {} },
     hand: { id: 'hand', type: 'hand', cards: handCards, rules: { faceUp: true }, meta: {} },
     foundation1: { id: 'foundation1', type: 'foundation', cards: [], rules: { suit: 'hearts', faceUp: true }, meta: {} },

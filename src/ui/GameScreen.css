@@ -152,7 +152,7 @@
   height: 72px !important;
 }
 .deck-tableau-gap {
-  height: 16px;
+  height: 0px;
   width: 100%;
 }
 
@@ -280,9 +280,9 @@ body {
 
 .deck-area {
   display: flex;
-  gap: 16px;
+  gap: 8px;
   margin: 0;
-  width: 432px;
+  width: 376px;
   height: 72px;
 }
 
@@ -310,8 +310,8 @@ body {
 
 .foundation-area {
   display: flex;
-  gap: 16px;
-  width: 240px;
+  gap: 8px;
+  width: 216px;
   min-width: 48px;
   min-height: 72px;
 }
@@ -345,8 +345,8 @@ body {
 }
 .tableau-row {
   display: flex;
-  gap: 16px;
-  width: 432px;
+  gap: 8px;
+  width: 376px;
   height: var(--tableau-row-height);
 }
 .tableau-pile {
@@ -563,7 +563,155 @@ body {
   font-weight: bold;
 }
 
-/* Choice Screen Overlay Styles */
+/* Enhanced Run Recap Modal Styles */
+.run-recap-enhanced {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.recap-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.recap-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: #FFD700;
+  font-size: 2rem;
+}
+
+.recap-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
+
+.recap-content {
+  margin-bottom: 2rem;
+}
+
+.recap-main-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.main-stat {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #FFD700;
+}
+
+.recap-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-section h3 {
+  margin: 0 0 1rem 0;
+  color: #FFD700;
+  font-size: 1.2rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-label {
+  opacity: 0.8;
+}
+
+.detail-value {
+  font-weight: bold;
+  color: #FFD700;
+}
+
+.fortune-display {
+  background: rgba(138, 43, 226, 0.2);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.fortune-name {
+  font-weight: bold;
+  color: #DDA0DD;
+  margin-bottom: 0.5rem;
+}
+
+.fortune-desc {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.exploits-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.exploit-tag {
+  background: rgba(255, 140, 0, 0.2);
+  border: 1px solid rgba(255, 140, 0, 0.3);
+  color: #FFD700;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.modal-button.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.modal-button.primary {
+  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+  color: #000;
+  border: none;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .recap-main-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .screen-overlay {
   position: fixed;
   top: 0;

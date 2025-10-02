@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History } from './ui';
-import { EngineController } from './engine/engineController';
+import { EngineController } from './core_engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
 import { setupCoronataEngine } from './core_engine/gameInitialization';
