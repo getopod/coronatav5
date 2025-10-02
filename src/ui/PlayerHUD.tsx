@@ -7,9 +7,10 @@ import './PlayerHUD.css';
 export interface PlayerHUDProps {
   gameState: GameState;
   selectedFortune?: any;
+  onNavigateToWelcome?: () => void;
 }
 
-export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune }) => {
+export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome }) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
   const progressBarRef = React.useRef<HTMLDivElement>(null);
@@ -368,9 +369,10 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
           title="Resign and return to menu"
           onClick={() => {
             if (confirm('Are you sure you want to resign and return to the menu?')) {
-              // This will be connected to proper navigation logic
               console.log('Player resigned');
-              alert('Resign functionality will be implemented soon!');
+              if (onNavigateToWelcome) {
+                onNavigateToWelcome();
+              }
             }
           }}
         >

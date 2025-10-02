@@ -769,7 +769,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       {/* Player Hand Area (only for Coronata) */}
       {isCoronata && handPile && (
         <div className="player-hand-area">
-          <div className="hand-label">Player Hand</div>
           <div className="hand-cards">
             {handPile.cards.length > 0 ? (
               handPile.cards.map((card: any, index: number) => (
@@ -842,7 +841,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       </div>
       
       {/* Player HUD */}
-      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} />}
+      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} />}
       
       {/* Game controls and resign button */}
       <div className="game-controls">
