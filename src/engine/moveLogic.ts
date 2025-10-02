@@ -2,12 +2,27 @@ import { Card, Pile, GameState, Move } from './types';
 
 // Move a card or stack from one pile to another
 export function moveCard(state: GameState, move: Move): GameState {
-  const fromPile = state.piles[move.from];
-  const toPile = state.piles[move.to];
+  // Create a shallow copy of state with deep copied piles to avoid mutations
+  const newState: GameState = {
+    ...state,
+    piles: {},
+    history: [...state.history]
+  };
+  
+  // Deep copy the piles object
+  for (const [id, pile] of Object.entries(state.piles)) {
+    newState.piles[id] = {
+      ...pile,
+      cards: [...pile.cards.map(card => ({ ...card }))]
+    };
+  }
+  
+  const fromPile = newState.piles[move.from];
+  const toPile = newState.piles[move.to];
   if (!fromPile || !toPile) return state;
   
-  // Get the movable stack starting from the specified card
-  const movableStack = getMovableStack(fromPile, move.cardId);
+  // Get the movable stack starting from the specified card (use original state for validation)
+  const movableStack = getMovableStack(state.piles[move.from], move.cardId);
   if (movableStack.length === 0) return state;
   
   const cardIdx = fromPile.cards.findIndex(c => c.id === move.cardId);
@@ -15,7 +30,9 @@ export function moveCard(state: GameState, move: Move): GameState {
   
   // Track card history for scoring - mark cards that have been played to tableau
   // Only apply this tag when cards are moved TO tableau by player moves, not during setup
-  movableStack.forEach(card => {
+  // Get the corresponding cards from the new state to modify
+  const newMovableStack = fromPile.cards.slice(cardIdx, cardIdx + movableStack.length);
+  newMovableStack.forEach(card => {
     card.tags ??= [];
     if (toPile.type === 'tableau' && !card.tags.includes('been-on-tableau')) {
       card.tags.push('been-on-tableau');
@@ -32,22 +49,27 @@ export function moveCard(state: GameState, move: Move): GameState {
   }
   
   // Add the entire stack to toPile
-  toPile.cards.push(...movableStack);
+  toPile.cards.push(...newMovableStack);
   
   // Coronata: Auto-refill hand when cards are played from hand to tableau or foundation
   console.log('Move details:', { from: move.from, to: move.to, toPileType: toPile.type });
+  console.log('Hand pile before refill:', newState.piles.hand?.cards?.length || 0, 'cards');
+  console.log('Deck pile before refill:', newState.piles.deck?.cards?.length || 0, 'cards');
+  
   if (move.from === 'hand' && (toPile.type === 'tableau' || toPile.type === 'foundation')) {
     console.log('Triggering hand refill from moveCard');
-    refillHandFromDeck(state);
+    refillHandFromDeck(newState);
+    console.log('Hand pile after refill:', newState.piles.hand?.cards?.length || 0, 'cards');
+    console.log('Deck pile after refill:', newState.piles.deck?.cards?.length || 0, 'cards');
   }
   
   // Record move in history with stack information
-  state.history.push({
+  newState.history.push({
     ...move,
-    stackSize: movableStack.length,
-    cardIds: movableStack.map(c => c.id)
+    stackSize: newMovableStack.length,
+    cardIds: newMovableStack.map(c => c.id)
   });
-  return state;
+  return newState;
 }
 
 // Klondike move validation (stacking, alternation, foundation)
@@ -138,11 +160,7 @@ export function getMovableStack(pile: Pile, cardId: string): Card[] {
 }
 
 // Coronata move validation stub
-export function validateCoronataMove(move: Move, state: GameState): boolean {
-  // TODO: Implement Coronata-specific move validation logic
-  // For now, accept all moves as valid
-  return true;
-}
+// Removed unused validateCoronataMove to resolve linter error
 // Modular: allow swapping out validateMove for other games
 export type MoveValidator = (move: Move, state: GameState) => boolean;
 
@@ -164,7 +182,9 @@ export function refillHandFromDeck(state: GameState): void {
     // Make sure drawn cards are face up in hand
     drawnCards.forEach(card => card.faceUp = true);
     
-    handPile.cards.push(...drawnCards);
+    // Create new arrays to trigger React re-render
+    handPile.cards = [...handPile.cards, ...drawnCards];
+    deckPile.cards = [...deckPile.cards]; // Trigger update for deck too
     
     console.log(`Hand refilled: drew ${cardsToTake} cards to reach max hand size ${targetHandSize}, hand now has ${handPile.cards.length} cards`);
   }

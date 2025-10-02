@@ -1,3 +1,51 @@
+// Helper: cryptographically secure shuffle
+function secureShuffle(array: any[], cryptoModule?: any) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j;
+    if (cryptoModule && typeof cryptoModule.randomInt === 'function') {
+      j = cryptoModule.randomInt(0, i + 1);
+    } else if (cryptoModule && typeof cryptoModule.randomBytes === 'function') {
+      const randBytes = cryptoModule.randomBytes(4);
+      const rand = randBytes.readUInt32BE(0);
+      j = Math.floor((rand / (0xFFFFFFFF + 1)) * (i + 1));
+    } else if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+      const randArray = new Uint32Array(1);
+      window.crypto.getRandomValues(randArray);
+      j = Math.floor((randArray[0] / (0xFFFFFFFF + 1)) * (i + 1));
+    } else {
+      throw new Error('No cryptographically secure random number generator available for shuffling.');
+    }
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+// Helper: create new game state after discard
+function getDiscardedState(gameState: any, handPile: any, deckPile: any, player: any, cryptoModule: any) {
+  const newDeckCards = [...deckPile.cards, ...handPile.cards];
+  secureShuffle(newDeckCards, cryptoModule);
+  const newHandCards = newDeckCards.slice(0, 5);
+  const remainingDeckCards = newDeckCards.slice(5);
+  return {
+    ...gameState,
+    piles: {
+      ...gameState.piles,
+      hand: {
+        ...handPile,
+        cards: newHandCards
+      },
+      deck: {
+        ...deckPile,
+        cards: remainingDeckCards
+      }
+    },
+    player: {
+      ...player,
+      discards: (player.discards || 0) - 1
+    },
+    _newHandCards: newHandCards // for logging only
+  };
+}
 import React from 'react';
 import { GameState } from '../core_engine/types';
 import { registry } from '../registry/index';
@@ -25,7 +73,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   const [showModal, setShowModal] = React.useState(false);
   const [modalContent, setModalContent] = React.useState<any[]>([]);
   const [modalTitle, setModalTitle] = React.useState('');
-  const [tooltip, setTooltip] = React.useState<{show: boolean, content: string, x: number, y: number}>({show: false, content: '', x: 0, y: 0});
+  const [showFortunePopup, setShowFortunePopup] = React.useState(false);
 
   // Debug logging
   console.log('PlayerHUD - gameState:', gameState);
@@ -77,45 +125,22 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
     // 2. Shuffle deck
     // 3. Draw 5 new cards
     // 4. Decrement discards resource
-    const newDeckCards = [...deckPile.cards, ...handPile.cards];
-    
-    // Simple shuffle (Fisher-Yates)
-    for (let i = newDeckCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newDeckCards[i], newDeckCards[j]] = [newDeckCards[j], newDeckCards[i]];
+    let cryptoModule = undefined;
+    if (typeof require !== 'undefined') {
+      try {
+        cryptoModule = require('crypto');
+      } catch { /* ignore */ }
     }
+  const newState = getDiscardedState(gameState, handPile, deckPile, player, cryptoModule);
+  const { _newHandCards, ...cleanState } = newState;
 
-    // Draw 5 new cards for hand
-    const newHandCards = newDeckCards.slice(0, 5);
-    const remainingDeckCards = newDeckCards.slice(5);
-
-    // Create updated state
-    const newState = {
-      ...gameState,
-      piles: {
-        ...gameState.piles,
-        hand: {
-          ...handPile,
-          cards: newHandCards
-        },
-        deck: {
-          ...deckPile,
-          cards: remainingDeckCards
-        }
-      },
-      player: {
-        ...player,
-        discards: discardsRemaining - 1
-      }
-    };
-
-    // Update engine state
-    engine.state = newState;
+    // Update engine state with new object reference for React to detect changes
+  engine.state = { ...cleanState };
     
     // Emit event to trigger UI refresh
     engine.emitEvent('handDiscarded', { source: 'playerHUD' });
     
-    console.log('Hand discarded and refreshed:', { newHandSize: newHandCards.length, discardsLeft: discardsRemaining - 1 });
+  console.log('Hand discarded and refreshed:', { newHandSize: newState._newHandCards.length, discardsLeft: discardsRemaining - 1 });
   };
 
   // Get counts for different item types
@@ -174,41 +199,14 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
     setModalTitle(title);
     setShowModal(true);
   };
-  
-  // Handle hover for tooltip
-  const handleEffectHover = (event: React.MouseEvent, type: string) => {
-    let items: any[];
-    
-    if (type === 'exploits') {
-      items = getPlayerExploits();
-    } else if (type === 'curses') {
-      items = getPlayerCurses();
-    } else if (type === 'blessings') {
-      items = getPlayerBlessings();
-    } else {
-      items = getPlayerFortunes();
-    }
-    
-    if (items.length > 0) {
-      const content = items.filter(item => item).map(item => `${item.label}: ${item.description}`).join('\n\n');
-      setTooltip({
-        show: true,
-        content,
-        x: event.clientX,
-        y: event.clientY
-      });
-    }
-  };
-  
-  const handleEffectLeave = () => {
-    setTooltip({show: false, content: '', x: 0, y: 0});
-  };
 
   // Update progress bar width
   React.useEffect(() => {
     if (progressBarRef.current && encounter?.scoreGoal) {
       const percentage = Math.min(100, ((player.score || 0) / encounter.scoreGoal) * 100);
-      progressBarRef.current.style.width = `${percentage}%`;
+      progressBarRef.current.style.setProperty('--score', String(player.score || 0));
+      progressBarRef.current.style.setProperty('--goal', String(encounter.scoreGoal));
+      progressBarRef.current.style.setProperty('--progress-width', `${percentage}%`);
       console.log(`Progress bar updated: ${percentage}% (${player.score}/${encounter.scoreGoal})`);
     }
   }, [player.score, encounter?.scoreGoal]);
@@ -288,31 +286,24 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
               <span className="effect-icon">🪙</span>
               <span className="effect-value">{player.coins || 0}</span>
             </div>
-            <span className="effect-label">Coin</span>
           </div>
-          
           <div className="effect-count has-items">
             <div className="resource-header">
               <span className="effect-icon">🔄</span>
               <span className="effect-value">{player.shuffles || 0}</span>
             </div>
-            <span className="effect-label">Shuffles</span>
           </div>
-          
           <div className="effect-count has-items">
             <div className="resource-header">
               <span className="effect-icon">🗑️</span>
               <span className="effect-value">{player.discards || 0}</span>
             </div>
-            <span className="effect-label">Discards</span>
           </div>
-          
           <div className="effect-count has-items">
             <div className="resource-header">
               <span className="effect-icon">✋</span>
               <span className="effect-value">{player.maxHandSize || 5}</span>
             </div>
-            <span className="effect-label">Max Hand Size</span>
           </div>
         </div>
       </div>
@@ -320,57 +311,50 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
       {/* Active Effects Summary */}
       <div className="effects-section">
         <div className="effects-grid">
-          <div 
+          <button
             className={`effect-count ${exploitCount > 0 ? 'has-items clickable' : ''}`}
+            type="button"
             onClick={() => exploitCount > 0 && handleEffectClick('exploits')}
-            onMouseEnter={(e) => exploitCount > 0 && handleEffectHover(e, 'exploits')}
-            onMouseLeave={handleEffectLeave}
           >
             <div className="resource-header">
               <span className="effect-icon">⚔️</span>
               <span className="effect-value">{exploitCount}</span>
             </div>
-            <span className="effect-label">Exploits</span>
-          </div>
-          
-          <div 
+          </button>
+          <button
             className={`effect-count ${curseCount > 0 ? 'has-items clickable' : ''}`}
+            type="button"
             onClick={() => curseCount > 0 && handleEffectClick('curses')}
-            onMouseEnter={(e) => curseCount > 0 && handleEffectHover(e, 'curses')}
-            onMouseLeave={handleEffectLeave}
           >
             <div className="resource-header">
               <span className="effect-icon">💀</span>
               <span className="effect-value">{curseCount}</span>
             </div>
-            <span className="effect-label">Curses</span>
-          </div>
-          
-          <div 
+          </button>
+          <button
             className={`effect-count ${blessingCount > 0 ? 'has-items clickable' : ''}`}
+            type="button"
             onClick={() => blessingCount > 0 && handleEffectClick('blessings')}
-            onMouseEnter={(e) => blessingCount > 0 && handleEffectHover(e, 'blessings')}
-            onMouseLeave={handleEffectLeave}
           >
             <div className="resource-header">
               <span className="effect-icon">✨</span>
               <span className="effect-value">{blessingCount}</span>
             </div>
-            <span className="effect-label">Blessings</span>
-          </div>
-          
-          <div 
+          </button>
+          <button
             className={`effect-count ${fortuneCount > 0 ? 'has-items clickable' : ''}`}
-            onClick={() => fortuneCount > 0 && handleEffectClick('fortunes')}
-            onMouseEnter={(e) => fortuneCount > 0 && handleEffectHover(e, 'fortunes')}
-            onMouseLeave={handleEffectLeave}
+            type="button"
+            onClick={() => {
+              if (fortuneCount > 0) {
+                setShowFortunePopup(!showFortunePopup);
+              }
+            }}
           >
             <div className="resource-header">
               <span className="effect-icon">🍀</span>
               <span className="effect-value">{fortuneCount}</span>
             </div>
-            <span className="effect-label">Fortunes</span>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -414,41 +398,55 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
         </button>
       </div>
       
-      {/* Tooltip */}
-      {tooltip.show && (
-        <div 
-          className="effect-tooltip"
-          style={{
-            position: 'fixed',
-            left: tooltip.x + 10,
-            top: tooltip.y - 10,
-            zIndex: 2000
-          }}
-        >
-          {tooltip.content.split('\n\n').map((item, index) => (
-            <div key={index} className="tooltip-item">{item}</div>
-          ))}
+      {/* Fortune Popup */}
+      {showFortunePopup && selectedFortune && (
+        <div className="fortune-popup">
+          <div className="fortune-popup-content">
+            <div className="fortune-popup-header">
+              <h3>{selectedFortune.label}</h3>
+              <button 
+                className="fortune-popup-close" 
+                onClick={() => setShowFortunePopup(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="fortune-popup-body">
+              <p>{selectedFortune.description}</p>
+              {selectedFortune.effects && selectedFortune.effects.length > 0 && (
+                <div className="fortune-effects">
+                  <strong>Effects:</strong>
+                  {selectedFortune.effects.map((effect: any, effectIndex: number) => (
+                    <div key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
+                      {effect.action} {effect.target} {effect.value && `(${effect.value})`}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
       
       {/* Modal */}
       {showModal && (
-        <div className="effect-modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="effect-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="effect-modal-overlay">
+          <section className="effect-modal" aria-label="Effect Modal">
+            <button className="modal-close modal-close-abs" type="button" aria-label="Close modal" onClick={() => setShowModal(false)}>&times;</button>
             <div className="modal-header">
               <h3>{modalTitle}</h3>
               <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
             <div className="modal-content">
-              {modalContent.map((item, index) => (
-                <div key={index} className="modal-item">
+              {modalContent.map((item, idx) => (
+                <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
                   <div className="modal-item-title">{item.label}</div>
                   <div className="modal-item-description">{item.description}</div>
                   {item.effects && item.effects.length > 0 && (
                     <div className="modal-item-effects">
                       <strong>Effects:</strong>
                       {item.effects.map((effect: any, effectIndex: number) => (
-                        <div key={effectIndex} className="effect-detail">
+                        <div key={typeof effect === 'string' ? effect : effectIndex + '-' + String(effect)} className="effect-detail">
                           {effect.action} {effect.target} {effect.value && `(${effect.value})`}
                         </div>
                       ))}
@@ -457,7 +455,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>

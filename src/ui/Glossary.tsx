@@ -276,12 +276,9 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
   return (
     <div className="glossary">
       <div className="glossary-container">
-        <header className="glossary-header">
-          <h1>Coronata Glossary</h1>
-          <button className="close-button" onClick={onBack}>
-            ✕
-          </button>
-        </header>
+        <button className="close-button" onClick={onBack}>
+          ✕
+        </button>
 
         <div className="glossary-controls">
           {/* Tab Navigation */}
@@ -367,7 +364,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
 
           <div className="items-grid">
             {filteredItems.map((item) => (
-              <div key={item.id} className="item-card">
+              <div key={item.id} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
                 <div className="item-header">
                   <h3 className="item-title">{item.label}</h3>
                   {activeTab === 'exploits' && item.rarity && (
@@ -383,7 +380,6 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
                 
                 {item.effects && item.effects.length > 0 && (
                   <div className="item-effects">
-                    <h4>Effects:</h4>
                     <ul>
                       {item.effects.map((effect, effectIndex) => (
                         <li key={`${item.id}-effect-${effectIndex}-${effect.action || 'unknown'}`}>{getConciseEffectDescription(effect)}</li>

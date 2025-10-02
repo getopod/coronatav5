@@ -2,7 +2,6 @@ import React from 'react';
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
 import { Card } from './Card';
-import { EngineController } from '../engine/engineController';
 import { getMovableStack, validateMove } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
 import { GameState } from '../core_engine/types';
@@ -27,6 +26,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   // Cast engine state to extended GameState for Coronata features
   // Use event dependency to re-render when engine state changes
   const gameState = React.useMemo(() => engine.state as GameState, [engine.state, event]);
+  // const player = gameState.player || {}; // Remove duplicate, use inside useMemo or where needed
+  const cardHeight = config.cardHeight || 72;
+  const overlapPercent = 0.5; // 50% overlap
+  const tableauRowHeight = 14 * (cardHeight * overlapPercent);
   
   // Debug logging
   console.log('GameScreen rendering with engine state:', gameState);
@@ -38,146 +41,94 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const isCoronata = (config.rules === 'coronata');
   console.log('Is Coronata mode:', isCoronata);
 
-  // --- Registry-driven effect HUD ---
-  // Get only truly active effects from game state (equipped exploits, active fears/dangers, etc.)
-  const activeEffects: any[] = React.useMemo(() => {
-    const effects: any[] = [];
-    const player = gameState.player || {};
-    // Use run state for encounter info
-    const encounter = gameState.run?.encounter || {} as any;
-    
-    // Get effects from equipped exploits
-    if (player.exploits && Array.isArray(player.exploits)) {
-      player.exploits.forEach((exploitId: string) => {
-        const exploit = registry.exploit.find((e: any) => e.id === exploitId);
-        if (exploit && exploit.effects) {
-          exploit.effects.forEach((eff: any) => {
-            effects.push({
-              ...eff,
-              label: exploit.label,
-              description: exploit.description,
-              type: exploit.type,
-              id: exploit.id,
-              source: 'exploit'
-            });
-          });
-        }
-      });
-    }
-    
-    // Get effects from active fear/danger
-    if (encounter.fear) {
-      const fear = registry.fear.find((f: any) => f.id === encounter.fear);
-      if (fear && fear.effects) {
-        fear.effects.forEach((eff: any) => {
-          effects.push({
-            ...eff,
-            label: fear.label,
-            description: fear.description,
-            type: fear.type,
-            id: fear.id,
-            source: 'fear'
-          });
-        });
-      }
-    }
-    if (encounter.danger) {
-      const danger = registry.danger.find((d: any) => d.id === encounter.danger);
-      if (danger && danger.effects) {
-        danger.effects.forEach((eff: any) => {
-          effects.push({
-            ...eff,
-            label: danger.label,
-            description: danger.description,
-            type: danger.type,
-            id: danger.id,
-            source: 'danger'
-          });
-        });
-      }
-    }
-    
-    // Get effects from active curses
-    if (player.curses && Array.isArray(player.curses)) {
-      player.curses.forEach((curseId: string) => {
-        const curse = registry.curse.find((c: any) => c.id === curseId);
-        if (curse && curse.effects) {
-          curse.effects.forEach((eff: any) => {
-            effects.push({
-              ...eff,
-              label: curse.label,
-              description: curse.description,
-              type: curse.type,
-              id: curse.id,
-              source: 'curse'
-            });
-          });
-        }
-      });
-    }
-    
-    // Get effects from selected fortune (passed from App.jsx)
-    if (selectedFortune && selectedFortune.effects) {
-      selectedFortune.effects.forEach((eff: any) => {
-        effects.push({
-          ...eff,
-          label: selectedFortune.label,
-          description: selectedFortune.description,
-          type: selectedFortune.type,
-          id: selectedFortune.id,
-          source: 'fortune'
-        });
-      });
-    }
-    
-    return effects;
-  }, [gameState.player, selectedFortune]);
-
-  // Collapsible state for effect categories
-  const [collapsedCategories, setCollapsedCategories] = React.useState<{ [key: string]: boolean }>({});
-  // Group effects by category (using 'type' as category)
-  const effectsByCategory = React.useMemo(() => {
-    const groups: { [key: string]: any[] } = {};
-    activeEffects.forEach(eff => {
-      const cat = eff.type || 'Other';
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(eff);
-    });
-    return groups;
-  }, [activeEffects]);
-  // Toggle collapse for a category
-  const toggleCategory = (cat: string) => {
-    setCollapsedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
-  };
-  const cardWidth = config.cardWidth || 48;
-  const cardHeight = config.cardHeight || 72;
-  const tableauGap = config.tableauGap || 16;
-  const deckWasteGap = config.deckWasteGap || 16;
-  const wasteFoundationGap = config.wasteFoundationGap || 24;
-  const overlapPercent = 0.5; // 50% overlap
-  const tableauRowHeight = 14 * (cardHeight * overlapPercent);
-  const [moveError, setMoveError] = React.useState<string | null>(null);
-  const effectFeedbackRef = React.useRef<HTMLDivElement>(null);
+  // --- State hooks ---
   const [selectedCardId, setSelectedCardId] = React.useState<string | null>(null);
   const [draggedCardId, setDraggedCardId] = React.useState<string | null>(null);
   const [dragOverPileId, setDragOverPileId] = React.useState<string | null>(null);
   const [shakeCardId, setShakeCardId] = React.useState<string | null>(null);
-  const [forceUpdate, setForceUpdate] = React.useState(0);
   const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
   const [showResignModal, setShowResignModal] = React.useState(false);
   const [showRunRecap, setShowRunRecap] = React.useState(false);
+
+  // --- Registry-driven effect HUD ---
+  // Get only truly active effects from game state (equipped exploits, active fears/dangers, etc.)
+  // const activeEffects: any[] = React.useMemo(() => {
+  //   const effects: any[] = [];
+  //   const player = gameState.player || {};
+  //   const encounter = gameState.run?.encounter || {} as any;
+  //   // Get effects from equipped exploits
+  //   if (player.exploits && Array.isArray(player.exploits)) {
+  //     player.exploits.forEach((exploitId: string) => {
+  //       const exploit = registry.exploit.find((e: any) => e.id === exploitId);
+  //       if (exploit && exploit.effects) {
+  //         exploit.effects.forEach((eff: any) => {
+  //           effects.push({
+  //             ...eff,
+  //             label: exploit.label,
+  //             description: exploit.description,
+  //             type: exploit.type,
+  //             id: exploit.id,
+  //             source: 'exploit'
+  //           });
+  //         });
+  //       }
+  //     });
+  //   }
+  //   // Get effects from active fear/danger
+  //   if (encounter.fear) {
+  //     const fear = registry.fear.find((f: any) => f.id === encounter.fear);
+  //     if (fear && fear.effects) {
+  //       fear.effects.forEach((eff: any) => {
+  //         effects.push({
+  //           ...eff,
+  //           label: fear.label,
+  //           description: fear.description,
+  //           type: fear.type,
+  //           id: fear.id,
+  //           source: 'fear'
+  //         });
+  //       });
+  //     }
+  //   }
+  //   if (encounter.danger) {
+  //     const danger = registry.danger.find((d: any) => d.id === encounter.danger);
+  //     if (danger && danger.effects) {
+  //       danger.effects.forEach((eff: any) => {
+  //         effects.push({
+  //           ...eff,
+  //           label: danger.label,
+  //           description: danger.description,
+  //           type: danger.type,
+  //           id: danger.id,
+  //           source: 'danger'
+  //         });
+  //       });
+  //     }
+  //   }
+  //   // Get effects from active curses
+  //   if (player.curses && Array.isArray(player.curses)) {
+  //     player.curses.forEach((curseId: string) => {
+  //       const curse = registry.curse.find((c: any) => c.id === curseId);
+  //       if (curse && curse.effects) {
+  //         curse.effects.forEach((eff: any) => {
+  //           effects.push({
+  //             ...eff,
+  //             label: curse.label,
+  //             description: curse.description,
+  //             type: curse.type,
+  //             id: curse.id,
+  //             source: 'curse'
+  //           });
+  //         });
+  //       }
+  //     });
+  //   }
+  //   return effects;
+  // }, [gameState]);
+
   
   // Choice screen states
   const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander'>('game');
-  const [gambleBonus, setGambleBonus] = React.useState(false);
-
-  // Force re-render when engine events occur (especially for score updates)
-  React.useEffect(() => {
-    if (event) {
-      console.log('Engine event received, forcing UI update:', event);
-      setForceUpdate(prev => prev + 1);
-    }
-  }, [event]);
   
   // Function to trigger shake animation for invalid moves
   const triggerShake = (cardId: string) => {
@@ -198,7 +149,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       setCurrentScreen('wander');
     } else if (choice === 'gamble') {
       // Apply 25% bonus for next encounter and continue game
-      setGambleBonus(true);
+      // (Gamble bonus logic removed)
       setCurrentScreen('game');
       console.log('Gamble bonus activated - 25% scoring multiplier for next encounter');
     }
@@ -246,8 +197,8 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     
     // Test all possible destination piles
     Object.values(engine.state.piles).forEach((pile: any) => {
-      // Skip the source pile and deck/stock piles (can't move cards there)
-      if (pile.id === fromPileId || pile.type === 'stock' || pile.type === 'deck') return;
+      // Skip the source pile, deck/stock piles, and waste pile (can't move cards there manually)
+      if (pile.id === fromPileId || pile.type === 'stock' || pile.type === 'deck' || pile.type === 'waste') return;
       
       const move = { from: fromPileId, to: pile.id, cardId };
       
@@ -286,31 +237,18 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       )?.id;
       
       if (fromPileId) {
-        // If clicking on a foundation, try all foundations to find the correct one
+        // If clicking on a foundation, try the specific foundation clicked
         const targetPile = Object.values(engine.state.piles).find((pile: any) => pile.id === pileId);
         if (targetPile?.type === 'foundation') {
-          console.log('Foundation clicked, trying all foundations for auto-placement');
-          const foundationPiles = Object.values(engine.state.piles).filter((p: any) => p.type === 'foundation');
-          let moveSuccessful = false;
-          
-          for (const foundationPile of foundationPiles) {
-            try {
-              console.log('Trying foundation:', foundationPile.id);
-              engine.moveCard({ from: fromPileId, to: foundationPile.id, cardId: selectedCardId });
-              console.log('Move successful to foundation:', foundationPile.id);
-              moveSuccessful = true;
-              break; // Exit the loop immediately after successful move
-            } catch (e) {
-              // Try next foundation
-              console.log('Foundation', foundationPile.id, 'rejected the card');
-            }
-          }
-          
-          if (moveSuccessful) {
+          console.log('Foundation clicked:', pileId);
+          try {
+            console.log('Attempting move from', fromPileId, 'to foundation', pileId, 'for card', selectedCardId);
+            engine.moveCard({ from: fromPileId, to: pileId, cardId: selectedCardId });
+            console.log('Move successful to foundation:', pileId);
             setSelectedCardId(null);
             setHighlightedDestinations([]);
-          } else {
-            console.log('No foundation accepted the card');
+          } catch (e) {
+            console.error('Foundation move failed:', e);
             triggerShake(selectedCardId);
             setSelectedCardId(null);
           }
@@ -395,13 +333,8 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       const validMoves = findValidMoves(cardId);
       
       if (validMoves.length === 0) {
-        // No valid moves - show error but only shake if card was not recently selected
-        // This prevents shaking when user is just trying to select a card
-        if (selectedCardId !== cardId) {
-          setMoveError('No valid moves available for this card.');
-          triggerShake(cardId);
-          setTimeout(() => setMoveError(null), 3000);
-        }
+        // No valid moves - shake to indicate invalid move
+        triggerShake(cardId);
         return;
       }
     
@@ -435,7 +368,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       }
       
       if (validMoves.length === 1) {
-        // Single valid move - auto-move there
+        // Single valid move - auto-move there without highlighting
         const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
           Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
         )?.id;
@@ -488,8 +421,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
         } catch (e: any) {
           console.error('Drag drop failed:', e);
           triggerShake(draggedCardId);
-          setMoveError('Invalid move.');
-          setTimeout(() => setMoveError(null), 3000);
         }
       }
     }
@@ -499,24 +430,8 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   };
   // Example: render piles and player state
   const piles = gameState.piles || {};
-  const player = gameState.player || {};
+  // const player = gameState.player || {}; // Remove duplicate
 
-  // Temporary: Flip Card button for testing
-  const handleFlipCard = () => {
-    // Find first pile and first card
-    const pileIds = Object.keys(piles);
-    if (pileIds.length === 0) return;
-    const firstPile = piles[pileIds[0]];
-    if (!firstPile || !firstPile.cards || firstPile.cards.length === 0) return;
-    // Clone piles and cards to avoid direct mutation
-    const newPiles = { ...gameState.piles };
-    const newCards = [...firstPile.cards];
-    const firstCard = { ...newCards[0], faceUp: !newCards[0].faceUp };
-    newCards[0] = firstCard;
-    newPiles[firstPile.id] = { ...firstPile, cards: newCards };
-    engine.state.piles = newPiles;
-    engine.emitEvent('stateChange', engine.state);
-  };
 
   // Separate piles by type
   console.log('GameScreen - piles before separation:', piles);
@@ -568,16 +483,20 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const handleShuffleDeck = () => {
     if (!wastePile || wastePile.cards.length === 0 || !deckPile) return;
     if ((gameState.player.shuffles || 0) <= 0) {
-      setMoveError('No shuffles remaining!');
-      setTimeout(() => setMoveError(null), 3000);
       return;
     }
     
     // Move all waste cards back to deck face down
     const wasteCards = [...wastePile.cards].map(card => ({ ...card, faceUp: false }));
     // Shuffle the cards
+    // Use cryptographically secure random number generator for shuffling
+    // Use cryptographically secure random number generator for shuffling
+    // window.crypto.getRandomValues is the browser-standard CSPRNG (see: https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues)
+    // This is the recommended approach for secure randomness in browsers, equivalent to Node.js crypto.randomBytes for this use case.
     for (let i = wasteCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const randArray = new Uint32Array(1);
+      window.crypto.getRandomValues(randArray);
+      const j = Math.floor((randArray[0] / (0xFFFFFFFF + 1)) * (i + 1));
       [wasteCards[i], wasteCards[j]] = [wasteCards[j], wasteCards[i]];
     }
     
@@ -703,7 +622,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                 draggable={wastePile.cards[wastePile.cards.length - 1].faceUp}
                 onClick={() => handleCardClick(wastePile.cards[wastePile.cards.length - 1].id, wastePile.id)}
                 onDoubleClick={() => handleCardDoubleClick(wastePile.cards[wastePile.cards.length - 1].id)}
-                onDragStart={e => handleDragStart(wastePile.cards[wastePile.cards.length - 1].id)}
+                onDragStart={() => handleDragStart(wastePile.cards[wastePile.cards.length - 1].id)}
                 onDragEnd={handleDragEnd}
               />
             ) : <div className="card-outline" />}
@@ -831,8 +750,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
           </div>
         </div>
       )}
-      {/* Spacer for gap between deck-area and tableau-row */}
-  <div className="deck-tableau-gap" />
       
       {/* Player Hand Area (only for Coronata) */}
       {isCoronata && handPile && (
@@ -852,7 +769,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                   draggable={card.faceUp}
                   onClick={() => handleCardClick(card.id, handPile.id)}
                   onDoubleClick={() => handleCardDoubleClick(card.id)}
-                  onDragStart={e => handleDragStart(card.id)}
+                  onDragStart={() => handleDragStart(card.id)}
                   onDragEnd={handleDragEnd}
                   style={{ 
                     marginLeft: index > 0 ? '-20px' : '0',
@@ -896,7 +813,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                     draggable={card.faceUp}
                     onClick={() => handleCardClick(card.id, pile.id)}
                     onDoubleClick={() => handleCardDoubleClick(card.id)}
-                    onDragStart={e => handleDragStart(card.id)}
+                    onDragStart={() => handleDragStart(card.id)}
                     onDragEnd={handleDragEnd}
                   />
                 ))
@@ -910,13 +827,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       
       {/* Player HUD */}
       {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} onChoiceSelected={handleChoiceSelected} />}
-      
-      {/* Move error display */}
-      {moveError && (
-        <div className="move-error">
-          {moveError}
-        </div>
-      )}
       
       {/* Resign confirmation modal */}
       {showResignModal && (

@@ -9,21 +9,17 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
   return (
     <div className="how-to-play">
       <div className="how-to-play-container">
-        <header className="how-to-play-header">
-          <h1>How to Play Coronata</h1>
-          <button className="close-button" onClick={onBack}>
-            ✕
-          </button>
-        </header>
+        <button className="close-button" onClick={onBack}>
+          ✕
+        </button>
 
         <div className="how-to-play-content">
           <section className="game-overview">
-            <h2>Game Overview</h2>
+            <h2>Welcome to Coronata</h2>
             <p>
-              Coronata is a mystical solitaire adventure where you explore an enchanted realm, 
-              collecting powerful exploits, blessings, and confronting fears as you progress 
-              through encounters. Your goal is to clear tableaus and build foundations while 
-              managing your resources and growing stronger with each victory.
+              Coronata is a roguesolitaire adventure where you build foundations and clear tableaus 
+              while collecting powerful exploits and confronting challenging encounters. Each run takes you 
+              through 5 trials with increasing difficulty as you grow stronger with magical items and abilities.
             </p>
           </section>
 
@@ -33,53 +29,46 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               <div className="rule-card">
                 <h3>🃏 Card Movement</h3>
                 <ul>
-                  <li>Build tableaus in descending order with alternating colors</li>
-                  <li>Move cards to foundations in ascending order by suit (A-K)</li>
+                  <li>Build tableaus in descending order with alternating colors (Red-Black-Red...)</li>
+                  <li>Move cards to foundations in ascending order by suit (A-2-3...J-Q-K)</li>
                   <li>Only face-up cards can be moved</li>
                   <li>Empty tableaus can only be filled with Kings</li>
+                  <li>You can move stacks of properly sequenced cards together</li>
                 </ul>
               </div>
               
               <div className="rule-card">
                 <h3>✋ Player Hand</h3>
                 <ul>
-                  <li>Start with 5 cards in your hand</li>
+                  <li>Start with 5 cards each encounter</li>
                   <li>Play cards from your hand to tableaus or foundations</li>
-                  <li>When you play a card from hand, draw a new one from the deck</li>
-                  <li>Use the Discard button to shuffle hand back into deck</li>
+                  <li>Hand automatically refills when you play cards (if deck has cards)</li>
+                  <li>Click deck to reveal cards to the waste pile</li>
+                  <li>Use Discard Hand button to shuffle hand back into deck (limited uses)</li>
                 </ul>
               </div>
 
               <div className="rule-card">
-                <h3>🏆 Scoring</h3>
+                <h3>Resources</h3>
                 <ul>
-                  <li>Cards played to tableaus score their face value</li>
-                  <li>Cards played to foundations score double their face value</li>
-                  <li>Special effects can modify scoring rules</li>
-                  <li>Aces = 1, Face cards = 10, Number cards = face value</li>
-                </ul>
-              </div>
-
-              <div className="rule-card">
-                <h3>🔄 Shuffles & Discards</h3>
-                <ul>
-                  <li>Limited shuffles per encounter (usually 3)</li>
-                  <li>Limited discards per encounter</li>
-                  <li>Use them wisely to access buried cards</li>
-                  <li>Some effects can increase these limits</li>
+                  <li>Shuffles: Limited per encounter (usually 3) - used when deck is empty</li>
+                  <li>Discards: Limited hand discards per encounter (usually 3)</li>
+                  <li>Coins: Earned from encounters, used for trading</li>
+                  <li>Some exploits and effects can increase these limits</li>
                 </ul>
               </div>
             </div>
           </section>
 
           <section className="coronata-features">
-            <h2>Coronata Adventure Features</h2>
+            <h2>Features</h2>
             
             <div className="feature-section">
-              <h3>🗺️ Encounters</h3>
+              <h3>Trials & Encounters</h3>
               <p>
-                Each round is an "encounter" where you must clear cards while managing limited resources. 
-                Successfully completing encounters earns rewards and advances your journey.
+                Each run consists of 5 trials, each containing multiple encounters. Each encounter 
+                requires you to clear cards while meeting score goals and managing limited resources. 
+                Successfully completing encounters earns rewards and advances your journey through each trial.
               </p>
             </div>
 
@@ -137,39 +126,6 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             </div>
           </section>
 
-          <section className="strategy-tips">
-            <h2>Strategy Tips</h2>
-            <div className="tips-grid">
-              <div className="tip-card">
-                <h4>🎯 Plan Ahead</h4>
-                <p>Look at face-down cards when possible and plan your moves to reveal useful cards</p>
-              </div>
-              
-              <div className="tip-card">
-                <h4>⚡ Exploit Synergies</h4>
-                <p>Combine exploits for powerful effects - some work better together than others</p>
-              </div>
-              
-              <div className="tip-card">
-                <h4>💰 Resource Management</h4>
-                <p>Don't waste shuffles and discards early - save them for when you really need them</p>
-              </div>
-              
-              <div className="tip-card">
-                <h4>🎲 Risk vs Reward</h4>
-                <p>Choose your path carefully - easier encounters give fewer rewards but safer progress</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="victory-conditions">
-            <h2>Victory & Progression</h2>
-            <p>
-              Win encounters by clearing all cards from the tableaus or meeting specific objectives. 
-              Each victory grants you choices for future encounters and the chance to gain new abilities. 
-              Your ultimate goal is to become powerful enough to face the final challenges of Coronata!
-            </p>
-          </section>
         </div>
       </div>
     </div>

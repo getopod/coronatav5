@@ -81,6 +81,15 @@ export function setupCoronataEngine(engineController: any, config: GameInitConfi
   integrateEnhancedScoring(engineController, config.variant);
   console.log('setupCoronataEngine: Enhanced scoring integration completed');
 
+  // Update encounter progress to set correct score goal using enhanced scoring
+  if (engineController.scoringSystem && engineController.state.run?.encounter) {
+    console.log('setupCoronataEngine: Updating encounter goal with enhanced scoring...');
+    const oldGoal = engineController.state.run.encounter.scoreGoal;
+    engineController.state = engineController.scoringSystem.updateEncounterProgress(engineController.state);
+    const newGoal = engineController.state.run.encounter.scoreGoal;
+    console.log(`setupCoronataEngine: Score goal updated from ${oldGoal} to ${newGoal}`);
+  }
+
   // Initialize default Coronata piles if not already set
   if (!engineController.state.piles || Object.keys(engineController.state.piles).length === 0) {
     engineController.state.piles = createDefaultCoronataPiles();

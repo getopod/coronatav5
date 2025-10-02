@@ -1,22 +1,24 @@
 /* Add support for dynamic tableau row height via data attribute */
 .game-screen-root {
-  /* Window-anchored positioning like HUD */
-  position: absolute;
-  top: 8px;
-  left: 8px;
+  /* Fixed to viewport center */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 100;
 
   /* Size and appearance */
   --tableau-row-height: 400px;
   background-color: #bfa76a;
-  min-height: calc(100vh - 16px); /* Account for top/bottom spacing */
-  width: calc(100vw - 16px); /* Account for left/right spacing */
+  height: 100vh;
+  width: 100vw;
   padding: 0px;
   
   /* Center content within the container */
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   
   /* Mobile responsive adjustments */
   min-width: 320px; /* Minimum iPhone screen width */
@@ -192,21 +194,21 @@
   width: 48px !important;
   height: 72px !important;
 }
-.deck-tableau-gap {
-  height: 16px;
-  width: 100%;
-}
 
 /* Player Hand Area Styles */
 .player-hand-area {
+  position: fixed;
+  top: 112px; /* 20px (deck top) + 72px (deck height) + 20px (gap) = 112px */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 8px 0;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.1);
+  margin: 0;
+  padding: 0;
   border-radius: 8px;
   min-height: 80px;
+  z-index: 150;
 }
 
 .hand-label {
@@ -235,14 +237,7 @@
   cursor: pointer;
 }
 
-.hand-cards .card:hover {
-  transform: translateY(-4px);
-  z-index: 100 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
 .hand-cards .card.selected {
-  transform: translateY(-8px);
   z-index: 101 !important;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
   border: 2px solid #ffd700;
@@ -265,10 +260,7 @@
     max-width: 90vw;
   }
   
-  .hand-cards .card {
-    width: 32px !important;
-    height: 48px !important;
-  }
+  /* Hand cards remain 48x72 regardless of screen size */
 }
 .deck-area .foundation-area * {
   margin: 0 !important;
@@ -320,11 +312,16 @@ body {
 }
 
 .deck-area {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  gap: 16px;
-  margin: 0;
-  width: 432px;
+  gap: 8px;
+  margin: 8px 0 0 0;
+  width: 384px; /* Match tableau width for alignment */
   height: 72px;
+  z-index: 200;
 }
 
 .deck-area .pile-cards {
@@ -351,8 +348,8 @@ body {
 
 .foundation-area {
   display: flex;
-  gap: 16px;
-  width: 240px;
+  gap: 8px;
+  width: 216px; /* 4 foundations × 48px + 3 gaps × 8px = 216px */
   min-width: 48px;
   min-height: 72px;
 }
@@ -385,9 +382,13 @@ body {
   margin: 0 auto;
 }
 .tableau-row {
+  position: fixed;
+  top: 200px; /* 112px (hand top) + 80px (hand min-height) + 8px (gap) = 200px */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  gap: 16px;
-  width: 432px;
+  gap: 8px;
+  width: 384px; /* 7 tableaus × 48px + 6 gaps × 8px = 384px */
   height: var(--tableau-row-height);
 }
 .tableau-pile {
@@ -413,7 +414,17 @@ body {
 }
 
 .pile-cards-vertical > *:not(:last-child) {
-  margin-bottom: -36px; /* Overlap by 50% of card height (72px) */
+  margin-bottom: -36px; /* Default overlap by 50% of card height (72px) */
+}
+
+/* Face-down cards in tableau: 80% overlap */
+.pile-cards-vertical > .card.face-down:not(:last-child) {
+  margin-bottom: -58px; /* 80% overlap: 72px * 0.8 = 58px */
+}
+
+/* Face-up cards in tableau: 60% overlap */
+.pile-cards-vertical > .card:not(.face-down):not(:last-child) {
+  margin-bottom: -43px; /* 60% overlap: 72px * 0.6 = 43px */
 }
 .piles-list {
   list-style: none;

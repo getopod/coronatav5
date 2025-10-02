@@ -48,11 +48,12 @@
 
 .fortunes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(282px, 1fr));
+  gap: 6px;
   margin-bottom: 2rem;
   justify-content: center;
   width: 100%;
+  justify-items: center;
 }
 
 .fortune-card {
@@ -65,17 +66,17 @@
   position: relative;
   min-height: 140px;
   max-height: 160px;
+  max-width: 282px;
   display: flex;
   flex-direction: column;
   text-align: left;
   width: 100%;
   font-family: inherit;
   color: inherit;
-  font-size: 0.85rem;
+  font-size: 0.65rem;
 }
 
 .fortune-card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
   border-color: #ffd700;
 }
@@ -105,6 +106,7 @@
 
 .fortune-card-header {
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .fortune-card-header h3 {
@@ -128,8 +130,10 @@
 .fortune-selection-actions {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .btn-primary,

@@ -8,7 +8,6 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
 
   // Get all game modes except coronata for the "Other" submenu
   const otherGameModes = Object.entries(gameModeProfiles).filter(([key]) => key !== 'coronata');
-  const coronataProfile = gameModeProfiles.coronata;
 
   if (showingOtherModes) {
     // Show the "Other" submenu with all non-Coronata game modes
@@ -117,12 +116,10 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
       color: '#fff',
       zIndex: 1000
     }}>
-      <h2 style={{ marginBottom: 24, textAlign: 'center' }}>Select Game Mode</h2>
       <div style={{ 
         display: 'flex', 
-        gap: 32, 
-        flexWrap: 'wrap', 
-        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: 16, 
         alignItems: 'center'
       }}>
         
@@ -157,7 +154,6 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
             <span style={{ fontWeight: 700, fontSize: 28, color: '#ffd700', textShadow: '0 2px 4px #0008' }}>CORONATA</span>
           </div>
           <div style={{ fontSize: 16, color: '#ccc', marginTop: 4, fontStyle: 'italic' }}>Solitaire Roguelike</div>
-          <div style={{ fontSize: 14, color: '#aaa', marginTop: 6 }}>Tableau: {coronataProfile.tableauCount}, Foundation: {coronataProfile.foundationCount}</div>
         </button>
 
         {/* Other Game Modes */}
@@ -172,7 +168,8 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
             cursor: 'pointer', 
             boxShadow: '0 2px 8px #0006', 
             minWidth: 180,
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            textAlign: 'center'
           }}
           onClick={() => setShowingOtherModes(true)}
           onMouseEnter={(e) => {
@@ -188,12 +185,7 @@ export function GameModeMenu({ onSelect }: { onSelect: (mode: string) => void })
             e.currentTarget.style.boxShadow = '0 2px 8px #0006';
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, fontSize: 22 }}>Other</span>
-            <span style={{ fontSize: 18, color: '#aaa' }}>→</span>
-          </div>
-          <div style={{ fontSize: 15, color: '#ccc', marginTop: 8 }}>Classic solitaire modes</div>
-          <div style={{ fontSize: 13, color: '#aaa', marginTop: 4 }}>{otherGameModes.length} modes available</div>
+          <span style={{ fontWeight: 700, fontSize: 22 }}>Classic Solitaire</span>
         </button>
 
       </div>

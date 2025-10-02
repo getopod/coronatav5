@@ -86,5 +86,7 @@ export interface Move {
   to: string;   // pile id
   cardId: string;
   type?: string; // e.g., 'normal', 'special'
+  stackSize?: number; // number of cards moved in stack
+  cardIds?: string[]; // IDs of all cards in moved stack
   meta?: Record<string, any>;
 }

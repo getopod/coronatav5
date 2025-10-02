@@ -216,7 +216,7 @@ export class EngineController {
       // UI hooks: can add event consumers here
     });
     // On state change: apply effects, check win/loss
-    this.eventEmitter.on('stateChange', (event: EngineEvent) => {
+  this.eventEmitter.on('stateChange', () => {
       this.applyActiveEffects();
       if (this.winLossDetector) {
         if (this.winLossDetector.checkWin(this.state)) {
@@ -229,10 +229,10 @@ export class EngineController {
       // UI hooks: can add event consumers here
     });
     // On win/loss: UI hooks
-    this.eventEmitter.on('win', (event: EngineEvent) => {
+  this.eventEmitter.on('win', () => {
       // UI: show win modal, etc.
     });
-    this.eventEmitter.on('loss', (event: EngineEvent) => {
+  this.eventEmitter.on('loss', () => {
       // UI: show loss modal, etc.
     });
   }
@@ -301,8 +301,17 @@ export class EngineController {
     if (!validateMove(move, this.state)) {
       throw new Error(`Invalid move: ${JSON.stringify(move)}`);
     }
-    // Apply move logic
-    this.state = moveCardLogic(this.state, move);
+    // Apply move logic and create new state object for React to detect changes
+    let newState = moveCardLogic(this.state, move);
+    
+    // Apply registry effects that trigger on moves
+    const activeEffects = this.getActiveEffects(newState, 'move', { move, fromState: this.state });
+    if (activeEffects.length > 0) {
+      console.log(`Applying ${activeEffects.length} registry effects for move:`, move);
+      newState = this.effectEngine.applyEffects(activeEffects, newState);
+    }
+    
+    this.state = { ...newState }; // Create new object reference
     this.emitEvent('move', { move, state: this.state });
   }
 

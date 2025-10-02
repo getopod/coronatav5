@@ -40,7 +40,6 @@ const FortuneSelectionScreen: React.FC<FortuneSelectionScreenProps> = ({
     <div className="fortune-selection-screen">
       <div className="fortune-selection-header">
         <h1>Choose Your Fortune</h1>
-        <p>Before embarking on your journey, the fates offer you a gift. Choose wisely.</p>
       </div>
 
       <div className="fortune-selection-content">
@@ -63,19 +62,19 @@ const FortuneSelectionScreen: React.FC<FortuneSelectionScreenProps> = ({
         </div>
 
         <div className="fortune-selection-actions">
+          <button 
+            className="btn-back"
+            onClick={onBack}
+          >
+            Back
+          </button>
+          
           <button
             className="btn-primary"
             onClick={handleConfirmSelection}
             disabled={!selectedFortuneId}
           >
-            Choose This Fortune
-          </button>
-          
-          <button 
-            className="btn-back"
-            onClick={onBack}
-          >
-            Back to Welcome
+            Continue
           </button>
         </div>
       </div>
