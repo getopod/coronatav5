@@ -27,18 +27,6 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRarity, setSelectedRarity] = useState<string>('all');
 
-  // Get rarity color
-  const getRarityColor = (rarity: string): string => {
-    switch (rarity.toLowerCase()) {
-      case 'common': return '#6b7280';
-      case 'uncommon': return '#10b981';
-      case 'rare': return '#3b82f6';
-      case 'epic': return '#8b5cf6';
-      case 'legendary': return '#f59e0b';
-      default: return '#374151';
-    }
-  };
-
   // Filter items based on search and rarity
   const filterItems = (items: RegistryEntry[]) => {
     return items.filter(item => {
@@ -104,6 +92,11 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
     const value = effect.value || 1;
     const target = effect.target;
     
+    // Handle score multiplier effects specially
+    if (action === 'score_multiplier' || action === 'modify_setting' && target?.includes('score')) {
+      return getScoreMultiplierDescription(effect);
+    }
+    
     // Map actions to icons and concise descriptions
     const effectMap: { [key: string]: { icon: string; text: string } } = {
       'modify_setting': {
@@ -133,6 +126,10 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       'damage': {
         icon: '💥',
         text: `${value} damage`
+      },
+      'score_multiplier': {
+        icon: '✨',
+        text: getScoreMultiplierDescription(effect)
       }
     };
 
@@ -143,6 +140,60 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
 
     // Fallback to original description for unknown effects
     return getEffectDescription(effect);
+  };
+
+  const getScoreMultiplierDescription = (effect: any): string => {
+    const value = effect.value || 1;
+    const condition = effect.condition;
+    let description = `X${value} score`;
+    
+    if (!condition) return description;
+    
+    // Handle suit conditions
+    if (condition.suit) {
+      const suits = Array.isArray(condition.suit) ? condition.suit : [condition.suit];
+      const suitIcons = suits.map(getSuitIcon).join(' ');
+      description += ` ${suitIcons}`;
+    }
+    
+    // Handle target/pile type conditions
+    const targetField = condition.target || condition.pile_type;
+    if (targetField) {
+      const targets = Array.isArray(targetField) ? targetField : [targetField];
+      const targetIcons = targets.map(getTargetIcon).join(' ');
+      description += ` to ${targetIcons}`;
+    }
+    
+    return description;
+  };
+
+  const getSuitIcon = (suit: string): string => {
+    const suitMap: { [key: string]: string } = {
+      'hearts': '♥️',
+      'diamonds': '♦️', 
+      'clubs': '♣️',
+      'spades': '♠️',
+      'heart': '♥️',
+      'diamond': '♦️',
+      'club': '♣️',
+      'spade': '♠️'
+    };
+    return suitMap[suit.toLowerCase()] || suit;
+  };
+
+  const getTargetIcon = (target: string): string => {
+    const targetMap: { [key: string]: string } = {
+      'tableau': '📋',
+      'tableaus': '📋',
+      'foundation': '🏛️',
+      'foundations': '🏛️',
+      'hand': '✋',
+      'deck': '🎴',
+      'waste': '🗑️',
+      'pile': '📚',
+      'piles': '📚'
+    };
+    return targetMap[target.toLowerCase()] || target;
   };
 
   const getSettingIcon = (target: string): string => {
@@ -254,8 +305,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
                   <h3 className="item-title">{item.label}</h3>
                   {item.rarity && (
                     <span 
-                      className="rarity-badge"
-                      style={{ backgroundColor: getRarityColor(item.rarity) }}
+                      className={`rarity-badge ${item.rarity.toLowerCase()}`}
                     >
                       {item.rarity}
                     </span>
