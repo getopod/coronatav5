@@ -5,10 +5,10 @@ import { Card } from './Card';
 import { getMovableStack, validateMove } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
 import { GameState } from '../engine/types'; // Changed from core_engine to engine
-import ChoiceSelectionScreen from './ChoiceSelectionScreen';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
 import { endGameSession } from '../engine/persistenceManager';
+import { EncounterFlowManager } from '../engine/encounterFlow';
 import './GameScreen.css';
 
 interface GameScreenProps {
@@ -217,7 +217,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     // Check if we're in an encounter flow context
     if (gameState.run?.encounterFlow?.active) {
       // Use EncounterFlowManager to progress to next activity
-      const { EncounterFlowManager } = require('../engine/encounterFlow');
       const flowManager = new EncounterFlowManager(gameState);
       
       // Complete the current trade activity
@@ -370,7 +369,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     // Check if we're in an encounter flow context
     if (gameState.run?.encounterFlow?.active) {
       // Use EncounterFlowManager to progress to next activity
-      const { EncounterFlowManager } = require('../engine/encounterFlow');
       const flowManager = new EncounterFlowManager(gameState);
       
       // Complete the current wander activity
@@ -1227,7 +1225,24 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       </div>
       
       {/* Player HUD */}
-      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} />}
+      {isCoronata && (
+        <PlayerHUD 
+          gameState={gameState} 
+          selectedFortune={selectedFortune} 
+          onNavigateToWelcome={onNavigateToWelcome} 
+          onShowRunRecap={() => setShowRunRecap(true)}
+          onOpenTrade={() => setCurrentScreen('trade')}
+          onOpenWander={() => setCurrentScreen('wander')}
+          onNextEncounter={() => {
+            // For testing purposes, complete the current encounter and move to the next one
+            console.log('Testing: Moving to next encounter');
+            if (engine) {
+              // This is a simplified implementation for testing
+              setCurrentScreen('game');
+            }
+          }}
+        />
+      )}
       
       {/* Resign confirmation modal */}
       {showResignModal && (
@@ -1256,17 +1271,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
         </div>
       )}
 
-      {/* Choice Screens - overlay when not in game mode */}
-      {currentScreen === 'choice' && (
-        <div className="screen-overlay">
-          <ChoiceSelectionScreen
-            onTradeSelected={() => setCurrentScreen('trade')}
-            onWanderSelected={() => setCurrentScreen('wander')}
-            onBack={() => setCurrentScreen('game')}
-          />
-        </div>
-      )}
-
+      {/* Trade Screen - overlay when not in game mode */}
       {currentScreen === 'trade' && (
         <div className="screen-overlay">
           <TradeScreen

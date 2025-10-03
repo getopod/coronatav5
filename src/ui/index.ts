@@ -8,6 +8,5 @@ export { Glossary } from './Glossary';
 export { History } from './History';
 export { Options } from './Options';
 export { default as FortuneSelectionScreen } from './FortuneSelectionScreen';
-export { default as ChoiceSelectionScreen } from './ChoiceSelectionScreen';
 export { default as TradeScreen } from './TradeScreen';
 export { default as WanderScreen } from './WanderScreen';

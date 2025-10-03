@@ -150,8 +150,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
     const selected: RegistryEntry[] = [];
     
     while (selected.length < count && selected.length < items.length) {
-      const crypto = require('crypto');
-      const randomIndex = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * weightedItems.length);
+      const randomIndex = Math.floor(Math.random() * weightedItems.length);
       const item = weightedItems[randomIndex];
       
       if (!selected.some(s => s.id === item.id)) {

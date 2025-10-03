@@ -227,7 +227,7 @@ function createSeededRandom(seed: string): () => number {
   
   return function() {
     hash = (hash * 9301 + 49297) % 233280;
-    return hash / 233280;
+    return Math.abs(hash) / 233280; // Ensure positive value
   };
 }
 

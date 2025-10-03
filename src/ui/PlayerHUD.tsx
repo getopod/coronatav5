@@ -58,9 +58,20 @@ export interface PlayerHUDProps {
   selectedFortune?: any;
   onNavigateToWelcome?: () => void;
   onShowRunRecap?: () => void;
+  onOpenTrade?: () => void;
+  onOpenWander?: () => void;
+  onNextEncounter?: () => void;
 }
 
-export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome, onShowRunRecap }) => {
+export const PlayerHUD: React.FC<PlayerHUDProps> = ({ 
+  gameState, 
+  selectedFortune, 
+  onNavigateToWelcome, 
+  onShowRunRecap,
+  onOpenTrade,
+  onOpenWander,
+  onNextEncounter
+}) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
   const progressBarRef = React.useRef<HTMLDivElement>(null);
@@ -74,6 +85,17 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   const [modalContent, setModalContent] = React.useState<any[]>([]);
   const [modalTitle, setModalTitle] = React.useState('');
   const [showFortunePopup, setShowFortunePopup] = React.useState(false);
+  
+  // Testing and options state
+  const [showTestingWindow, setShowTestingWindow] = React.useState(false);
+  const [showOptionsWindow, setShowOptionsWindow] = React.useState(false);
+  const [testingAuthenticated, setTestingAuthenticated] = React.useState(false);
+  const [testingWindowPosition, setTestingWindowPosition] = React.useState({ x: 100, y: 100 });
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
+  
+  // Zoom state
+  const [zoomLevel, setZoomLevel] = React.useState(100); // Default to 100%
 
   // Debug logging
   console.log('PlayerHUD - gameState:', gameState);
@@ -81,6 +103,104 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   console.log('PlayerHUD - run:', run);
   console.log('PlayerHUD - encounter:', encounter);
   console.log('PlayerHUD - selectedFortune:', selectedFortune);
+
+  // Testing window handlers
+  const handleTestingClick = () => {
+    if (!testingAuthenticated) {
+      const password = prompt('Enter password:');
+      if (password === 'please') {
+        setTestingAuthenticated(true);
+        setShowTestingWindow(true);
+      } else {
+        alert('Incorrect password');
+      }
+    } else {
+      setShowTestingWindow(!showTestingWindow);
+    }
+  };
+
+  const handleOptionsClick = () => {
+    setShowOptionsWindow(!showOptionsWindow);
+  };
+  
+  // Zoom handler
+  const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newZoom = parseInt(event.target.value);
+    setZoomLevel(newZoom);
+    
+    // Apply zoom to the game screen
+    const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
+    if (gameScreen) {
+      gameScreen.style.transform = `translate(-50%, -50%) scale(${newZoom / 100})`;
+    }
+  };
+
+  // Testing admin functions
+  const handleAddCoins = () => {
+    if (!engine || !engine.state?.player) return;
+    try {
+      // Directly modify the player's coins
+      engine.state.player.coins = (engine.state.player.coins || 0) + 100;
+      // Try to trigger a re-render by calling any available update method
+      if (engine.emit) engine.emit('state-changed', engine.state);
+    } catch (error) {
+      console.error('Failed to add coins:', error);
+    }
+  };
+
+  const handleOpenTrade = () => {
+    console.log('Opening trade window...');
+    if (onOpenTrade) {
+      onOpenTrade();
+    }
+  };
+
+  const handleOpenWander = () => {
+    console.log('Opening wander window...');
+    if (onOpenWander) {
+      onOpenWander();
+    }
+  };
+
+  const handleNextEncounter = () => {
+    console.log('Attempting to progress to next encounter...');
+    if (onNextEncounter) {
+      onNextEncounter();
+    }
+  };
+
+  // Dragging handlers for testing window
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - testingWindowPosition.x,
+      y: e.clientY - testingWindowPosition.y
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      setTestingWindowPosition({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragOffset]);
 
   // Handle discard action - move hand cards back to deck, shuffle, and redraw
   const handleDiscardHand = () => {
@@ -115,13 +235,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
     // 2. Shuffle deck
     // 3. Draw 5 new cards
     // 4. Decrement discards resource
-    let cryptoModule = undefined;
-    if (typeof require !== 'undefined') {
-      try {
-        cryptoModule = require('crypto');
-      } catch { /* ignore */ }
-    }
-  const newState = getDiscardedState(gameState, handPile, deckPile, player, cryptoModule);
+    // Use Math.random for browser compatibility
+  const newState = getDiscardedState(gameState, handPile, deckPile, player, null);
   const { _newHandCards, ...cleanState } = newState;
 
     // Update engine state with new object reference for React to detect changes
@@ -323,8 +438,40 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
 
       {/* HUD Controls */}
       <div className="hud-controls">
+        {/* Zoom Slider */}
+        <div className="zoom-control">
+          <label htmlFor="zoom-slider" className="zoom-label">Zoom:</label>
+          <input
+            id="zoom-slider"
+            type="range"
+            min="50"
+            max="150"
+            value={zoomLevel}
+            onChange={handleZoomChange}
+            className="zoom-slider"
+            title={`Zoom: ${zoomLevel}%`}
+          />
+          <span className="zoom-value">{zoomLevel}%</span>
+        </div>
+        
         <button 
-          className="resign-button" 
+          className="testing-button hud-action-button" 
+          title="Testing functions (admin)"
+          onClick={handleTestingClick}
+        >
+          Testing
+        </button>
+
+        <button 
+          className="options-button hud-action-button" 
+          title="Options"
+          onClick={handleOptionsClick}
+        >
+          Options
+        </button>
+
+        <button 
+          className="resign-button hud-action-button" 
           title="Resign and view run summary"
           onClick={() => {
             if (confirm('Are you sure you want to resign and view the run recap?')) {
@@ -337,15 +484,15 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
             }
           }}
         >
-          🏳️ Resign
+          Resign
         </button>
 
         <button 
-          className="discard-button" 
+          className="discard-button hud-action-button" 
           title="Discard selected cards from hand"
           onClick={handleDiscardHand}
         >
-          🗑️ Discard
+          Discard
         </button>
       </div>
       
@@ -407,6 +554,56 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
               ))}
             </div>
           </section>
+        </div>
+      )}
+
+      {/* Testing Window */}
+      {showTestingWindow && (
+        <div 
+          className="testing-window-draggable"
+          style={{
+            left: `${testingWindowPosition.x}px`,
+            top: `${testingWindowPosition.y}px`
+          }}
+        >
+          <div 
+            className="testing-window-header"
+            onMouseDown={handleMouseDown}
+          >
+            <span>🔧 Testing Admin</span>
+            <button 
+              className="close-testing"
+              onClick={() => setShowTestingWindow(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="testing-window-content">
+            <button 
+              className="testing-action-btn"
+              onClick={handleAddCoins}
+            >
+              💰 Add 100 Coins
+            </button>
+            <button 
+              className="testing-action-btn"
+              onClick={handleOpenTrade}
+            >
+              🛒 Open Trade
+            </button>
+            <button 
+              className="testing-action-btn"
+              onClick={handleOpenWander}
+            >
+              🚶 Open Wander
+            </button>
+            <button 
+              className="testing-action-btn"
+              onClick={handleNextEncounter}
+            >
+              ➡️ Next Encounter
+            </button>
+          </div>
         </div>
       )}
     </div>

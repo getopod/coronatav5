@@ -16,7 +16,7 @@ interface SettingsState {
 }
 
 export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'display' | 'achievements' | 'statistics'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'display'>('general');
   const [settings, setSettings] = useState<SettingsState>({
     audioEnabled: true,
     animationsEnabled: true,
@@ -320,23 +320,11 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
           >
             🔊 Audio
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === 'display' ? 'active' : ''}`}
             onClick={() => setActiveTab('display')}
           >
             🎨 Display
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'achievements' ? 'active' : ''}`}
-            onClick={() => setActiveTab('achievements')}
-          >
-            🏆 Achievements
-          </button>
-          <button 
-            className={`nav-button ${activeTab === 'statistics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('statistics')}
-          >
-            📊 Statistics
           </button>
         </div>
 
@@ -344,8 +332,6 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
           {activeTab === 'general' && renderGeneralSettings()}
           {activeTab === 'audio' && renderAudioSettings()}
           {activeTab === 'display' && renderDisplaySettings()}
-          {activeTab === 'achievements' && renderAchievements()}
-          {activeTab === 'statistics' && renderStatistics()}
         </div>
 
         <div className="options-footer">

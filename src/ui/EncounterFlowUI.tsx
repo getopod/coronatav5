@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GameState } from '../engine/types';
+import { EncounterFlowManager } from '../engine/encounterFlow';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
 import { registry } from '../registry/index';
@@ -47,7 +48,6 @@ export const EncounterFlowUI: React.FC<EncounterFlowUIProps> = ({
 
   const completeCurrentActivity = (results: any) => {
     // Create new flow manager instance and complete activity
-    const { EncounterFlowManager } = require('../engine/encounterFlow');
     const flowManager = new EncounterFlowManager(gameState);
     
     // Complete the current activity

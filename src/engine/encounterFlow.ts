@@ -75,9 +75,8 @@ export class EncounterFlowManager {
         { type: 'fortune-swap', id: `fortune-swap-${Date.now()}` }
       ];
 
-      // 50% chance for bonus trade using crypto-secure random
-      const crypto = require('crypto');
-      if ((crypto.randomBytes(1)[0] / 255) < 0.5) {
+      // 50% chance for bonus trade using Math.random
+      if (Math.random() < 0.5) {
         this.flowState.queuedActivities.push({
           type: 'trade',
           id: `bonus-trade-${Date.now()}`
@@ -189,8 +188,7 @@ export class EncounterFlowManager {
       return true; // For now, use all wanders
     });
 
-    const crypto = require('crypto');
-    const randomIndex = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * wanderPool.length);
+    const randomIndex = Math.floor(Math.random() * wanderPool.length);
     const selectedWander = wanderPool[randomIndex];
     
     return {

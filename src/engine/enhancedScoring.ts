@@ -1,6 +1,6 @@
 // Enhanced scoring system with encounter goal integration
 import { GameState, Move } from './types';
-import { initializeRun, selectEncounter, defaultCoronataConfig } from './encounterSystem';
+import { initializeRun, selectEncounter, defaultCoronataConfig, progressEncounter } from './encounterSystem';
 import { EncounterFlowManager } from './encounterFlow';
 
 // Import from relative paths since we're consolidating into /engine/
@@ -125,7 +125,6 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     state.run.availableChoices = undefined;
     
     // Progress to next encounter using legacy logic
-    const { progressEncounter } = require('./encounterSystem');
     const newRunState = progressEncounter(state.run);
     state.run = newRunState;
     
@@ -244,9 +243,8 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
             bonus *= 1.5;
             break;
           case 'luck_blessing': {
-            // Use cryptographically secure random for security compliance
-            const crypto = require('crypto');
-            bonus += Math.floor(crypto.randomInt(0, 10));
+            // Use Math.random for browser compatibility
+            bonus += Math.floor(Math.random() * 10);
             break;
           }
         }
@@ -365,11 +363,10 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     return state;
   }
 
-  // Helper method for array shuffling (Fisher-Yates with crypto-secure random)
+  // Helper method for array shuffling (Fisher-Yates with Math.random)
   private shuffleArray(array: any[]): void {
-    const crypto = require('crypto');
     for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * (i + 1));
+      const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
   }

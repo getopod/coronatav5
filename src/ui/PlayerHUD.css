@@ -15,6 +15,7 @@
   border-radius: 12px;
   padding: 15px;
   width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
+  max-width: 384px; /* Match tableau width for alignment */
   margin: 0 2px; /* 2px margin on each side */
   font-family: 'Courier New', monospace;
   font-size: 12px;
@@ -413,6 +414,9 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
+  justify-items: center;
+  max-width: 200px;
+  margin: 0 auto;
 }
 
 .effect-count {
@@ -426,6 +430,8 @@
   opacity: 0.6;
   transition: all 0.2s ease;
   width: 32px;
+  height: 32px;
+  justify-content: center;
 }
 
 .effect-count.has-items {
@@ -745,44 +751,125 @@
   display: flex;
   gap: 8px;
   justify-content: center;
+  align-items: center;
   margin-top: 8px;
 }
 
-.resign-button {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  border: 1px solid #ef4444;
+/* Zoom control styling */
+.zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(40, 40, 40, 0.8);
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.zoom-label {
+  color: #ccc;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.zoom-slider {
+  width: 60px;
+  height: 12px;
+  background: #333;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
+.zoom-value {
+  color: #ccc;
+  font-size: 9px;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* Base style for all HUD action buttons */
+.hud-action-button {
   border-radius: 6px;
   color: #ffffff;
   font-size: 10px;
-  padding: 0;
+  padding: 2px 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Courier New', monospace;
   height: 16px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.hud-action-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Testing button - Orange */
+.testing-button {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  border-color: #f97316;
+}
+
+.testing-button:hover {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
+}
+
+/* Options button - Grey */
+.options-button {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
+  border-color: #9ca3af;
+}
+
+.options-button:hover {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  box-shadow: 0 2px 8px rgba(156, 163, 175, 0.4);
+}
+
+/* Resign button - Red */
+.resign-button {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border-color: #ef4444;
 }
 
 .resign-button:hover {
   background: linear-gradient(135deg, #ef4444, #dc2626);
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
 }
 
+/* Discard button - Yellowish Gold */
 .discard-button {
   background: linear-gradient(135deg, #d97706, #b45309);
-  border: 1px solid #f59e0b;
-  border-radius: 6px;
-  color: #ffffff;
-  font-size: 10px;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Courier New', monospace;
-  height: 16px;
+  border-color: #f59e0b;
 }
 
 .discard-button:hover {
   background: linear-gradient(135deg, #f59e0b, #d97706);
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 }
 
@@ -885,4 +972,136 @@
   margin-bottom: 4px;
   font-size: 13px;
   color: #d1d5db;
+}
+
+/* Testing and Options buttons */
+.testing-button,
+.options-button {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #374151;
+  color: #d1d5db;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.2s ease;
+}
+
+.testing-button:hover,
+.options-button:hover {
+  background: #4b5563;
+  color: #f9fafb;
+}
+
+/* Testing window */
+.testing-window {
+  position: fixed;
+  width: 300px;
+  background: #1f2937;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  cursor: move;
+}
+
+/* New testing window styles */
+.testing-window-draggable {
+  position: fixed;
+  width: 250px;
+  background: #1f2937;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  z-index: 10000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.testing-window-header {
+  background: #374151;
+  padding: 8px 12px;
+  color: #f9fafb;
+  font-weight: bold;
+  cursor: move;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.close-testing {
+  background: none;
+  border: none;
+  color: #f9fafb;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-testing:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-radius: 3px;
+}
+
+.testing-window-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.testing-action-btn {
+  padding: 8px 12px;
+  background: #374151;
+  color: #d1d5db;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.testing-action-btn:hover {
+  background: #4b5563;
+  color: #f9fafb;
+}
+
+.testing-window h3 {
+  margin: 0 0 16px 0;
+  color: #f9fafb;
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 1px solid #374151;
+  padding-bottom: 8px;
+}
+
+.testing-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.testing-controls button {
+  padding: 8px 12px;
+  background: #374151;
+  color: #d1d5db;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.testing-controls button:hover {
+  background: #4b5563;
+  color: #f9fafb;
 }
