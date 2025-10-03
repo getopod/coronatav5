@@ -49,6 +49,9 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
   const [showResignModal, setShowResignModal] = React.useState(false);
   const [showRunRecap, setShowRunRecap] = React.useState(false);
+  
+  // Zoom state for floating zoom window
+  const [zoomLevel, setZoomLevel] = React.useState(100);
 
   // --- Registry-driven effect HUD ---
   // Get only truly active effects from game state (equipped exploits, active fears/dangers, etc.)
@@ -914,12 +917,37 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     console.log('Deck shuffled! Shuffles remaining:', newPlayer.shuffles);
   };
 
+  // Zoom handler for floating zoom window
+  const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newZoom = parseInt(event.target.value);
+    setZoomLevel(newZoom);
+    
+    // Apply zoom to the game screen
+    const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
+    if (gameScreen) {
+      gameScreen.style.transform = `translate(-50%, -50%) scale(${newZoom / 100})`;
+    }
+  };
+
   return (
   <div 
     className="game-screen-root" 
     data-tableau-row-height={tableauRowHeight}
     onClick={handleBackgroundClick}
   >
+      {/* Floating Zoom Window */}
+      <div className="floating-zoom-window">
+        <input
+          type="range"
+          min="50"
+          max="150"
+          value={zoomLevel}
+          onChange={handleZoomChange}
+          className="floating-zoom-slider"
+          title={`Zoom: ${zoomLevel}%`}
+        />
+        <span className="floating-zoom-value">{zoomLevel}%</span>
+      </div>
       {/* Registry-driven Effect HUD - HIDDEN PER USER REQUEST */}
       {/*
       <div

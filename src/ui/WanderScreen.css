@@ -4,7 +4,9 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 384px; /* Match tableau width for alignment */
+  max-width: 384px; /* Same as player HUD max-width */
   height: 600px;
+  max-height: 880px;
   background: linear-gradient(135deg, #1e3a3a, #2c5454, #3a6f6f);
   color: #ffffff;
   padding: 0.5rem;
@@ -14,6 +16,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow-y: auto;
+  z-index: 1000; /* Same as player HUD */
 }
 
 .wander-loading {

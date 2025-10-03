@@ -58,6 +58,8 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   text-transform: uppercase;
   letter-spacing: 1px;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 .welcome-button:hover {
@@ -71,7 +73,7 @@
 }
 
 .welcome-button.primary {
-  width: 280px;
+  width: 168px;
   height: 60px;
   background: linear-gradient(135deg, #ffd700 0%, #f4c430 100%);
   color: #1a1a2e;
@@ -87,7 +89,7 @@
 }
 
 .welcome-button.secondary {
-  width: 280px;
+  width: 168px;
   height: 50px;
   background: linear-gradient(135deg, #444 0%, #333 100%);
   color: #ccc;
@@ -102,7 +104,7 @@
 }
 
 .welcome-button.back {
-  width: 200px;
+  width: 100px;
   height: 50px;
   background: linear-gradient(135deg, #333 0%, #222 100%);
   color: #999;
@@ -133,19 +135,19 @@
   }
   
   .welcome-button.primary {
-    width: 250px;
+    width: 168px;
     height: 60px;
     font-size: 24px;
   }
   
   .welcome-button.secondary {
-    width: 250px;
+    width: 168px;
     height: 50px;
     font-size: 20px;
   }
   
   .welcome-button.back {
-    width: 180px;
+    width: 100px;
     height: 45px;
     font-size: 18px;
   }

@@ -20,6 +20,57 @@
   box-sizing: border-box;
 }
 
+/* Force all card-suit and card-value elements to have height 24px */
+.game-screen-root .card-suit,
+.game-screen-root .card-value {
+  height: 24px !important;
+}
+
+/* Force all card-label elements to have height 24px */
+.game-screen-root .card-label {
+  height: 24px !important;
+}
+
+/* Force all face-up cards to have proper corner positioning */
+.game-screen-root .card:not(.face-down)::before {
+  content: attr(data-rank);
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-size: 16px;
+  height: 24px;
+  z-index: 1;
+}
+
+.game-screen-root .card:not(.face-down)::after {
+  content: attr(data-suit);
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 18px;
+  height: 24px;
+  z-index: 1;
+}
+
+/* Bottom left suit and bottom right label for face-up cards */
+.game-screen-root .card:not(.face-down) .card-bottom-left {
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  font-size: 18px;
+  height: 24px;
+  transform: rotate(180deg);
+}
+
+.game-screen-root .card:not(.face-down) .card-bottom-right {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 16px;
+  height: 24px;
+  transform: rotate(180deg);
+}
+
 /* Mobile viewport adjustments */
 @media (max-width: 768px) {
   .game-screen-root {
@@ -313,7 +364,7 @@ body {
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
-  margin: 8px 0 0 0;
+  margin: 0;
   width: 384px; /* Match tableau width for alignment */
   height: 72px;
   z-index: 200;
@@ -339,6 +390,23 @@ body {
 }
 .deck-area * {
   height: 72px !important;
+}
+
+/* Ensure deck area face-up cards have same label and suit properties as player hand area */
+.deck-area .card:not(.face-down) .card-label {
+  font-size: 16px;
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  height: 24px;
+}
+
+.deck-area .card:not(.face-down) .card-suit {
+  font-size: 18px;
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  height: 24px;
 }
 
 .foundation-area {
@@ -747,6 +815,70 @@ body {
   background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
   color: #000;
   border: none;
+  font-weight: bold;
+}
+
+/* Floating Zoom Window */
+.floating-zoom-window {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid #555;
+  border-radius: 8px;
+  padding: 0;
+  height: 2px;
+  min-height: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  z-index: 2000; /* Higher than any game element */
+  font-family: 'Courier New', monospace;
+  font-size: 2px;
+  color: #fff;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  /* Fixed size - won't scale with zoom */
+  width: 180px;
+}
+
+.floating-zoom-slider {
+  flex: 1;
+  width: 120px;
+  height: 2px;
+  min-height: 2px;
+  background: #333;
+  border-radius: 9px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+.floating-zoom-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
+.floating-zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
+.floating-zoom-value {
+  color: #ccc;
+  font-size: 2px;
+  min-width: 38px;
+  text-align: center;
   font-weight: bold;
 }
 

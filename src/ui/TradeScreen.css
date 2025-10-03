@@ -4,7 +4,9 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 384px; /* Match tableau width for alignment */
+  max-width: 384px; /* Same as player HUD max-width */
   height: 600px;
+  max-height: 880px;
   background: linear-gradient(135deg, #1a2332, #253447, #2e4057);
   color: #ffffff;
   padding: 1rem;
@@ -13,6 +15,7 @@
   align-items: center;
   overflow-y: auto;
   box-sizing: border-box;
+  z-index: 1000; /* Same as player HUD */
 }
 
 .trade-header {

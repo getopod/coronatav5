@@ -51,21 +51,21 @@ export function CoronataWelcomeScreen({
           </g>
           
           {/* Game Title */}
-          <text x="150" y="120" fontSize="48" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
+          <text x="150" y="175" fontSize="48" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
           
           {/* Subtitle */}
-          <text x="150" y="145" fontSize="14" textAnchor="middle" fill="#cccccc" letterSpacing="2">SOLITAIRE ROGUELIKE</text>
+          <text x="150" y="200" fontSize="14" textAnchor="middle" fill="#cccccc" letterSpacing="2">ROGUE-LIKE SOLITAIRE</text>
         </svg>
       </div>
 
       {/* Interactive buttons positioned below the logo */}
       <div className="button-overlay">
         <button className="welcome-button primary" onClick={onStart}>
-          Start Game
+          Start
         </button>
         
         <button className="welcome-button secondary" onClick={onHowToPlay}>
-          How to Play
+          How To
         </button>
         
         <button className="welcome-button secondary" onClick={onGlossary}>

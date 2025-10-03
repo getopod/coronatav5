@@ -13,7 +13,7 @@
   background: rgba(20, 20, 20, 0.95);
   border: 2px solid #4a4a4a;
   border-radius: 12px;
-  padding: 15px;
+  padding: 6px;
   width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
   max-width: 384px; /* Match tableau width for alignment */
   margin: 0 2px; /* 2px margin on each side */
@@ -116,9 +116,10 @@
 /* Full-width Progress Bar */
 .progress-container-full {
   width: 100%;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   border-radius: 6px;
   overflow: hidden;
+  z-index: inherit; /* Use same z-index as parent PlayerHUD */
 }
 
 .full-progress-bar {
@@ -132,6 +133,7 @@
   position: relative;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: inherit; /* Use same z-index as parent PlayerHUD */
 }
 
 .full-progress-bar::before {
@@ -407,7 +409,8 @@
 
 /* Effects Section */
 .effects-section {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  height: 28px;
 }
 
 .effects-grid {
@@ -438,11 +441,13 @@
   opacity: 1;
   border-color: #6b7280;
   background: rgba(75, 85, 99, 0.5);
+  padding: 2px;
 }
 
 .effect-icon {
   font-size: 12px;
   margin-bottom: 1px;
+  height: 16px;
 }
 
 .effect-value {
@@ -753,59 +758,6 @@
   justify-content: center;
   align-items: center;
   margin-top: 8px;
-}
-
-/* Zoom control styling */
-.zoom-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(40, 40, 40, 0.8);
-  border: 1px solid #555;
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: 9px;
-}
-
-.zoom-label {
-  color: #ccc;
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-.zoom-slider {
-  width: 60px;
-  height: 12px;
-  background: #333;
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-}
-
-.zoom-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-}
-
-.zoom-slider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-}
-
-.zoom-value {
-  color: #ccc;
-  font-size: 9px;
-  min-width: 28px;
-  text-align: center;
 }
 
 /* Base style for all HUD action buttons */

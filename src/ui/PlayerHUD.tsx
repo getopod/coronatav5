@@ -1,31 +1,22 @@
-// Helper: cryptographically secure shuffle
-function secureShuffle(array: any[], cryptoModule?: any) {
+// Helper: simple and fast shuffle for card games
+function fastShuffle(array: any[]) {
   for (let i = array.length - 1; i > 0; i--) {
-    let j;
-    if (cryptoModule && typeof cryptoModule.randomInt === 'function') {
-      j = cryptoModule.randomInt(0, i + 1);
-    } else if (cryptoModule && typeof cryptoModule.randomBytes === 'function') {
-      const randBytes = cryptoModule.randomBytes(4);
-      const rand = randBytes.readUInt32BE(0);
-      j = Math.floor((rand / (0xFFFFFFFF + 1)) * (i + 1));
-    } else if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-      const randArray = new Uint32Array(1);
-      window.crypto.getRandomValues(randArray);
-      j = Math.floor((randArray[0] / (0xFFFFFFFF + 1)) * (i + 1));
-    } else {
-      throw new Error('No cryptographically secure random number generator available for shuffling.');
-    }
+    const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
 }
 
-// Helper: create new game state after discard
-function getDiscardedState(gameState: any, handPile: any, deckPile: any, player: any, cryptoModule: any) {
-  const newDeckCards = [...deckPile.cards, ...handPile.cards];
-  secureShuffle(newDeckCards, cryptoModule);
-  const newHandCards = newDeckCards.slice(0, 5);
-  const remainingDeckCards = newDeckCards.slice(5);
+// Helper: create new game state after discard - optimized for performance
+function getDiscardedState(gameState: any, handPile: any, deckPile: any, player: any) {
+  // Simply shuffle the existing deck and draw new cards (don't mix with hand)
+  const shuffledDeck = [...deckPile.cards];
+  fastShuffle(shuffledDeck);
+  
+  // Draw 5 new cards from shuffled deck
+  const newHandCards = shuffledDeck.slice(0, 5);
+  const remainingDeckCards = shuffledDeck.slice(5);
+  
   return {
     ...gameState,
     piles: {
@@ -42,8 +33,7 @@ function getDiscardedState(gameState: any, handPile: any, deckPile: any, player:
     player: {
       ...player,
       discards: (player.discards || 0) - 1
-    },
-    _newHandCards: newHandCards // for logging only
+    }
   };
 }
 import React from 'react';
@@ -93,9 +83,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   const [testingWindowPosition, setTestingWindowPosition] = React.useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = React.useState(false);
   const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
-  
-  // Zoom state
-  const [zoomLevel, setZoomLevel] = React.useState(100); // Default to 100%
 
   // Debug logging
   console.log('PlayerHUD - gameState:', gameState);
@@ -121,18 +108,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
   const handleOptionsClick = () => {
     setShowOptionsWindow(!showOptionsWindow);
-  };
-  
-  // Zoom handler
-  const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newZoom = parseInt(event.target.value);
-    setZoomLevel(newZoom);
-    
-    // Apply zoom to the game screen
-    const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
-    if (gameScreen) {
-      gameScreen.style.transform = `translate(-50%, -50%) scale(${newZoom / 100})`;
-    }
   };
 
   // Testing admin functions
@@ -202,50 +177,28 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
     }
   }, [isDragging, dragOffset]);
 
-  // Handle discard action - move hand cards back to deck, shuffle, and redraw
+  // Handle discard action - shuffle deck and redraw hand (optimized)
   const handleDiscardHand = () => {
-    if (!engine) {
-      console.error('Engine not available for discard action');
-      return;
-    }
+    if (!engine) return;
 
-    // Check if player has discards remaining
     const discardsRemaining = player.discards || 0;
     if (discardsRemaining <= 0) {
       alert('No discards remaining!');
       return;
     }
 
-    // Get current hand and deck piles
     const handPile = gameState.piles?.hand;
     const deckPile = gameState.piles?.deck;
 
-    if (!handPile || !deckPile) {
-      console.error('Hand or deck pile not found');
-      return;
-    }
-
-    if (handPile.cards.length === 0) {
+    if (!handPile || !deckPile || handPile.cards.length === 0) {
       alert('No cards in hand to discard!');
       return;
     }
 
-    // Create new state with discard logic:
-    // 1. Move all hand cards back to deck
-    // 2. Shuffle deck
-    // 3. Draw 5 new cards
-    // 4. Decrement discards resource
-    // Use Math.random for browser compatibility
-  const newState = getDiscardedState(gameState, handPile, deckPile, player, null);
-  const { _newHandCards, ...cleanState } = newState;
-
-    // Update engine state with new object reference for React to detect changes
-  engine.state = { ...cleanState };
-    
-    // Emit event to trigger UI refresh
+    // Fast discard and redraw
+    const newState = getDiscardedState(gameState, handPile, deckPile, player);
+    engine.state = { ...newState };
     engine.emitEvent('handDiscarded', { source: 'playerHUD' });
-    
-  console.log('Hand discarded and refreshed:', { newHandSize: newState._newHandCards.length, discardsLeft: discardsRemaining - 1 });
   };
 
   // Get counts for different item types
@@ -438,22 +391,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
       {/* HUD Controls */}
       <div className="hud-controls">
-        {/* Zoom Slider */}
-        <div className="zoom-control">
-          <label htmlFor="zoom-slider" className="zoom-label">Zoom:</label>
-          <input
-            id="zoom-slider"
-            type="range"
-            min="50"
-            max="150"
-            value={zoomLevel}
-            onChange={handleZoomChange}
-            className="zoom-slider"
-            title={`Zoom: ${zoomLevel}%`}
-          />
-          <span className="zoom-value">{zoomLevel}%</span>
-        </div>
-        
         <button 
           className="testing-button hud-action-button" 
           title="Testing functions (admin)"
