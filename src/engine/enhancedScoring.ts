@@ -1,6 +1,7 @@
 // Enhanced scoring system with encounter goal integration
 import { GameState, Move } from './types';
-import { initializeRun, selectEncounter, defaultCoronataConfig } from '../core_engine/encounterSystem';
+import { initializeRun, selectEncounter, defaultCoronataConfig } from './encounterSystem';
+import { EncounterFlowManager } from './encounterFlow';
 
 // Import from relative paths since we're consolidating into /engine/
 export interface EnhancedScoringSystem {
@@ -106,6 +107,32 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     return state.player.score || 0;
   }
 
+  // Handle player choice after encounter completion - DEPRECATED
+  // This method is replaced by the new EncounterFlowManager system
+  progressAfterChoice(state: GameState, choice: 'trade' | 'wander' | 'fortune-swap'): GameState {
+    console.warn('progressAfterChoice is deprecated. Use EncounterFlowManager instead.');
+    
+    // Fallback behavior for compatibility
+    if (!state.run?.awaitingPlayerChoice) {
+      console.warn('No player choice awaiting');
+      return state;
+    }
+
+    console.log('Player chose (legacy):', choice);
+    
+    // Clear choice state
+    state.run.awaitingPlayerChoice = false;
+    state.run.availableChoices = undefined;
+    
+    // Progress to next encounter using legacy logic
+    const { progressEncounter } = require('./encounterSystem');
+    const newRunState = progressEncounter(state.run);
+    state.run = newRunState;
+    
+    console.log('Progressed to new encounter (legacy):', state.run?.encounter);
+    return state;
+  }
+
   checkEncounterGoals(state: GameState): boolean {
     if (!state.run?.encounter) return false;
     
@@ -120,11 +147,11 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 
   // Calculate encounter goal based on master doc formula and table
   calculateEncounterGoal(encounterNumber: number): number {
-    // Score Goal Table from new balanced master doc (25% growth + danger modifiers)
+    // Score Goal Table from working system (matches previous implementation)
     const scoreGoalTable: { [key: number]: number } = {
-      1: 120,    // Fear
-      2: 150,    // Fear  
-      3: 225,    // Danger (188 * 1.2)
+      1: 112,    // Fear (previous working value)
+      2: 149,    // Fear (previous working value)
+      3: 224,    // Danger (previous working value)
       4: 234,    // Fear
       5: 293,    // Fear
       6: 439,    // Danger (366 * 1.2)
@@ -165,26 +192,31 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       // Mark encounter as completed
       if (state.run.encounter) {
         state.run.encounter.completed = true;
-        // Set state to show trade/wander choices (no more gamble)
-        state.run.awaitingPlayerChoice = true;
         
-        // After Fears: Trade + 2 Wander choices, After Dangers: Mandatory Fortune swap
+        // NEW: Use EncounterFlowManager for proper post-encounter flow
         const encounterType = state.run.encounter.type || 'fear';
-        if (encounterType === 'fear') {
-          state.run.availableChoices = ['trade', 'wander', 'wander'];
-        } else if (encounterType === 'danger') {
-          // After dangers: mandatory fortune swap then normal choices
-          state.run.availableChoices = ['fortune-swap'];
-        } else {
-          // Usurper or other: just trade/wander
-          state.run.availableChoices = ['trade', 'wander'];
-        }
         
-        console.log('Encounter completed! Awaiting player choice:', state.run.availableChoices);
+        // Initialize encounter flow manager
+        const flowManager = new EncounterFlowManager(state);
+        
+        // Set up post-encounter activities based on Master Doc
+        const flowState = flowManager.onEncounterComplete(encounterType);
+        
+        // Store flow state in run for UI to access
+        state.run.encounterFlow = {
+          active: true,
+          phase: flowState.phase,
+          currentActivity: flowState.currentActivity,
+          queuedActivities: flowState.queuedActivities,
+          completedActivities: flowState.completedActivities
+        };
+        
+        console.log(`Encounter completed! Starting ${encounterType} flow:`, state.run.encounterFlow);
+        
+        // DEPRECATED: Remove old choice system
+        // state.run.awaitingPlayerChoice = true;
+        // state.run.availableChoices = [...];
       }
-
-      // Don't automatically progress - wait for player choice
-      // The UI should show the choice interface and call progressAfterChoice()
     }
 
     return state;
@@ -237,8 +269,113 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     return score;
   }
 
+  /**
+   * Reset game board for a new encounter while preserving player inventory
+   * This should be called when starting each new encounter in a run
+   */
+  resetForNewEncounter(state: GameState, newEncounterNumber: number): GameState {
+    console.log(`Resetting for encounter ${newEncounterNumber}...`);
+    
+    // Preserve player inventory (coins, exploits, curses, blessings, fortunes)
+    const preservedInventory = {
+      coins: state.player.coins,
+      exploits: [...(state.player.exploits || [])],
+      curses: [...(state.player.curses || [])],
+      blessings: [...(state.player.blessings || [])],
+      fortunes: [...(state.player.fortunes || [])],
+      shuffles: 3, // Reset shuffles for new encounter
+      discards: 2 // Reset discards for new encounter
+    };
+
+    // Reset game board state
+    state.player.score = 0; // Fresh score for new encounter
+    
+    // Reset all piles to fresh state
+    if (state.piles) {
+      // Collect all cards from all piles
+      const allCards: any[] = [];
+      Object.values(state.piles).forEach(pile => {
+        if (pile.cards) {
+          allCards.push(...pile.cards);
+        }
+      });
+
+      // Reset all cards to default state (face down, no special effects)
+      allCards.forEach(card => {
+        card.faceUp = false;
+        card.blessed = false;
+        card.tempEffects = [];
+      });
+
+      // Shuffle all cards back into deck
+      this.shuffleArray(allCards);
+
+      // Reset pile structures
+      state.piles.deck.cards = allCards;
+      state.piles.waste.cards = [];
+      state.piles.hand.cards = [];
+      
+      // Reset foundations
+      for (let i = 1; i <= 4; i++) {
+        if (state.piles[`foundation-${i}`]) {
+          state.piles[`foundation-${i}`].cards = [];
+        }
+      }
+      
+      // Reset tableau
+      for (let i = 1; i <= 7; i++) {
+        if (state.piles[`tableau-${i}`]) {
+          state.piles[`tableau-${i}`].cards = [];
+        }
+      }
+    }
+
+    // Restore preserved inventory
+    Object.assign(state.player, preservedInventory);
+
+    // Deal fresh hand
+    const handSize = state.player.maxHandSize || 5;
+    if (state.piles?.deck?.cards && state.piles?.hand?.cards) {
+      for (let i = 0; i < handSize && state.piles.deck.cards.length > 0; i++) {
+        const card = state.piles.deck.cards.pop();
+        if (card) {
+          card.faceUp = true; // Hand cards should be face up
+          state.piles.hand.cards.push(card);
+        }
+      }
+    }
+
+    // Set new encounter goal
+    const newGoal = this.calculateEncounterGoal(newEncounterNumber);
+    if (state.run?.encounter) {
+      state.run.encounter.scoreGoal = newGoal;
+      state.run.encounter.completed = false;
+    }
+
+    console.log(`Encounter reset complete:`, {
+      newScore: state.player.score,
+      newGoal,
+      preservedCoins: state.player.coins,
+      preservedExploits: state.player.exploits?.length || 0,
+      preservedCurses: state.player.curses?.length || 0,
+      handSize: state.piles?.hand?.cards?.length || 0,
+      deckSize: state.piles?.deck?.cards?.length || 0
+    });
+
+    return state;
+  }
+
+  // Helper method for array shuffling (Fisher-Yates with crypto-secure random)
+  private shuffleArray(array: any[]): void {
+    const crypto = require('crypto');
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
   // Penalty system for negative actions
-  applyPenalty(state: GameState, penaltyType: string, amount: number): GameState {
+  applyPenalty(state: GameState, _penaltyType: string, amount: number): GameState {
     let penalty = amount;
 
     // Fortune can reduce penalties
@@ -252,7 +389,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 }
 
 // Factory function for creating scoring systems
-export function createScoringSystem(variant: string): EnhancedScoringSystem {
+export function createScoringSystem(_variant: string): EnhancedScoringSystem {
   // For now, always return CoronataScoringSystem
   // Future variants can be added here
   return new CoronataScoringSystem();
@@ -267,7 +404,7 @@ export function integrateEnhancedScoring(engineController: any, variant: string)
   
   // Initialize Coronata-specific state if needed
   if (variant === 'coronata') {
-    initializeCoronataState(engineController);
+    engineController.state = initializeCoronataState(engineController);
   }
   
   // Add encounter-specific event handlers
@@ -358,14 +495,55 @@ function initializeCoronataState(engineController: any) {
     state.player.fortunes = state.player.fortunes || [];
     state.player.maxHandSize = state.player.maxHandSize || 5;
     
-    // For testing: Give player some exploits to demonstrate effects
-    if (state.player.exploits.length === 0) {
-      state.player.exploits = [
-        "exploit-scholars-eye",      // 5/10 cards get +5 points
-        "exploit-chronomancer",      // +1 shuffle per encounter
-        "exploit-whispering-gale"    // See top deck card
+    // Initialize player inventory - start clean except for selected fortune
+    // REMOVED: Demo effects that were polluting the game state
+    // Players should start with only their chosen fortune and acquire effects through gameplay
+
+    console.log('Player inventory initialized clean:', {
+      exploits: state.player.exploits,
+      curses: state.player.curses, 
+      fortunes: state.player.fortunes
+    });
+
+    // Process immediate effects for all active registry entries
+    if (engineController?.effectEngine) {
+      console.log('Processing immediate effects for active registry entries...');
+      const activeRegistryIds = [
+        ...(state.player.exploits || []),
+        ...(state.player.curses || []),
+        ...(state.player.fortunes || [])
       ];
-      console.log('Demo exploits added to player:', state.player.exploits);
+
+      const immediateEffects = [];
+      for (const registryId of activeRegistryIds) {
+        const registryEntry = engineController.registryEntries.find((entry: any) => entry.id === registryId);
+        if (registryEntry?.effects) {
+          for (const effect of registryEntry.effects) {
+            if (effect.condition && effect.condition.event === 'immediate') {
+              immediateEffects.push({
+                type: effect.action,
+                target: effect.target,
+                value: effect.value,
+                condition: effect.condition,
+                meta: { 
+                  context: 'immediate',
+                  sourceEntry: registryEntry.id,
+                  sourceLabel: registryEntry.label 
+                }
+              });
+            }
+          }
+        }
+      }
+
+      if (immediateEffects.length > 0) {
+        console.log(`Applying ${immediateEffects.length} immediate effects:`, immediateEffects);
+        const newState = engineController.effectEngine.applyEffects(immediateEffects, state);
+        console.log('Immediate effects applied. Player coins before:', state.player?.coins, 'after:', newState.player?.coins);
+        
+        // Return the updated state
+        return newState;
+      }
     }
   }
   
@@ -454,4 +632,6 @@ function initializeCoronataState(engineController: any) {
   console.log('Coronata state initialized:', state);
   console.log('Final deck cards:', state.piles.deck?.cards?.length || 0);
   console.log('Final hand cards:', state.piles.hand?.cards?.length || 0);
+  
+  return state;
 }

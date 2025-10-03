@@ -1,5 +1,5 @@
 // Engine Controller: Registry-to-Engine Bootstrapping & Central Dispatcher
-import { GameState, Move } from './types';
+import { GameState, Move, Pile, Card } from './types';
 import { loadRegistry, RegistryConfig } from './registryLoader';
 import { EffectEngine, Effect, EffectHandler, builtInHandlers } from './effectEngine';
 import { EventEmitter, EngineEvent } from './eventSystem';
@@ -8,6 +8,7 @@ import { validateMove, moveCard as moveCardLogic } from './moveLogic';
 import { gameModeProfiles } from './gameModeProfiles';
 import type { GameModeProfile } from './gameModeProfiles';
 import { integrateEnhancedScoring, EnhancedScoringSystem } from './enhancedScoring';
+import { FeatTrackingSystem } from './featTracking';
 
 export interface EngineControllerConfig {
   registryConfig: RegistryConfig;
@@ -95,6 +96,7 @@ export class EngineController {
   public effectEngine: EffectEngine;
   public eventEmitter: EventEmitter;
   public scoringSystem?: EnhancedScoringSystem;
+  public featTracker: FeatTrackingSystem;
   private registryEntries: RegistryEntry[];
   public plugins: EnginePlugin[] = [];
 
@@ -114,6 +116,12 @@ export class EngineController {
       handlers: { ...builtInHandlers, ...(config.customHandlers || {}) }
     });
     this.eventEmitter = new EventEmitter();
+    
+    // Initialize feat tracking system
+    this.featTracker = new FeatTrackingSystem();
+    
+    // Track new game session
+    this.featTracker.updateStats('gamesStarted', 1);
     
     // Auto-integrate enhanced features based on game mode profile
     if (this.config.enableEnhancedScoring) {
@@ -204,41 +212,53 @@ export class EngineController {
     if (!effect.condition) return true;
     if (typeof effect.condition === 'function') return effect.condition(this.state);
     
-    const { card, toPile, move } = moveData;
+    const { card, toPile } = moveData;
     
     // Check target pile type matching
-    if (effect.target) {
-      const targetTypes = effect.target.split('|');
-      const pileTypeMatches = targetTypes.some(targetType => {
-        if (targetType === 'tableau' && toPile.type === 'tableau') return true;
-        if (targetType === 'foundation' && toPile.type === 'foundation') return true;
-        if (targetType === 'hand' && toPile.type === 'hand') return true;
-        if (targetType === 'deck' && toPile.type === 'deck') return true;
-        if (targetType === 'waste' && toPile.type === 'waste') return true;
-        return false;
-      });
-      if (!pileTypeMatches) return false;
-    }
+    if (!this.checkTargetPileCondition(effect, toPile)) return false;
     
     // Check card-specific conditions if card exists
-    if (card && effect.condition) {
-      // Check card value
-      if (effect.condition.value) {
-        const values = Array.isArray(effect.condition.value) ? effect.condition.value : [effect.condition.value];
-        if (!values.includes(card.value)) return false;
-      }
-      
-      // Check card suit
-      if (effect.condition.suit) {
-        const suits = Array.isArray(effect.condition.suit) ? effect.condition.suit : [effect.condition.suit];
-        if (!suits.includes(card.suit)) return false;
-      }
-    }
+    if (!this.checkCardConditions(effect, card)) return false;
     
     // Event-based conditions would be handled elsewhere (on_play_from_hand, etc.)
     // For now, skip event conditions in move context
-    if (effect.condition.event) {
+    const condition = effect.condition as any;
+    if (condition?.event) {
       return false; // These need special handling
+    }
+    
+    return true;
+  }
+
+  private checkTargetPileCondition(effect: Effect, toPile: any): boolean {
+    if (!effect.target) return true;
+    
+    const targetTypes = effect.target.split('|');
+    return targetTypes.some(targetType => {
+      if (targetType === 'tableau' && toPile.type === 'tableau') return true;
+      if (targetType === 'foundation' && toPile.type === 'foundation') return true;
+      if (targetType === 'hand' && toPile.type === 'hand') return true;
+      if (targetType === 'deck' && toPile.type === 'deck') return true;
+      if (targetType === 'waste' && toPile.type === 'waste') return true;
+      return false;
+    });
+  }
+
+  private checkCardConditions(effect: Effect, card: any): boolean {
+    if (!card || !effect.condition || typeof effect.condition === 'function') return true;
+    
+    const condition = effect.condition as any; // Type assertion for object conditions
+    
+    // Check card value
+    if (condition.value) {
+      const values = Array.isArray(condition.value) ? condition.value : [condition.value];
+      if (!values.includes(card.value)) return false;
+    }
+    
+    // Check card suit
+    if (condition.suit) {
+      const suits = Array.isArray(condition.suit) ? condition.suit : [condition.suit];
+      if (!suits.includes(card.suit)) return false;
     }
     
     return true;
@@ -265,6 +285,45 @@ export class EngineController {
     }
   }
 
+  // Helper method to find a card by ID in all piles
+  private getCardById(cardId: string): Card | null {
+    if (!this.state.piles) return null;
+    
+    // piles is a Record<string, Pile>, so iterate over values
+    for (const pile of Object.values(this.state.piles)) {
+      if (Array.isArray(pile.cards)) {
+        const card = pile.cards.find((c: Card) => c.id === cardId);
+        if (card) return card;
+      }
+    }
+    return null;
+  }
+
+  // Helper method to handle feat tracking for moves
+  private handleFeatTracking(move: Move): void {
+    this.featTracker.updateStats('moves', 1);
+    
+    // Track card type moves
+    if (move.cardId) {
+      const card = this.getCardById(move.cardId);
+      if (card) {
+        if (card.value === 1) this.featTracker.updateStats('acesPlayed', 1);
+        if (card.value === 13) this.featTracker.updateStats('kingsPlayed', 1);
+      }
+    }
+    
+    // Track foundation moves
+    if (this.state.piles) {
+      const toPile = Object.values(this.state.piles).find((p: Pile) => p.id === move.to);
+      if (toPile?.type === 'foundation') {
+        this.featTracker.updateStats('foundationMoves', 1);
+      }
+    }
+    
+    // Check for feat completions
+    this.featTracker.checkFeats(this.state);
+  }
+
   // Wire up event listeners for engine events
   wireEvents() {
     // Set up event-based effect handlers for coin earning, etc.
@@ -273,6 +332,11 @@ export class EngineController {
     // On move: apply effects, update score, check win/loss, record undo/redo
     this.eventEmitter.on('move', (event: EngineEvent) => {
       this.applyActiveEffects();
+      
+      // Handle feat tracking
+      const { move } = event.payload as { move: Move, state: GameState };
+      this.handleFeatTracking(move);
+      
       // Scoring - Skip base scoring if enhanced scoring is active (Coronata mode)
       console.log('Base scoring check - config.rules:', this.config?.rules, 'scoringSystem exists:', !!this.scoringSystem);
       if (this.scoringSystem && this.config?.rules !== 'coronata') {
@@ -311,11 +375,17 @@ export class EngineController {
       }
       // UI hooks: can add event consumers here
     });
-    // On win/loss: UI hooks
+    // On win/loss: UI hooks and feat tracking
   this.eventEmitter.on('win', () => {
+      // Update feat tracking for wins
+      this.featTracker.updateStats('wins', 1);
+      this.featTracker.checkFeats(this.state);
       // UI: show win modal, etc.
     });
   this.eventEmitter.on('loss', () => {
+      // Update feat tracking for losses
+      this.featTracker.updateStats('losses', 1);
+      this.featTracker.checkFeats(this.state);
       // UI: show loss modal, etc.
     });
   }
@@ -422,7 +492,9 @@ export class EngineController {
       try {
         // Apply registry effects that trigger on moves
         console.log('ENGINE: Getting active effects...');
-        const activeEffects = this.getActiveEffects(newState, 'move', { move, fromState: this.state });
+        const card = fromPile.cards.find(c => c.id === move.cardId);
+        const moveData = { move, card, toPile, fromPile, fromState: this.state };
+        const activeEffects = this.getActiveEffects(newState, 'move', moveData);
         console.log(`ENGINE: Found ${activeEffects.length} active effects`);
         
         if (activeEffects.length > 0) {

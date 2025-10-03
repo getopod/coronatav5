@@ -51,7 +51,7 @@ export function CoronataWelcomeScreen({
           </g>
           
           {/* Game Title */}
-          <text x="150" y="120" fontSize="36" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
+          <text x="150" y="120" fontSize="48" fontWeight="bold" textAnchor="middle" fill="#ffd700" letterSpacing="4" filter="url(#glow)">CORONATA</text>
           
           {/* Subtitle */}
           <text x="150" y="145" fontSize="14" textAnchor="middle" fill="#cccccc" letterSpacing="2">SOLITAIRE ROGUELIKE</text>

@@ -8,7 +8,7 @@ import { GameState } from '../engine/types'; // Changed from core_engine to engi
 import ChoiceSelectionScreen from './ChoiceSelectionScreen';
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
-import { endGameSession } from '../core_engine/persistenceManager';
+import { endGameSession } from '../engine/persistenceManager';
 import './GameScreen.css';
 
 interface GameScreenProps {
@@ -130,6 +130,26 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   // Choice screen states
   const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander'>('game');
   
+  // Integrate selected fortune into game state for registry effects
+  React.useEffect(() => {
+    if (selectedFortune && engine.state.player && isCoronata) {
+      const currentFortunes = engine.state.player.fortunes || [];
+      
+      // Only add if not already present (avoid duplicates)
+      if (!currentFortunes.includes(selectedFortune.id)) {
+        console.log('Adding selected fortune to player registry:', selectedFortune.label);
+        
+        // Add the fortune to player registry
+        engine.state.player.fortunes = [...currentFortunes, selectedFortune.id];
+        
+        // Emit state change to trigger re-render and effect processing
+        engine.emitEvent('stateChange', engine.state);
+        
+        console.log('Player fortunes updated:', engine.state.player.fortunes);
+      }
+    }
+  }, [selectedFortune, engine, isCoronata]);
+
   // Responsive scaling effect
   React.useEffect(() => {
     const handleResize = () => {
@@ -192,23 +212,53 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     }, 600);
   };
 
-  // Handle player choice selection
-  const handleChoiceSelected = (choice: 'trade' | 'wander' | 'fortune-swap') => {
-    console.log('Player chose:', choice);
-    if (choice === 'trade') {
-      setCurrentScreen('trade');
-    } else if (choice === 'wander') {
-      setCurrentScreen('wander');
-    } else if (choice === 'fortune-swap') {
-      // Force fortune swap after danger encounters (simplified for now)
-      setCurrentScreen('game');
-      console.log('Fortune swap required after danger encounter - continuing game');
-    }
-  };
-
   // Handle trade screen actions
   const handleTradeBack = () => {
-    setCurrentScreen('choice');
+    // Check if we're in an encounter flow context
+    if (gameState.run?.encounterFlow?.active) {
+      // Use EncounterFlowManager to progress to next activity
+      const { EncounterFlowManager } = require('../engine/encounterFlow');
+      const flowManager = new EncounterFlowManager(gameState);
+      
+      // Complete the current trade activity
+      flowManager.completeCurrentActivity({ skipped: true });
+      
+      // Update game state with new flow state
+      const updatedState = flowManager.getUpdatedGameState();
+      const newFlowState = flowManager.getFlowState();
+      
+      engine.state = {
+        ...updatedState,
+        run: {
+          ...updatedState.run,
+          encounterFlow: {
+            active: !flowManager.isFlowComplete(),
+            phase: newFlowState.phase,
+            currentActivity: newFlowState.currentActivity,
+            queuedActivities: newFlowState.queuedActivities,
+            completedActivities: newFlowState.completedActivities
+          }
+        }
+      };
+      
+      // Emit state change for React updates
+      engine.emitEvent('stateChange', engine.state);
+      
+      // Check if flow is complete or has next activity
+      if (flowManager.isFlowComplete()) {
+        // Flow complete, return to game
+        setCurrentScreen('game');
+      } else if (newFlowState.currentActivity?.type === 'wander') {
+        // Next activity is wander, show wander screen
+        setCurrentScreen('wander');
+      } else {
+        // No more activities or unknown state, return to game
+        setCurrentScreen('game');
+      }
+    } else {
+      // Fallback to legacy behavior
+      setCurrentScreen('choice');
+    }
   };
 
   const handleTradePurchase = (item: any, cost: number) => {
@@ -317,11 +367,61 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
   // Handle wander screen actions
   const handleWanderBack = () => {
-    setCurrentScreen('choice');
+    // Check if we're in an encounter flow context
+    if (gameState.run?.encounterFlow?.active) {
+      // Use EncounterFlowManager to progress to next activity
+      const { EncounterFlowManager } = require('../engine/encounterFlow');
+      const flowManager = new EncounterFlowManager(gameState);
+      
+      // Complete the current wander activity
+      flowManager.completeCurrentActivity({ skipped: true });
+      
+      // Update game state with new flow state
+      const updatedState = flowManager.getUpdatedGameState();
+      const newFlowState = flowManager.getFlowState();
+      
+      engine.state = {
+        ...updatedState,
+        run: {
+          ...updatedState.run,
+          encounterFlow: {
+            active: !flowManager.isFlowComplete(),
+            phase: newFlowState.phase,
+            currentActivity: newFlowState.currentActivity,
+            queuedActivities: newFlowState.queuedActivities,
+            completedActivities: newFlowState.completedActivities
+          }
+        }
+      };
+      
+      // Emit state change for React updates
+      engine.emitEvent('stateChange', engine.state);
+      
+      // Check if flow is complete or has next activity
+      if (flowManager.isFlowComplete()) {
+        // Flow complete, return to game
+        setCurrentScreen('game');
+      } else if (newFlowState.currentActivity?.type === 'trade') {
+        // Next activity is trade, show trade screen
+        setCurrentScreen('trade');
+      } else if (newFlowState.currentActivity?.type === 'wander') {
+        // Next activity is another wander, stay on wander screen with new content
+        setCurrentScreen('wander');
+      } else {
+        // No more activities or unknown state, return to game
+        setCurrentScreen('game');
+      }
+    } else {
+      // Fallback to legacy behavior
+      setCurrentScreen('choice');
+    }
   };
 
   const handleWanderChoice = (wanderId: string, choice: string, outcome: string) => {
     console.log('Wander choice made:', { wanderId, choice, outcome });
+    
+    // Create a copy of the current state to modify
+    const newState = { ...engine.state };
     
     // Find the wander in the registry to get its effects
     const wander = registry.wander?.find(w => w.id === wanderId);
@@ -1127,7 +1227,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       </div>
       
       {/* Player HUD */}
-      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} onChoiceSelected={handleChoiceSelected} />}
+      {isCoronata && <PlayerHUD gameState={gameState} selectedFortune={selectedFortune} onNavigateToWelcome={onNavigateToWelcome} onShowRunRecap={() => setShowRunRecap(true)} />}
       
       {/* Resign confirmation modal */}
       {showResignModal && (

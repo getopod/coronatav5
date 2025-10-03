@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { persistenceManager } from '../core_engine/persistenceManager';
-import type { GameSessionData, PlayerProfile } from '../core_engine/persistenceManager';
+import { persistenceManager } from '../engine/persistenceManager';
+import type { GameSessionData, PlayerProfile } from '../engine/persistenceManager';
 import './History.css';
 
 export interface HistoryProps {

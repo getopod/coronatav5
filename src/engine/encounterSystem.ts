@@ -17,7 +17,7 @@ export interface EncounterConfig {
 export const defaultCoronataConfig: EncounterConfig = {
   totalTrials: 5,
   encountersPerTrial: 3,
-  baseScoreGoal: 120, // Starting goal from master doc
+  baseScoreGoal: 112, // Fixed to working value
   scoreGoalIncrease: 0, // Will use calculateEncounterGoal function instead
   fearWeight: 0.67, // 2/3 fear, 1/3 danger per trial (F, F, D pattern)
 };
@@ -69,7 +69,6 @@ export function selectEncounter(
   
   if (!availableEncounters || availableEncounters.length === 0) {
     console.warn(`No ${encounterType} encounters available in registry, using fallback`);
-    // Temporary fallback for testing
     const fallbackEntry = {
       id: `fallback-${encounterType}`,
       label: `Test ${encounterType.charAt(0).toUpperCase() + encounterType.slice(1)}`,

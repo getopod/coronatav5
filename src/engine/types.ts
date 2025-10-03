@@ -46,6 +46,37 @@ export interface PlayerProfile {
   settings?: Record<string, any>;
 }
 
+export interface EncounterState {
+  id: string;
+  type: 'fear' | 'danger';
+  registryId: string; // ID from registry (fear/danger)
+  name: string;
+  description: string;
+  effects: any[];
+  scoreGoal?: number;
+  completed?: boolean;
+}
+
+export interface RunState {
+  currentTrial: number;
+  currentEncounter: number;
+  totalTrials: number;
+  encountersPerTrial: number;
+  encounter?: EncounterState;
+  difficulty: number;
+  seed?: string; // for reproducible runs
+  awaitingPlayerChoice?: boolean; // true when encounter is complete and waiting for post-encounter choices
+  availableChoices?: string[]; // ['trade', 'wander'] when encounter is complete (random order)
+  encountersCompleted?: number;
+  encounterFlow?: {
+    active: boolean;
+    phase: string;
+    currentActivity: any;
+    queuedActivities: any[];
+    completedActivities: string[];
+  };
+}
+
 export interface PlayerStats {
   gamesPlayed: number;
   gamesWon: number;

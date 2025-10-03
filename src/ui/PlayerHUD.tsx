@@ -50,6 +50,7 @@ import React from 'react';
 import { GameState } from '../engine/types'; // Changed from core_engine to engine
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
+import { EncounterFlowUI } from './EncounterFlowUI';
 import './PlayerHUD.css';
 
 export interface PlayerHUDProps {
@@ -57,10 +58,9 @@ export interface PlayerHUDProps {
   selectedFortune?: any;
   onNavigateToWelcome?: () => void;
   onShowRunRecap?: () => void;
-  onChoiceSelected?: (choice: 'trade' | 'wander' | 'fortune-swap') => void;
 }
 
-export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome, onShowRunRecap, onChoiceSelected }) => {
+export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune, onNavigateToWelcome, onShowRunRecap }) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
   const progressBarRef = React.useRef<HTMLDivElement>(null);
@@ -81,16 +81,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   console.log('PlayerHUD - run:', run);
   console.log('PlayerHUD - encounter:', encounter);
   console.log('PlayerHUD - selectedFortune:', selectedFortune);
-
-  // Handle player choice after encounter completion
-  const handlePlayerChoice = (choice: 'trade' | 'wander' | 'fortune-swap') => {
-    console.log('Player selected choice:', choice);
-    if (onChoiceSelected) {
-      onChoiceSelected(choice);
-    } else {
-      alert(`Choice "${choice}" selected! (Progression logic to be implemented)`);
-    }
-  };
 
   // Handle discard action - move hand cards back to deck, shuffle, and redraw
   const handleDiscardHand = () => {
@@ -161,7 +151,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
   };
   
   const getPlayerBlessings = () => {
-    const blessings = (player.blessings || []).map(id => registry.blessing.find(b => b.id === id)).filter(Boolean);
+    const blessings = (player.blessings || []).map((id: string) => registry.blessing.find(b => b.id === id)).filter(Boolean);
     return blessings;
   };
   
@@ -242,47 +232,14 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
         </div>
       )}
 
-      {/* Player Choice Interface */}
-      {run?.awaitingPlayerChoice && (
-        <div className="choice-interface">
-          <div className="choice-header">
-            <h3>🎉 Encounter Complete!</h3>
-            <p>Choose your next action:</p>
-          </div>
-          <div className="choice-buttons">
-            {run.availableChoices?.includes('trade') && (
-              <button 
-                className="choice-btn trade"
-                onClick={() => handlePlayerChoice('trade')}
-              >
-                💰 Trade
-                <br />
-                <span className="choice-description">Exchange resources</span>
-              </button>
-            )}
-            {run.availableChoices?.includes('wander') && (
-              <button 
-                className="choice-btn wander"
-                onClick={() => handlePlayerChoice('wander')}
-              >
-                🚶 Wander
-                <br />
-                <span className="choice-description">Explore new paths</span>
-              </button>
-            )}
-            {run.availableChoices?.includes('fortune-swap') && (
-              <button 
-                className="choice-btn fortune"
-                onClick={() => handlePlayerChoice('fortune-swap')}
-              >
-                🔮 Fortune Swap
-                <br />
-                <span className="choice-description">Change your destiny</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Encounter Flow Interface */}
+      <EncounterFlowUI 
+        gameState={gameState}
+        engine={engine}
+        onFlowComplete={() => {
+          console.log('Encounter flow completed');
+        }}
+      />
 
       {/* Player Resources */}
       <div className="effects-section">

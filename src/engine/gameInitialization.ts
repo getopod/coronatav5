@@ -29,7 +29,7 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
   const encounterConfig = {
     totalTrials: 5,
     encountersPerTrial: 3,
-    baseScoreGoal: 120, // Starting goal from master doc
+    baseScoreGoal: 112, // Fixed to working value 
     scoreGoalIncrease: 0, // We use calculateEncounterGoal function instead
     fearWeight: 0.67 // 2/3 fear, 1/3 danger per trial
   };

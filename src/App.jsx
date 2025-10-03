@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
-import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History } from './ui';
+import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History, Options } from './ui';
 import { EngineController } from './engine/engineController';
 import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
 import { GameModeMenu } from './ui/GameModeMenu';
-import { startGameSession } from './core_engine/persistenceManager';
+import { startGameSession } from './engine/persistenceManager';
 import { exploits } from './registry/registry'; // Import registry items
+// Debug utilities
+import './debug/gameDebug';
 // Removed unused imports: gameModeProfiles, reactLogo, vieLogo, setupCoronataEngine
 import './App.css';
 
@@ -17,6 +19,7 @@ function App() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [selectedFortune, setSelectedFortune] = useState(null);
   // Create engine instance for selected mode
   const engine = React.useMemo(() => {
@@ -59,6 +62,7 @@ function App() {
     setShowHowToPlay(false);
     setShowGlossary(false);
     setShowHistory(false);
+    setShowOptions(false);
   };
 
   // Handle Fortune Selection actions
@@ -107,11 +111,17 @@ function App() {
     setShowHistory(true);
   };
 
+  const handleShowOptions = () => {
+    setShowCoronataWelcome(false);
+    setShowOptions(true);
+  };
+
   // Handle back navigation from sub-screens
   const handleBackToWelcome = () => {
     setShowHowToPlay(false);
     setShowGlossary(false);
     setShowHistory(false);
+    setShowOptions(false);
     setShowCoronataWelcome(true);
   };
 
@@ -128,7 +138,7 @@ function App() {
         onHowToPlay={handleShowHowToPlay}
         onGlossary={handleShowGlossary}
         onHistory={handleShowHistory}
-        onOptions={() => alert('Options will be implemented soon!')}
+        onOptions={handleShowOptions}
         onBack={handleCoronataBack}
       />
     );
@@ -147,6 +157,11 @@ function App() {
   // Show History screen
   if (selectedMode === 'coronata' && showHistory) {
     return <History onBack={handleBackToWelcome} />;
+  }
+
+  // Show Options screen
+  if (selectedMode === 'coronata' && showOptions) {
+    return <Options onBack={handleBackToWelcome} engine={engine} />;
   }
 
   // Show Fortune Selection screen

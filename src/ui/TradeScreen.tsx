@@ -150,7 +150,8 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
     const selected: RegistryEntry[] = [];
     
     while (selected.length < count && selected.length < items.length) {
-      const randomIndex = Math.floor(Math.random() * weightedItems.length);
+      const crypto = require('crypto');
+      const randomIndex = Math.floor((crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * weightedItems.length);
       const item = weightedItems[randomIndex];
       
       if (!selected.some(s => s.id === item.id)) {
@@ -298,11 +299,6 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
                     <span className={`rarity ${item.rarity}`}>{item.rarity}</span>
                   </div>
                   <p className="item-description">{item.description}</p>
-                  <div className="item-tags">
-                    {item.tags.map((tag: string) => (
-                      <span key={tag} className="item-tag">{tag}</span>
-                    ))}
-                  </div>
                   <div className="item-footer">
                     <span className="item-cost">🪙 {item.cost}</span>
                     <button
