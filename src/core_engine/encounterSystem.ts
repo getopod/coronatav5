@@ -15,11 +15,11 @@ export interface EncounterConfig {
 }
 
 export const defaultCoronataConfig: EncounterConfig = {
-  totalTrials: 3,
-  encountersPerTrial: 4,
-  baseScoreGoal: 500,
-  scoreGoalIncrease: 200,
-  fearWeight: 0.7, // 70% fear, 30% danger
+  totalTrials: 5,
+  encountersPerTrial: 3,
+  baseScoreGoal: 120, // Starting goal from master doc
+  scoreGoalIncrease: 0, // Will use calculateEncounterGoal function instead
+  fearWeight: 0.67, // 2/3 fear, 1/3 danger per trial (F, F, D pattern)
 };
 
 /**

@@ -51,8 +51,8 @@ export interface RunState {
   encounter?: EncounterState;
   difficulty: number;
   seed?: string; // for reproducible runs
-  awaitingPlayerChoice?: boolean; // true when encounter is complete and waiting for trade/wander/gamble choice
-  availableChoices?: string[]; // ['trade', 'wander', 'gamble'] when encounter is complete
+  awaitingPlayerChoice?: boolean; // true when encounter is complete and waiting for post-encounter choices
+  availableChoices?: string[]; // ['trade', 'wander'] when encounter is complete (random order)
 }
 
 export interface PlayerProfile {
@@ -79,6 +79,22 @@ export interface GameState {
   profile?: PlayerProfile;
   blocked?: boolean;
   blockReason?: string;
+  // Ascension system properties
+  ascension?: {
+    currentLevel: number;
+    levelInfo: any; // AscensionLevel from ascensionSystem.ts
+    appliedChallenges: string[];
+  };
+  modifiers?: {
+    costMultiplier?: number;
+    scoreMultiplier?: number;
+    rewardMultiplier?: number;
+  };
+  settings?: {
+    handSize?: number;
+    shufflesPerEncounter?: number;
+    drawReduction?: number;
+  };
 }
 
 export interface Move {

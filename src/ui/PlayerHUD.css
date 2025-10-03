@@ -594,9 +594,9 @@
   box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
 }
 
-.choice-btn.gamble:hover {
-  border-color: #ef4444;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+.choice-btn.fortune-swap:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 
 .choice-description {

@@ -1,5 +1,6 @@
 // Enhanced scoring system with encounter goal integration
 import { GameState, Move } from './types';
+import { initializeRun, selectEncounter, defaultCoronataConfig } from '../core_engine/encounterSystem';
 
 // Import from relative paths since we're consolidating into /engine/
 export interface EnhancedScoringSystem {
@@ -210,9 +211,12 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
           case 'golden_touch':
             bonus *= 1.5;
             break;
-          case 'luck_blessing':
-            bonus += Math.floor(Math.random() * 10);
+          case 'luck_blessing': {
+            // Use cryptographically secure random for security compliance
+            const crypto = require('crypto');
+            bonus += Math.floor(crypto.randomInt(0, 10));
             break;
+          }
         }
       });
     }
@@ -406,20 +410,34 @@ function initializeCoronataState(engineController: any) {
   
   // Initialize basic run state for Coronata
   if (!state.run) {
-    state.run = {
-      currentTrial: 1,
-      currentEncounter: 1,
+    // Update config to match new balance specifications
+    const coronataConfig = {
+      ...defaultCoronataConfig,
       totalTrials: 5,
       encountersPerTrial: 3,
-      difficulty: 1,
+      baseScoreGoal: 120, // Starting goal for first encounter
+      scoreGoalIncrease: 0, // We'll use the calculateEncounterGoal function instead
+      fearWeight: 0.67 // 2/3 fear, 1/3 danger per trial
+    };
+    
+    const runState = initializeRun(1, coronataConfig);
+    const firstEncounter = selectEncounter(runState, coronataConfig);
+    
+    // Create a scoring system instance to calculate the goal
+    const scoringSystem = new CoronataScoringSystem();
+    
+    state.run = {
+      ...runState,
       completedEncounters: [],
       encounter: {
-        id: 1,
-        type: 'fear',
-        title: 'Practice Round',
-        description: 'Get familiar with the game mechanics',
-        scoreGoal: 112,
-        completed: false
+        id: firstEncounter.id,
+        type: firstEncounter.type,
+        title: firstEncounter.name,
+        description: firstEncounter.description,
+        scoreGoal: scoringSystem.calculateEncounterGoal(1), // Use proper goal calculation
+        completed: false,
+        registryId: firstEncounter.registryId,
+        effects: firstEncounter.effects
       }
     };
   }

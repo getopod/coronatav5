@@ -1,11 +1,11 @@
 # Coronata Master Doc
-**Version 3.0 (Complete Rebalanced Edition)**  
-*Last Updated: October 2, 2025*
+**Version 4.0 (Complete Rebalanced Edition)**  
+*Last Updated: October 3, 2025*
 
 ## The Complete Guide to Coronata
 This document contains every rule, mechanic, balance detail, and implementation specification for Coronata. It serves as the canonical reference for players, designers, developers, and AI agents.
 
-**Coronata** is a solitaire-roguelike that transforms Klondike patience into a strategic campaign experience. Each run is a journey through 15 encounters across 5 trials, where narrative events and mechanical modifiers create unique challenges. The game features a comprehensive economy, ascension system, and data-driven registry that makes every run feel distinct.
+**Coronata** is a solitaire-roguelike that transforms Klondike patience into a strategic campaign experience. Each run is a journey through 15 encounters across 5 trials, where narrative events and mechanical modifiers create unique challenges. The game features a comprehensive economy, 9-level ascension system, and data-driven registry that makes every run feel distinct.
 
 ---
 
@@ -13,16 +13,18 @@ This document contains every rule, mechanic, balance detail, and implementation 
 
 ### **Run Structure (5 Trials)**
 ```
-Trial 1: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
-Trial 2: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]  
-Trial 3: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
-Trial 4: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade]
-Trial 5: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → Danger → [Fortune Swap + 50% Trade] → [Final Trade] → Usurper
+Trial 1: Fear → [1 Trade + 2 Wanders in random order] → Fear → [1 Trade + 2 Wanders in random order] → Danger → [Fortune Swap (mandatory) + 50% chance for bonus Trade]
+Trial 2: Fear → [1 Trade + 2 Wanders in random order] → Fear → [1 Trade + 2 Wanders in random order] → Danger → [Fortune Swap (mandatory) + 50% chance for bonus Trade]  
+Trial 3: Fear → [1 Trade + 2 Wanders in random order] → Fear → [1 Trade + 2 Wanders in random order] → Danger → [Fortune Swap (mandatory) + 50% chance for bonus Trade]
+Trial 4: Fear → [1 Trade + 2 Wanders in random order] → Fear → [1 Trade + 2 Wanders in random order] → Danger → [Fortune Swap (mandatory) + 50% chance for bonus Trade]
+Trial 5: Fear → [1 Trade + 2 Wanders in random order] → Fear → [1 Trade + 2 Wanders in random order] → Danger → [Fortune Swap (mandatory) + 50% chance for bonus Trade] → [Final Trade] → Usurper
 ```
 
 **Total Encounters**: 15 (10 Fears + 4 Dangers + 1 Usurper)  
-**Trade Opportunities**: 5 guaranteed + up to 5 bonus = 5-10 total trades  
-**Progression**: Each encounter awards coins and items to build your loadout
+**Trade Opportunities**: 5 guaranteed + up to 5 bonus + 1 final = 6-11 total trades  
+**Wander Events**: 10 total (2 per trial cycle)
+**Fortune Swaps**: 4 mandatory (after each Danger)
+**Progression**: Each encounter awards coins and unlocks new strategic options
 
 ---
 
@@ -33,6 +35,7 @@ Trial 5: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → D
 - **Hand Size**: 5 cards
 - **Shuffles**: 3 per encounter  
 - **Discards**: 3 per encounter
+- **Fortune**: 1 (selected at run start)
 
 ### **Encounter Rewards**
 | Encounter Type | Coin Reward | Score Bonus |
@@ -41,12 +44,367 @@ Trial 5: Fear → [Trade/Wander/Wander] → Fear → [Trade/Wander/Wander] → D
 | Danger        | 40 coins    | 100 points  |
 | Usurper       | 60 coins    | 200 points  |
 
-### **Total Coin Flow Per Run**
+### **Total Coin Flow Per Run (Base Level)**
 - Starting: 50 coins
-- 10 Fears: 250 coins  
-- 4 Dangers: 160 coins
+- 10 Fears: 10 × 25 = 250 coins  
+- 4 Dangers: 4 × 40 = 160 coins
 - 1 Usurper: 60 coins
 - **Total Available**: **520 coins per run**
+
+### **Item Pricing Structure (Base Level)**
+| Item Type | Cost Range | Examples |
+|-----------|------------|----------|
+| Common Exploits | 30-50 coins | Basic score bonuses |
+| Uncommon Exploits | 60-90 coins | Conditional effects |
+| Rare Exploits | 100-150 coins | Powerful synergies |
+| Legendary Exploits | 180-250 coins | Game-changing abilities |
+| Blessings | 15-40 coins | Card-specific permanent upgrades |
+| Curse Removal | 60-120 coins | Escalating cost per removal |
+| Hand Size +1 | 80 coins | Permanent upgrade |
+| Shuffle +1 | 40 coins | Extra resource per encounter |
+| Discard +1 | 40 coins | Extra resource per encounter |
+
+### **Purchasing Power Analysis (Base Level)**
+
+**Trade 1** (after Fear 1): **75 coins available**
+- Can buy: 2-3 weak items OR 1 decent item OR save for later
+- Examples: 2 common exploits + blessing OR 1 uncommon exploit
+
+**Trade 2** (after Fear 3): **125 coins available**
+- Can buy: Mix of decent items OR save for amazing item  
+- Examples: 1 rare exploit OR 2 uncommon items
+
+**Trade 3** (after Danger 1): **165 coins available**
+- Can buy: 1 amazing item OR multiple decent upgrades
+- Examples: 1 legendary exploit OR hand size + rare exploit
+
+**Trade 4** (after Fear 6): **215 coins available**
+- Can buy: Build synergies and fine-tune loadout
+- Examples: Multiple rare items or legendary + utility
+
+**Trade 5** (after Fear 8): **275 coins available**
+- Can buy: Final power spike or complete build optimization
+- Examples: Top-tier legendary + support items
+
+**Final Trade** (before Usurper): **335 coins available**
+- Can buy: Last-minute optimizations and Usurper preparation
+- Focus: Items that specifically help with final encounter
+
+---
+
+## 🎯 Scoring System
+
+### **Smoothed Score Goals**
+For encounter $i$:
+$$\text{ScoreGoal}_i = S_{base} \times (1.25)^{(i-1)} \times D_{mod} \times A_{scale}$$
+
+Where:
+- $S_{base}$: 120 (achievable base score)
+- Growth rate: 25% per encounter (smooth progression)
+- $D_{mod}$: Encounter modifier (1.0 for Fear, 1.2 for Danger, 1.5 for Usurper)
+- $A_{scale}$: Ascension scaling (1.0 + 0.1 × AscensionLevel)
+
+### **Score Goals Table (Base Level)**
+
+| Encounter | Type | Base Goal | Final Goal |
+|-----------|------|-----------|------------|
+| 1         | Fear | 120       | 120        |
+| 2         | Fear | 150       | 150        |
+| 3         | Danger| 188       | 225        |
+| 4         | Fear | 234       | 234        |
+| 5         | Fear | 293       | 293        |
+| 6         | Danger| 366       | 439        |
+| 7         | Fear | 458       | 458        |
+| 8         | Fear | 572       | 572        |
+| 9         | Danger| 715       | 858        |
+| 10        | Fear | 894       | 894        |
+| 11        | Fear | 1118      | 1118       |
+| 12        | Danger| 1397      | 1676       |
+| 13        | Fear | 1746      | 1746       |
+| 14        | Fear | 2183      | 2183       |
+| 15        | Usurper| 2728     | 4092       |
+
+### **Scoring Precedence**
+1. Compute base score (card face value or foundation multiplier)
+2. Apply additive modifiers (sum all +X bonuses from registry effects)
+3. Apply multiplicative modifiers (product of all Nx bonuses from registry effects)
+4. Evaluate special tokens (basePlusBeneath, card-specific blessings, etc.)
+
+**Foundation Multiplier**: Foundation plays score 2× base value by default (can be modified by registry effects)
+
+---
+
+## 🏔️ Ascension System (9 Levels)
+
+### **Level 0: Base Game**
+- Normal gameplay as specified above
+- All systems functioning at baseline values
+
+### **Level 1: "Merchant's Tax"**
+- **Challenge**: Economic pressure begins
+- **Effects**: 
+  - All item costs +25%
+  - Starting coins: 40 (down from 50)
+- **Reward**: Unlocks "Ascension Explorer" achievement
+
+### **Level 2: "Scarce Resources"**
+- **Challenge**: Resource limitations
+- **Effects**:
+  - Item costs +50%
+  - Starting shuffles: 2 (down from 3)
+  - Score goals +10%
+- **Reward**: Unlocks "Resource Manager" title
+
+### **Level 3: "Hostile Markets"**
+- **Challenge**: Trade system becomes difficult
+- **Effects**:
+  - Item costs +75%
+  - Trade reroll costs double
+  - Only 3 exploits offered per trade (down from 4)
+  - Score goals +20%
+- **Reward**: Unlocks rare "Merchant's Bane" exploit
+
+### **Level 4: "Cursed Luck"**
+- **Challenge**: Negative effects appear
+- **Effects**:
+  - Item costs +100%
+  - Start each run with 1 random curse
+  - Curse removal costs +50%
+  - Score goals +30%
+- **Reward**: Unlocks "Curse Breaker" achievement
+
+### **Level 5: "Diminished Fortune"**
+- **Challenge**: Core mechanics weakened
+- **Effects**:
+  - Item costs +125%
+  - Fortune effects reduced by 25%
+  - Starting hand size: 4 (down from 5)
+  - Score goals +40%
+- **Reward**: Unlocks legendary "Phoenix Rising" fortune
+
+### **Level 6: "Twisted Trials"**
+- **Challenge**: Encounters become more dangerous
+- **Effects**:
+  - Item costs +150%
+  - All Danger encounters gain one additional negative effect
+  - Starting discards: 2 (down from 3)
+  - Score goals +50%
+- **Reward**: Unlocks "Trial Master" title
+
+### **Level 7: "Apex Challenge"**
+- **Challenge**: Multiple handicaps
+- **Effects**:
+  - Item costs +175%
+  - Start with 2 random curses
+  - Fortune must be swapped every 2 encounters (not just after Dangers)
+  - Score goals +65%
+- **Reward**: Unlocks exclusive "Apex Predator" cosmetic theme
+
+### **Level 8: "Master's Gauntlet"**
+- **Challenge**: Near-impossible conditions
+- **Effects**:
+  - Item costs +200%
+  - All Fear encounters gain Fear-level negative modifiers
+  - Maximum hand size capped at 4
+  - Score goals +80%
+- **Reward**: Unlocks "Gauntlet Survivor" achievement
+
+### **Level 9: "Transcendent Ordeal"**
+- **Challenge**: The ultimate test
+- **Effects**:
+  - Item costs +250%
+  - Start with 3 random curses
+  - No blessing purchases allowed
+  - Usurper gains 2 additional random Danger effects
+  - Score goals +100% (double difficulty)
+- **Reward**: Unlocks "Transcendent" title and exclusive ending
+
+### **Ascension Rewards**
+- **Completion Rewards**: Unique cosmetics, titles, exclusive registry items
+- **Prestige Currency**: "Ascension Tokens" earned for meta-progression
+- **Unlock Tiers**: New registry content locked behind ascension levels
+- **Leaderboards**: Global rankings for highest ascension completed
+
+---
+
+## 🎴 Core Vocabulary
+
+- **Deck**: Standard 52-card deck (A=1...K=13), face-down draw pile
+- **Hand**: Cards held between draws (default size 5, adjustable)
+- **Waste**: Face-up pile for discarded cards from deck cycling
+- **Tableau**: 7 Klondike-style columns for card placement
+- **Foundation**: 4 suit-based scoring piles (Ace to King)
+- **Encounter**: Single gameplay challenge (Fear/Danger/Usurper)
+- **Trial**: Group of 3 encounters (Fear-Fear-Danger)
+- **Run**: Complete playthrough (5 trials + final Usurper = 15 encounters)
+
+### **Registry Items**
+- **Fortune**: Persistent run-level modifier (choose 1 at start, mandatory swap after Dangers)
+- **Exploit**: Powerful passive/triggered effects (max 4 equipped at once)
+- **Blessing**: Card-specific permanent upgrades applied to individual cards
+- **Curse**: Negative modifiers affecting gameplay (can be removed for coins)
+- **Fear**: Lightweight encounter modifiers with single effects
+- **Danger**: Heavyweight multi-effect encounter modifiers with higher rewards
+- **Wander**: Narrative choice-based events with multiple outcomes
+- **Feat**: Achievements awarded for completing specific objectives
+
+---
+
+## 🔄 Post-Encounter Flow
+
+### **After Fear Encounters**
+1. Receive 25 coins reward
+2. **Choose encounter flow**: 1 Trade + 2 Wander events
+3. **Random order**: Game randomizes whether Trade or Wanders come first
+4. **No backtracking**: Once you leave Trade window, cannot return
+5. **Wander selection**: Game randomly selects wander events, player chooses responses
+
+### **After Danger Encounters**  
+1. Receive 40 coins reward
+2. **Mandatory Fortune Swap**: Must exchange current fortune for new one
+3. **50% Bonus Trade**: Coin flip determines if additional trade opportunity appears
+4. **Fortune Pool**: Available fortunes exclude current one and recently used ones
+
+### **Before Usurper (Final Encounter)**
+1. Receive 40 coins from final Danger
+2. Complete mandatory fortune swap
+3. **Final Trade**: Guaranteed final shopping opportunity
+4. **Usurper Preparation**: Last chance to optimize build for ultimate challenge
+
+### **Trade Window Structure**
+- **4 Exploits**: Randomly selected from available pool (excluding equipped ones)
+- **3 Blessings**: Randomly selected from available pool
+- **2 Curses**: Randomly selected from available pool (for players who want risk/reward)
+- **Utility Options**: Hand size, shuffles, discards, curse removal
+- **Reroll**: 50 coins + 25 per previous reroll (escalating cost)
+
+### **Wander Event Structure**
+- **Random Selection**: Game chooses event from appropriate difficulty pool
+- **Multiple Outcomes**: Most wanders offer 2-3 choice options
+- **Consequences**: Choices affect coins, items, or temporary modifiers
+- **Narrative Continuity**: Some wanders reference previous choices or current build
+
+---
+
+## ✨ Blessing System
+
+### **Card-Specific Upgrades**
+Blessings are **permanent upgrades applied to individual cards**, not consumable global effects.
+
+### **Application Process**
+1. **Purchase**: Buy blessing from Trade window for 15-40 coins
+2. **Target Selection**: Choose specific card from Hand, Draw Pile, or Discard Pile
+3. **Permanent Attachment**: Blessing becomes part of that card for remainder of run
+4. **Visual Indicators**: Blessed cards display sparkle effects and blessing counts
+5. **Stacking**: Multiple different blessings can be applied to same card
+
+### **Blessing Categories**
+- **Score Enhancers**: Add flat points or multipliers to card plays
+- **Special Abilities**: Grant unique effects when card is played
+- **Conditional Bonuses**: Activate based on play location or game state
+- **Resource Generators**: Award coins or other resources when triggered
+
+### **Strategic Considerations**
+- **High-Value Targets**: Apply to Kings, Aces, or frequently played cards
+- **Synergy Building**: Combine blessings for multiplicative effects
+- **Risk Management**: Consider card accessibility and play frequency
+- **Build Optimization**: Align blessings with fortune and exploit choices
+
+---
+
+## 🎮 Detailed Game Mechanics
+
+### **Card Movement Rules**
+- **Tableau Building**: Descending rank, alternating colors (Red-Black-Red...)
+- **Foundation Building**: Ascending rank by suit (A-2-3...Q-K)
+- **Empty Tableau Rule**: Only Kings can be placed on empty tableau columns
+- **Stack Movement**: Properly sequenced cards can be moved together
+- **Foundation Priority**: Foundation plays score higher (2× base value default)
+
+### **Resource Management**
+- **Shuffles**: Recycle waste pile back into deck (limited per encounter)
+- **Discards**: Remove cards from hand back to waste pile (limited per encounter)  
+- **Hand Size**: Number of cards drawn from deck (upgradeable via trade)
+- **Coins**: Primary currency for trade purchases and upgrades
+
+### **Win Conditions**
+- **Encounter Victory**: Reach or exceed score goal within move/time limits
+- **Run Victory**: Complete all 15 encounters including final Usurper
+- **Perfect Run**: Complete run without failing any encounters
+- **Ascension Victory**: Complete run at specific ascension level
+
+### **Failure Conditions**
+- **Score Failure**: End encounter below required score threshold  
+- **Resource Depletion**: Run out of moves with no valid plays
+- **Curse Accumulation**: Acquire too many curses without removal
+- **Time Limit**: Exceed maximum time per encounter (if enabled)
+
+---
+
+## 📊 Balance Philosophy
+
+### **Smooth Progression**
+The 25% score growth eliminates frustrating difficulty spikes while maintaining steady challenge escalation.
+
+### **Meaningful Choices**
+Every trade offers multiple viable strategies rather than obvious optimal purchases.
+
+### **Build Diversity**
+Registry effects support multiple distinct playstyles and synergy combinations.
+
+### **Risk/Reward Balance**
+Curses and dangerous wanders offer high-power options for skilled players willing to accept downsides.
+
+### **Ascension Depth**
+9 difficulty levels provide infinite replay value while preserving core game balance.
+
+---
+
+## 🎯 Implementation Notes
+
+### **Engine Requirements**
+- Modular registry system supporting dynamic effect loading
+- State management for persistent run progression
+- Event-driven architecture for complex effect interactions
+- Save/load system for run persistence and statistics tracking
+
+### **UI Requirements**  
+- Responsive design supporting mobile and desktop gameplay
+- Clear visual feedback for registry effects and blessing attachments
+- Intuitive navigation between game states and menus
+- Accessibility features for diverse player needs
+
+### **Performance Considerations**
+- Efficient card rendering for smooth animations
+- Optimized effect processing for complex registry interactions
+- Lazy loading for large registry datasets
+- Memory management for extended play sessions
+
+---
+
+## 📈 Future Expansion Plans
+
+### **Additional Game Modes**
+- **Classic Solitaire**: Traditional Klondike without roguelike elements
+- **Speed Runs**: Time-limited encounters with different balancing
+- **Puzzle Mode**: Predetermined scenarios with specific solutions
+- **Multiplayer**: Competitive or cooperative variants
+
+### **Registry Expansion**
+- **Seasonal Events**: Limited-time registry items and encounters
+- **Community Content**: Player-created registry entries and challenges
+- **Thematic Sets**: Coherent groups of related registry items
+- **Advanced Synergies**: Complex multi-item combinations and effects
+
+### **Meta-Progression**
+- **Collection System**: Permanent unlocks spanning multiple runs
+- **Achievement Tiers**: Nested objectives with escalating rewards
+- **Customization Options**: Visual themes, card backs, table designs
+- **Statistics Tracking**: Detailed analytics and personal records
+
+---
+
+*This document represents the complete, authoritative specification for Coronata. All implementations should conform to these specifications. For questions or clarifications, consult the development team.*
 
 ### **Item Pricing Structure**
 | Item Type | Cost Range | Examples |

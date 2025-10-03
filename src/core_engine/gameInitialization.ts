@@ -25,13 +25,13 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
     fortunes: []
   };
 
-  // Initialize run state  
+  // Initialize run state with balanced configuration
   const encounterConfig = {
-    totalTrials: 3,
-    encountersPerTrial: 4,
-    baseScoreGoal: 500,
-    scoreGoalIncrease: 200,
-    fearWeight: 0.7
+    totalTrials: 5,
+    encountersPerTrial: 3,
+    baseScoreGoal: 120, // Starting goal from master doc
+    scoreGoalIncrease: 0, // We use calculateEncounterGoal function instead
+    fearWeight: 0.67 // 2/3 fear, 1/3 danger per trial
   };
   
   let run: RunState = initializeRun(difficulty, encounterConfig);
@@ -117,9 +117,10 @@ export function createDefaultCoronataPiles() {
     }
   }
   
-  // Shuffle the deck
+  // Shuffle the deck using cryptographically secure randomness
+  const crypto = require('crypto');
   for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(crypto.randomInt(0, i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   

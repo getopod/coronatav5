@@ -103,7 +103,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Handle player choice after encounter completion
-  progressAfterChoice(state: GameState, choice: 'trade' | 'wander' | 'gamble'): GameState {
+  progressAfterChoice(state: GameState, choice: 'trade' | 'wander' | 'fortune-swap'): GameState {
     if (!state.run?.awaitingPlayerChoice) {
       console.warn('No player choice awaiting');
       return state;
@@ -111,7 +111,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 
     console.log('Player chose:', choice);
     
-    // Apply choice effects here (trade/wander/gamble logic)
+    // Apply choice effects here (trade/wander/fortune-swap logic)
     // Choice effects will be implemented in future iterations
     
     // Clear choice state
@@ -218,10 +218,24 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       // Mark encounter as completed
       if (state.run.encounter) {
         state.run.encounter.completed = true;
-        // Set state to show trade/wander/gamble choices
         state.run.awaitingPlayerChoice = true;
-        state.run.availableChoices = ['trade', 'wander', 'gamble'];
-        console.log('Encounter completed! Awaiting player choice:', state.run.availableChoices);
+        
+        // Post-encounter flow depends on encounter type
+        const encounterType = state.run.encounter.type || 'fear';
+        if (encounterType === 'fear') {
+          // After Fears: Trade + 2 Wanders (randomized order)
+          const crypto = require('crypto');
+          const choiceOrder = crypto.randomInt(0, 2) === 0 ? ['trade', 'wander'] : ['wander', 'trade'];
+          state.run.availableChoices = choiceOrder;
+        } else if (encounterType === 'danger') {
+          // After Dangers: Mandatory Fortune swap first
+          state.run.availableChoices = ['fortune-swap'];
+        } else {
+          // Usurper or other: just trade/wander
+          state.run.availableChoices = ['trade', 'wander'];
+        }
+        
+        console.log(`${encounterType.toUpperCase()} completed! Post-encounter flow:`, state.run.availableChoices);
       }
 
       // Don't automatically progress - wait for player choice
@@ -247,9 +261,11 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
           case 'golden_touch':
             bonus *= 1.5;
             break;
-          case 'luck_blessing':
-            bonus += Math.floor(Math.random() * 10);
+          case 'luck_blessing': {
+            const crypto = require('crypto');
+            bonus += Math.floor(crypto.randomInt(0, 10));
             break;
+          }
         }
       });
     }

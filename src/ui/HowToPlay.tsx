@@ -28,14 +28,15 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             <h2>Game Structure</h2>
             <div className="rules-grid">
               <div className="rule-card">
-                <h3>� Runs & Trials</h3>
+                <h3>🏔️ Runs & Trials</h3>
                 <ul>
-                  <li>Each run contains 3 Trials</li>
+                  <li>Each run contains 5 Trials (15 total encounters)</li>
                   <li>Each Trial has 3 Encounters: Fear, Fear, Danger</li>
                   <li>Complete encounters by meeting score goals</li>
-                  <li>After Fears: choose Trade, Wander, or Gamble</li>
-                  <li>After Dangers: option to swap Fortune</li>
+                  <li>After Fears: 1 Trade + 2 Wanders (random order)</li>
+                  <li>After Dangers: mandatory Fortune swap + 50% bonus Trade</li>
                   <li>Final encounter: face the Usurper (boss)</li>
+                  <li>Ascension System: 9 additional difficulty levels for replay</li>
                 </ul>
               </div>
               
@@ -137,10 +138,14 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             <h2>⚠️ Important: Progression Flow</h2>
             <div className="feature-section">
               <p>
-                <strong>After each Fear encounter, you choose ONE path:</strong> Trade, Wander, or Gamble.{' '}
+                <strong>After each Fear encounter:</strong> You get 1 Trade + 2 Wander events in random order.{' '}
                 <strong>Once you leave the Trade window, you cannot return.</strong>{' '}
-                Wanders are randomly selected by the game - you choose how to respond, not which event.
+                Wanders are randomly selected by the game - you choose how to respond, not which event occurs.
                 Plan your purchases carefully before leaving Trade!
+              </p>
+              <p>
+                <strong>After each Danger encounter:</strong> You must swap your Fortune for a new one, 
+                plus there's a 50% chance for a bonus Trade opportunity.
               </p>
             </div>
           </section>
@@ -152,7 +157,7 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                 <span className="resource-icon">🪙</span>
                 <div>
                   <strong>Coins</strong>
-                  <p>Earned through encounters and effects, used for trading. Interest rate: 20% per encounter.</p>
+                  <p>Start with 50 coins. Earn 25 per Fear, 40 per Danger, 60 from Usurper. Use for trading.</p>
                 </div>
               </div>
               
@@ -176,7 +181,7 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                 <span className="resource-icon">🎯</span>
                 <div>
                   <strong>Score Goals</strong>
-                  <p>Each encounter has a target score. Foundation plays score 2× base value by default.</p>
+                  <p>Smooth 25% growth per encounter. Foundation plays score 2× base value by default.</p>
                 </div>
               </div>
 
@@ -189,10 +194,10 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               </div>
 
               <div className="resource-item">
-                <span className="resource-icon">🎲</span>
+                <span className="resource-icon">🏔️</span>
                 <div>
-                  <strong>Gamble</strong>
-                  <p>Skip Trade/Wander for 25% scoring bonus in next encounter. Risk vs reward - no shopping or narrative events.</p>
+                  <strong>Ascension Levels</strong>
+                  <p>9 difficulty levels beyond base game. Higher costs, tougher goals, unique rewards and challenges.</p>
                 </div>
               </div>
             </div>
