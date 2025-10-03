@@ -1082,7 +1082,14 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                     onClick={() => handleCardClick(pile.cards[pile.cards.length - 1].id, pile.id)}
                   />
                 ) : (
-                  <div className="card-outline" onClick={() => handlePileClick(pile.id)} />
+                  <div className="card-outline foundation-suit-container" onClick={() => handlePileClick(pile.id)}>
+                    <span className="foundation-suit-symbol">
+                      {pile.rules?.suit === 'hearts' && '♥'}
+                      {pile.rules?.suit === 'diamonds' && '♦'}
+                      {pile.rules?.suit === 'clubs' && '♣'}
+                      {pile.rules?.suit === 'spades' && '♠'}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

@@ -57,8 +57,37 @@
 .card-suit {
   font-size: 18px;
   position: absolute;
+  top: 4px;
+  right: 6px;
+}
+
+/* Bottom corners container */
+.card-corners-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Bottom corner elements (rotated 180 degrees) */
+.card-suit-bottom {
+  font-size: 18px;
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  height: 24px;
+  transform: rotate(180deg);
+}
+
+.card-label-bottom {
+  font-size: 16px;
+  position: absolute;
   bottom: 4px;
   right: 6px;
+  height: 24px;
+  transform: rotate(180deg);
 }
 .card-back {
   width: 100%;

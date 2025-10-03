@@ -93,6 +93,11 @@ export function Card({
             <span className={["card-label", colorClass].join(" ")}>{getCardLabel(value)}</span>
             <span className={["card-suit", colorClass].join(" ")}>{suitSymbols[suit]}</span>
           </div>
+          {/* Add bottom corners */}
+          <div className="card-corners-bottom">
+            <span className={["card-suit-bottom", colorClass].join(" ")}>{suitSymbols[suit]}</span>
+            <span className={["card-label-bottom", colorClass].join(" ")}>{getCardLabel(value)}</span>
+          </div>
           {blessings && blessings.length > 0 && (
             <div className="card-blessings">
               {blessings.slice(0, 3).map((_, index) => (

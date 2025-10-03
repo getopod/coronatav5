@@ -20,55 +20,14 @@
   box-sizing: border-box;
 }
 
-/* Force all card-suit and card-value elements to have height 24px */
-.game-screen-root .card-suit,
-.game-screen-root .card-value {
+/* Force all card-suit elements to have height 24px */
+.game-screen-root .card-suit {
   height: 24px !important;
 }
 
 /* Force all card-label elements to have height 24px */
 .game-screen-root .card-label {
   height: 24px !important;
-}
-
-/* Force all face-up cards to have proper corner positioning */
-.game-screen-root .card:not(.face-down)::before {
-  content: attr(data-rank);
-  position: absolute;
-  top: 4px;
-  left: 6px;
-  font-size: 16px;
-  height: 24px;
-  z-index: 1;
-}
-
-.game-screen-root .card:not(.face-down)::after {
-  content: attr(data-suit);
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 18px;
-  height: 24px;
-  z-index: 1;
-}
-
-/* Bottom left suit and bottom right label for face-up cards */
-.game-screen-root .card:not(.face-down) .card-bottom-left {
-  position: absolute;
-  bottom: 4px;
-  left: 6px;
-  font-size: 18px;
-  height: 24px;
-  transform: rotate(180deg);
-}
-
-.game-screen-root .card:not(.face-down) .card-bottom-right {
-  position: absolute;
-  bottom: 4px;
-  right: 6px;
-  font-size: 16px;
-  height: 24px;
-  transform: rotate(180deg);
 }
 
 /* Mobile viewport adjustments */
@@ -387,6 +346,12 @@ body {
   flex-direction: column;
   align-items: center;
   height: 72px;
+  position: relative;
+}
+
+.foundation-pile .pile-cards {
+  position: relative;
+  z-index: 2;
 }
 .deck-area * {
   height: 72px !important;
@@ -434,6 +399,25 @@ body {
   border-radius: 8px;
   background: #f5f5f5;
   margin: 0 auto;
+  position: relative;
+}
+
+.foundation-suit-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.foundation-suit-symbol {
+  font-size: 24px;
+  color: #666;
+  font-weight: bold;
+  position: absolute;
+  z-index: 1;
 }
 
 .waste .card-outline {

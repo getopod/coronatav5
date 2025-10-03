@@ -120,10 +120,11 @@
   border-radius: 6px;
   overflow: hidden;
   z-index: inherit; /* Use same z-index as parent PlayerHUD */
+  height: 12px;
 }
 
 .full-progress-bar {
-  height: 20px;
+  height: 12px;
   background: rgba(75, 85, 99, 0.8);
   border-radius: 6px;
   border: 1px solid #4b5563;
@@ -202,7 +203,7 @@
 }
 
 .progress-text-centered {
-  font-size: 11px;
+  font-size: 6px;
   font-weight: bold;
   color: #ffffff;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
