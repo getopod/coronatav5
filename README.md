@@ -1,4 +1,4 @@
-# Fresh Game - Solitaire with Coronata Features
+# Coronata - a rogue-like solitaite game based on Klondike.
 
 A modern React/TypeScript solitaire game with enhanced Coronata progression mechanics, featuring dynamic card interactions, custom scoring systems, and immersive gameplay elements.
 
