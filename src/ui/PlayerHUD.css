@@ -8,15 +8,14 @@
 .player-hud {
   position: fixed;
   bottom: 20px;
-  left: calc(50% - 24px); /* Align HUD center with first foundation center */
+  left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 20, 0.95);
   border: 2px solid #4a4a4a;
   border-radius: 12px;
   padding: 15px;
-  min-width: -webkit-fill-available;
-  min-width: 266px;
-  max-width: 320px;
+  width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
+  margin: 0 2px; /* 2px margin on each side */
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: #ffffff;
@@ -479,12 +478,13 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .player-hud {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin: 10px;
-    min-width: auto;
-    max-width: none;
+    /* ALWAYS BOTTOM FIXED with 2px margins */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
+    margin: 0 2px; /* 2px margin on each side */
   }
   
   .resource-grid {

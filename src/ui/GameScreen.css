@@ -221,7 +221,6 @@
   justify-content: center;
   gap: 4px;
   min-height: 72px;
-  flex-wrap: wrap;
   max-width: 800px; /* Prevent hand from becoming too wide */
 }
 
