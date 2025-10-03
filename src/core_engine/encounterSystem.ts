@@ -93,19 +93,10 @@ export function selectEncounter(
     };
   }
   
-  // Select random encounter (use crypto random for better reliability)
-  let index: number;
-  if (window?.crypto?.getRandomValues) {
-    // Browser environment with crypto
-    const randomArray = new Uint32Array(1);
-    window.crypto.getRandomValues(randomArray);
-    index = Math.floor((randomArray[0] / (0xFFFFFFFF + 1)) * availableEncounters.length);
-  } else {
-    // Fallback to seeded random
-    const randomValue = seededRandom();
-    index = Math.floor(randomValue * availableEncounters.length);
-  }
-  
+  // Select random encounter
+  const randomValue = seededRandom();
+  const index = Math.floor(randomValue * availableEncounters.length);
+  console.log('Random value:', randomValue);
   console.log('Array length:', availableEncounters.length);
   console.log('Calculated index:', index);
   console.log('Index in bounds?', index >= 0 && index < availableEncounters.length);
@@ -114,7 +105,7 @@ export function selectEncounter(
   console.log('Selected entry:', selectedEntry);
   
   // Double-check selectedEntry is valid
-  if (!selectedEntry?.id) {
+  if (!selectedEntry || !selectedEntry.id) {
     console.error('Selected entry is invalid:', selectedEntry);
     console.error('Available encounters:', availableEncounters);
     console.error('Index used:', index);

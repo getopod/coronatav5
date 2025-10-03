@@ -6,12 +6,16 @@
   z-index: 10;
 }
 .player-hud {
-  position: relative;
+  position: fixed;
+  bottom: 20px;
+  left: calc(50% - 24px); /* Align HUD center with first foundation center */
+  transform: translateX(-50%);
   background: rgba(20, 20, 20, 0.95);
   border: 2px solid #4a4a4a;
   border-radius: 12px;
-  padding: 12px;
-  width: 100%;
+  padding: 15px;
+  min-width: -webkit-fill-available;
+  min-width: 266px;
   max-width: 320px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
@@ -20,7 +24,6 @@
   backdrop-filter: blur(5px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   z-index: 1000;
-  margin: 0 auto;
 }
 
 /* Encounter Section */

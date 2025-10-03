@@ -1,155 +1,81 @@
-/* Add support for dynamic tableau row height via data attribute */
+/* GameScreen using EXACT working screen pattern while preserving all game element dimensions */
 .game-screen-root {
-  /* Fixed positioning like other working screens */
-  position: fixed;
-  top: 0;
-  left: 0;
+  /* CENTERED ABSOLUTE POSITIONING - game container centered in viewport */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100vw;
   height: 100vh;
-  
-  /* Centered layout like FortuneSelectionScreen */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  
-  /* Size and appearance */
-  --tableau-row-height: 400px;
+  overflow: hidden;
   background-color: #bfa76a;
+  /* Container for absolutely positioned game elements */
+  font-family: 'Courier New', monospace;
+  z-index: 2000;
+  
+  /* PRESERVE existing game dimensions */
+  --tableau-row-height: 400px;
   padding: 20px;
+  min-width: 266px; /* Minimum width to ensure all cards are visible */
   box-sizing: border-box;
-  z-index: 1000;
 }
 
 /* Mobile viewport adjustments */
 @media (max-width: 768px) {
   .game-screen-root {
-    /* Mobile-friendly spacing and layout */
-    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-    gap: 8px;
-    
-    /* On mobile, use flex-start to put content at top */
-    justify-content: flex-start;
-    
+    /* COMMENTED OUT: Conflicting positioning - let JavaScript handle positioning */
+    /* top: 2px; */
+    /* left: 2px; */
+    /* width: calc(100vw - 4px); */
+    /* min-height: calc(100vh - 4px); */
     /* Prevent content from being too small */
-    --tableau-row-height: 250px;
+    min-width: 266px; /* Ensure all cards remain visible */
+    padding: 2px;
+    /* COMMENTED OUT: Conflicting transform - let JavaScript handle scaling */
+    /* transform: scale(0.65); */
+    /* transform-origin: top center; */
   }
   
-  /* Mobile deck area positioning */
+  /* Scale down deck area for mobile */
   .deck-area {
-    width: 100%;
-    max-width: 340px;
-    gap: 8px;
-    margin: 4px 0;
+    width: 340px;
+    gap: 12px;
   }
   
-  /* Mobile player hand positioning */
-  .player-hand-area {
-    margin: 8px 0;
-    max-width: 90vw;
-  }
-  
-  /* Mobile tableau positioning */
+  /* Scale down tableau row for mobile */
   .tableau-row {
-    width: 100%;
-    max-width: 340px;
-    gap: 6px;
-    margin: 8px 0;
+    width: 340px;
+    gap: 12px;
   }
   
-  /* Mobile HUD positioning */
-  .player-hud {
-    margin: 8px 0;
-    max-width: 90vw;
+  /* Reduce tableau height for mobile */
+  .game-screen-root {
+    --tableau-row-height: 300px;
   }
   
-  /* Scale down cards for mobile */
+  /* Scale down cards and piles */
   .deck-area .pile-cards,
   .deck-area .card-outline,
   .foundation-pile {
-    width: 40px;
-    height: 60px;
+    width: 38px;
+    height: 57px;
   }
   
   .tableau-pile {
-    min-width: 40px;
-    width: 40px;
+    min-width: 38px;
+    width: 38px;
   }
   
   .pile-cards-vertical {
-    width: 40px;
+    width: 38px;
   }
   
   .pile-cards-vertical > *:not(:last-child) {
-    margin-bottom: -30px; /* Reduced overlap for smaller cards */
-  }
-  
-  /* Mobile hand cards */
-  .hand-cards .card {
-    width: 40px !important;
-    height: 60px !important;
+    margin-bottom: -28px; /* Reduced overlap for smaller cards */
   }
 }
-
-/* Extra small screens (iPhone SE, etc.) */
-@media (max-width: 375px) {
-  .game-screen-root {
-    padding: 4px;
-    gap: 4px;
-  }
-  
-  .deck-area {
-    gap: 6px;
-    max-width: 320px;
-  }
-  
-  .tableau-row {
-    gap: 4px;
-    max-width: 320px;
-  }
-  
-  .deck-area .pile-cards,
-  .deck-area .card-outline,
-  .foundation-pile {
-    width: 36px;
-    height: 54px;
-  }
-  
-  .tableau-pile {
-    min-width: 36px;
-    width: 36px;
-  }
-  
-  .pile-cards-vertical {
-    width: 36px;
-  }
-  
-  .hand-cards .card {
-    width: 36px !important;
-    height: 54px !important;
-  }
-}
-/* Deck Area Styles */
-.deck-area {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  margin: 10px 0;
-  width: 100%;
-  max-width: 400px;
-}
-
-/* Tableau Row Styles */
-.tableau-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-  min-height: var(--tableau-row-height);
-  margin: 10px 0;
+.game-screen-root[data-tableau-row-height] {
+  --tableau-row-height: attr(data-tableau-row-height px);
 }
 
 .effect-hud-category-header.clickable {
@@ -266,7 +192,10 @@
 
 /* Player Hand Area Styles */
 .player-hand-area {
-  position: relative;
+  position: absolute;
+  top: 112px; /* 20px (deck top) + 72px (deck height) + 20px (gap) = 112px */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -275,8 +204,6 @@
   border-radius: 8px;
   min-height: 80px;
   z-index: 150;
-  width: 100%;
-  max-width: 800px;
 }
 
 .hand-label {
@@ -351,18 +278,19 @@
 body {
   margin: 0;
   padding: 0;
-
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
 
 #root {
-  width: 464px;
-  height: 592px;
-  margin: 0 !important;
+  /* EXACT same pattern as working screens (App.css) */
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 0 !important;
+  overflow: hidden;
+  text-align: center;
 }
 .deck-area .card,
 .deck-area .card-outline {
@@ -380,7 +308,7 @@ body {
 }
 
 .deck-area {
-  position: fixed;
+  position: absolute;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
@@ -450,7 +378,7 @@ body {
   margin: 0 auto;
 }
 .tableau-row {
-  position: fixed;
+  position: absolute;
   top: 200px; /* 112px (hand top) + 80px (hand min-height) + 8px (gap) = 200px */
   left: 50%;
   transform: translateX(-50%);

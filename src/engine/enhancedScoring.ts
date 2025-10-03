@@ -353,6 +353,16 @@ function initializeCoronataState(engineController: any) {
     state.player.blessings = state.player.blessings || [];
     state.player.fortunes = state.player.fortunes || [];
     state.player.maxHandSize = state.player.maxHandSize || 5;
+    
+    // For testing: Give player some exploits to demonstrate effects
+    if (state.player.exploits.length === 0) {
+      state.player.exploits = [
+        "exploit-scholars-eye",      // 5/10 cards get +5 points
+        "exploit-chronomancer",      // +1 shuffle per encounter
+        "exploit-whispering-gale"    // See top deck card
+      ];
+      console.log('Demo exploits added to player:', state.player.exploits);
+    }
   }
   
   // Ensure hand pile exists and initialize it with cards from deck

@@ -99,12 +99,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
       return;
     }
 
-    // Check if discard button is blocked by an effect
-    if (gameState.blockedActions?.includes('discard_button')) {
-      alert('Discard button is blocked by an active effect!');
-      return;
-    }
-
     // Check if player has discards remaining
     const discardsRemaining = player.discards || 0;
     if (discardsRemaining <= 0) {
@@ -216,17 +210,6 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
       console.log(`Progress bar updated: ${percentage}% (${player.score}/${encounter.scoreGoal})`);
     }
   }, [player.score, encounter?.scoreGoal]);
-
-  // Get discard button tooltip text
-  const getDiscardTooltip = () => {
-    if (gameState.blockedActions?.includes('discard_button')) {
-      return 'Discard is blocked by an active effect';
-    }
-    if ((player.discards || 0) <= 0) {
-      return 'No discards remaining';
-    }
-    return 'Discard your hand and draw new cards';
-  };
 
   return (
     <div className="player-hud">
@@ -402,9 +385,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({ gameState, selectedFortune
 
         <button 
           className="discard-button" 
-          title={getDiscardTooltip()}
+          title="Discard selected cards from hand"
           onClick={handleDiscardHand}
-          disabled={gameState.blockedActions?.includes('discard_button') || (player.discards || 0) <= 0}
         >
           🗑️ Discard
         </button>
