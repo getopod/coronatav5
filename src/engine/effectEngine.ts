@@ -29,22 +29,32 @@ export class EffectEngine {
   }
 
   applyEffect(effect: Effect, state: GameState): GameState {
-    // Check condition (skip 'event' conditions as they're handled at the calling level)
-    if (effect.condition) {
-      if (typeof effect.condition === 'function') {
-        if (!effect.condition(state)) return state;
-      } else {
-        // Simple key/value match (skip event conditions)
-        for (const key in effect.condition) {
-          if (key === 'event') continue; // Event conditions are handled by applyEventBasedEffects
-          if ((state as any)[key] !== effect.condition[key]) return state;
-        }
-      }
-    }
-    // Find handler
-    const handler = this.handlers[effect.type];
+    if (!this._passesCondition(effect, state)) return state;
+    const handler = this._getHandler(effect.type);
     if (!handler) return state;
     return handler(effect, state);
+  }
+
+  private _passesCondition(effect: Effect, state: GameState): boolean {
+    if (!effect.condition) return true;
+    if (typeof effect.condition === 'function') {
+      return effect.condition(state);
+    }
+    for (const key in effect.condition) {
+      if (key === 'event') continue;
+      if ((state as any)[key] !== effect.condition[key]) return false;
+    }
+    return true;
+  }
+
+  private _getHandler(type: string): EffectHandler | undefined {
+    // Only allow handlers for known, static keys
+    // Use hasOwnProperty for compatibility with older JS targets
+    // Use hasOwnProperty for compatibility with older JS targets (lint warning accepted for compatibility)
+    if (Object.prototype.hasOwnProperty.call(this.handlers, type)) {
+      return this.handlers[type];
+    }
+    return undefined;
   }
 
   applyEffects(effects: Effect[], state: GameState): GameState {
@@ -224,22 +234,18 @@ export const builtInHandlers: Record<string, EffectHandler> = {
     state.movePermissions.push(effect);
     return state;
   },
-  move_card: (effect, state) => {
+  move_card: (_effect, state) => {
     // Custom logic to move a card (to be implemented)
     return state;
   },
   trigger_animation: (effect, state) => {
     // Animation event: UI should listen for this
-    if (state && state.registry && state.registry.engineController) {
-      state.registry.engineController.emitEvent('custom', { type: 'animation', effect });
-    }
+    state.registry?.engineController?.emitEvent('custom', { type: 'animation', effect });
     return state;
   },
   play_sound: (effect, state) => {
     // Sound event: UI should listen for this
-    if (state && state.registry && state.registry.engineController) {
-      state.registry.engineController.emitEvent('custom', { type: 'sound', effect });
-    }
+    state.registry?.engineController?.emitEvent('custom', { type: 'sound', effect });
     return state;
   },
 
@@ -271,17 +277,17 @@ export const builtInHandlers: Record<string, EffectHandler> = {
     const target = effect.target as string;
     const cardData = effect.value;
     const pile = state.piles?.[target];
-    
     if (pile && cardData) {
-      // Create new card object
+      // Create new card object with cryptographically secure random ID
+      const crypto = require('crypto');
+      const secureId = crypto.randomBytes(8).toString('hex');
       const newCard = {
-        id: `generated-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+        id: `generated-${Date.now()}-${secureId}`,
         suit: cardData.suit || 'hearts',
         value: cardData.value || 1, // Use value instead of rank for Card type
         faceUp: target === 'hand',
         blessings: cardData.blessings || []
       };
-      
       pile.cards.push(newCard);
       console.log(`Added card ${newCard.id} to ${target}`);
     }
@@ -291,14 +297,9 @@ export const builtInHandlers: Record<string, EffectHandler> = {
   fortune_enhancement: (effect, state) => {
     // Enhance fortune effects (typically multiplying their impact)
     const multiplier = effect.value ?? 2;
-    
-    // Store fortune enhancement for other effects to reference
-    if (!state.fortuneEnhancement) {
-      state.fortuneEnhancement = { multiplier: 1, active: false };
-    }
+    state.fortuneEnhancement ??= { multiplier: 1, active: false };
     state.fortuneEnhancement.multiplier = multiplier;
     state.fortuneEnhancement.active = true;
-    
     console.log(`Fortune enhancement active: ${multiplier}x multiplier`);
     return state;
   },
@@ -579,34 +580,33 @@ export const builtInHandlers: Record<string, EffectHandler> = {
     return state;
   },
 
-  discard_hand: (effect, state) => {
+  discard_hand: (_effect, state) => {
     // Discard entire hand
     const handPile = state.piles?.hand;
     const discardPile = state.piles?.discard;
-    
     if (handPile && discardPile) {
       const cardsToDiscard = handPile.cards.splice(0);
       cardsToDiscard.forEach(card => card.faceUp = true);
       discardPile.cards.push(...cardsToDiscard);
       console.log(`Discarded ${cardsToDiscard.length} cards from hand`);
     }
-    
     return state;
   },
 
-  shuffle_deck: (effect, state) => {
-    // Shuffle the deck
+  shuffle_deck: (_effect, state) => {
+    // Shuffle the deck using cryptographically secure random numbers
     const deckPile = state.piles?.deck;
-    
     if (deckPile && deckPile.cards.length > 0) {
-      // Simple shuffle algorithm
+      const crypto = require('crypto');
       for (let i = deckPile.cards.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
+        // Generate a secure random index
+        const randBytes = crypto.randomBytes(4);
+        const randInt = randBytes.readUInt32BE(0);
+        const j = randInt % (i + 1);
         [deckPile.cards[i], deckPile.cards[j]] = [deckPile.cards[j], deckPile.cards[i]];
       }
       console.log(`Shuffled deck with ${deckPile.cards.length} cards`);
     }
-    
     return state;
   },
 
@@ -660,4 +660,136 @@ export const builtInHandlers: Record<string, EffectHandler> = {
   },
 
   // Add more built-in handlers as needed
+
+  // --- STUB HANDLERS FOR UNIMPLEMENTED REGISTRY ACTIONS ---
+  unlock_cosmetic: (effect, state) => {
+    // Mark a cosmetic (e.g., avatar, theme) as unlocked for the player
+    const cosmeticId = effect.value as string;
+    state.player.unlockedCosmetics ??= [];
+    if (!state.player.unlockedCosmetics.includes(cosmeticId)) {
+      state.player.unlockedCosmetics.push(cosmeticId);
+    }
+    return state;
+  },
+  restrict_play: (effect, state) => {
+    // Prevent playing a specific card or type for a duration
+    const restriction = { target: effect.target, duration: effect.duration ?? 1 };
+    state.player.restrictions ??= [];
+    state.player.restrictions.push(restriction);
+    return state;
+  },
+  move_adjacent: (effect, state) => {
+    // Move a card to an adjacent pile (left/right)
+    const cardId = effect.target as string;
+    const direction = effect.value as 'left' | 'right';
+    // Find the pile and card
+  // No need for 'found' variable
+    for (const pileName in state.piles) {
+      const pile = state.piles[pileName];
+      const idx = pile.cards.findIndex((c: any) => c.id === cardId);
+      if (idx !== -1) {
+        // Remove card from current pile
+        const [card] = pile.cards.splice(idx, 1);
+        // Find adjacent pile
+        const pileNames = Object.keys(state.piles);
+        const currentIdx = pileNames.indexOf(pileName);
+        const adjIdx = direction === 'left' ? currentIdx - 1 : currentIdx + 1;
+        if (adjIdx >= 0 && adjIdx < pileNames.length) {
+          state.piles[pileNames[adjIdx]].cards.push(card);
+        } else {
+          // If no adjacent, return to original pile
+          pile.cards.push(card);
+        }
+  break;
+      }
+    }
+    return state;
+  },
+  return_and_shuffle: (effect, state) => {
+    // Return a card to the deck and shuffle
+    const cardId = effect.target as string;
+    for (const pile of Object.values(state.piles)) {
+      const idx = pile.cards.findIndex((c: any) => c.id === cardId);
+      if (idx !== -1) {
+        const [card] = pile.cards.splice(idx, 1);
+        state.piles.deck.cards.push(card);
+        // Shuffle deck
+        const crypto = require('crypto');
+        for (let i = state.piles.deck.cards.length - 1; i > 0; i--) {
+          const randBytes = crypto.randomBytes(4);
+          const randInt = randBytes.readUInt32BE(0);
+          const j = randInt % (i + 1);
+          [state.piles.deck.cards[i], state.piles.deck.cards[j]] = [state.piles.deck.cards[j], state.piles.deck.cards[i]];
+        }
+        break;
+      }
+    }
+    return state;
+  },
+  unlock_cardback: (effect, state) => {
+    // Unlock a cardback for the player
+    const cardbackId = effect.value as string;
+    state.player.unlockedCardbacks ??= [];
+    if (!state.player.unlockedCardbacks.includes(cardbackId)) {
+      state.player.unlockedCardbacks.push(cardbackId);
+    }
+    return state;
+  },
+  unlock_master_card: (effect, state) => {
+    // Unlock a master card for the player
+    const masterCardId = effect.value as string;
+    state.player.unlockedMasterCards ??= [];
+    if (!state.player.unlockedMasterCards.includes(masterCardId)) {
+      state.player.unlockedMasterCards.push(masterCardId);
+    }
+    return state;
+  },
+  force_discard: (_effect, state) => {
+    // Force the player to discard a card from hand
+    const hand = state.piles.hand;
+    if (hand && hand.cards.length > 0) {
+      hand.cards.pop();
+      state.player.discards = (state.player.discards ?? 1) - 1;
+    }
+    return state;
+  },
+  auto_discard: (_effect, state) => {
+    // Automatically discard the top card of hand
+    const hand = state.piles.hand;
+    const discard = state.piles.discard;
+    if (hand && hand.cards.length > 0 && discard) {
+      const card = hand.cards.pop();
+      if (card) discard.cards.push(card);
+      state.player.discards = (state.player.discards ?? 1) - 1;
+    }
+    return state;
+  },
+  prevent_discard: (effect, state) => {
+    // Prevent discarding for a duration
+    state.player.preventDiscardTurns = effect.duration ?? 1;
+    return state;
+  },
+  return_to_hand: (effect, state) => {
+    // Return a card from any pile to hand
+    const cardId = effect.target as string;
+    for (const pile of Object.values(state.piles)) {
+      const idx = pile.cards.findIndex((c: any) => c.id === cardId);
+      if (idx !== -1) {
+        const [card] = pile.cards.splice(idx, 1);
+        state.piles.hand.cards.push(card);
+        break;
+      }
+    }
+    return state;
+  },
+  draw_card: (effect, state) => {
+    // Alias to draw_cards for single card
+    const drawCardsHandler = builtInHandlers.draw_cards;
+    if (drawCardsHandler) {
+      return drawCardsHandler({ ...effect, value: effect.value ?? 1 }, state);
+    }
+    console.warn('[EffectEngine] draw_card effect not implemented:', effect);
+    return state;
+  },
+  // --- END STUB HANDLERS ---
 };
