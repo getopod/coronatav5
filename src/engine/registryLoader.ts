@@ -77,7 +77,7 @@ export function loadRegistry(config: RegistryConfig): GameState {
       exploits: [], // Initialize empty arrays for registry items
       ownedBlessings: [], // Purchased blessings awaiting application to cards
       curses: [],
-      fortunes: [],
+      activeFortune: undefined,
       ...config.resources || {}
     },
     registry: config,

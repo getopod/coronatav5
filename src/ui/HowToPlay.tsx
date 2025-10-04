@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './HowToPlay.css';
 
 export interface HowToPlayProps {
@@ -6,6 +6,17 @@ export interface HowToPlayProps {
 }
 
 export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['quick-start']));
+
+  const toggleSection = (sectionId: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId);
+    } else {
+      newExpanded.add(sectionId);
+    }
+    setExpandedSections(newExpanded);
+  };
   return (
     <div className="how-to-play">
       <div className="how-to-play-container">
@@ -15,53 +26,154 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
 
         <div className="how-to-play-content">
           <section className="game-overview">
-            <h2>Welcome to Coronata</h2>
+            <h2>🌀 Welcome to Coronata</h2>
             <p>
-              Coronata is a solitaire-roguelike adventure that builds on Klondike-style patience. 
-              Each run is a short campaign through trials of encounters that modify the base solitaire 
-              game with narrative and mechanical twists. Collect powerful exploits, confront challenging 
-              encounters, and grow stronger through each trial.
+              <strong>Coronata</strong> transforms classic Klondike solitaire into an epic roguelike adventure.
+              Each run is a unique journey through 15 encounters across 5 trials, where every decision shapes
+              your path to victory. Master the art of patience while wielding powerful registry items,
+              confronting fearsome challenges, and building an unstoppable deck that defies the odds.
+            </p>
+            <p>
+              <em>Will you become a legendary solitaire master, or will the cards claim another victim?</em>
             </p>
           </section>
 
-          <section className="basic-rules">
-            <h2>Game Structure</h2>
-            <div className="rules-grid">
-              <div className="rule-card">
-                <h3>🏔️ Runs & Trials</h3>
-                <ul>
-                  <li>Each run contains 5 Trials (15 total encounters)</li>
-                  <li>Each Trial has 3 Encounters: Fear, Fear, Danger</li>
-                  <li>Complete encounters by meeting score goals</li>
-                  <li>After Fears: 1 Trade + 2 Wanders (random order)</li>
-                  <li>After Dangers: mandatory Fortune swap + 50% bonus Trade</li>
-                  <li>Final encounter: face the Usurper (boss)</li>
-                  <li>Ascension System: 9 additional difficulty levels for replay</li>
-                </ul>
-              </div>
-              
-              <div className="rule-card">
-                <h3>🃏 Card Movement</h3>
-                <ul>
-                  <li>Build tableaus in descending order with alternating colors</li>
-                  <li>Move cards to foundations in ascending order by suit</li>
-                  <li>Foundation plays score higher (2× base value by default)</li>
-                  <li>Empty tableaus can only be filled with Kings</li>
-                  <li>Move stacks of properly sequenced cards together</li>
-                </ul>
-              </div>
-
-              <div className="rule-card">
-                <h3>✋ Hand & Deck</h3>
-                <ul>
-                  <li>Start with 5 cards each encounter</li>
-                  <li>Hand automatically refills when you play cards</li>
-                  <li>Click deck to reveal cards to waste pile</li>
-                  <li>Shuffle waste back to deck when empty (costs shuffle)</li>
-                  <li>Discard Hand: shuffle entire hand back into deck</li>
-                </ul>
-              </div>
+          {/* Quick Start Guide */}
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('quick-start')}>
+              <h2>🚀 Quick Start Guide (Essential Reading)</h2>
+              <span className={`expand-icon ${expandedSections.has('quick-start') ? 'expanded' : ''}`}>▼</span>
             </div>
+            {expandedSections.has('quick-start') && (
+              <div className="section-content">
+                <div className="tutorial-step">
+                  <h3>Step 1: Choose Your Fortune</h3>
+                  <p>Every run starts by selecting one of three Fortunes. These define your playstyle:</p>
+                  <ul>
+                    <li><strong>Foundation Focus:</strong> Bonus points for building suits</li>
+                    <li><strong>Tableau Master:</strong> Enhanced card movement and reveals</li>
+                    <li><strong>Resource Hoarder:</strong> Extra shuffles and discards</li>
+                  </ul>
+                </div>
+
+                <div className="tutorial-step">
+                  <h3>Step 2: Master Basic Card Movement</h3>
+                  <p>The core of Coronata is still Klondike solitaire:</p>
+                  <ul>
+                    <li><strong>Tableau:</strong> Build descending sequences of alternating colors</li>
+                    <li><strong>Foundation:</strong> Build ascending sequences by suit (A-2-3...K)</li>
+                    <li><strong>Empty Columns:</strong> Only Kings can fill empty tableau spots</li>
+                    <li><strong>Stack Moves:</strong> Move properly sequenced groups together</li>
+                  </ul>
+                </div>
+
+                <div className="tutorial-step">
+                  <h3>Step 3: Understand Your Resources</h3>
+                  <p>You start with limited resources that refresh each encounter:</p>
+                  <ul>
+                    <li><strong>Coins:</strong> 50 starting, earn 25/40/60 per encounter</li>
+                    <li><strong>Shuffles:</strong> 3 per encounter (recycle waste to deck)</li>
+                    <li><strong>Discards:</strong> 3 per encounter (reshuffle entire hand)</li>
+                    <li><strong>Hand Size:</strong> 5 cards (upgradeable)</li>
+                  </ul>
+                </div>
+
+                <div className="tutorial-step">
+                  <h3>Step 4: Win Your First Encounter</h3>
+                  <p>Each encounter has a score goal that increases over time:</p>
+                  <ul>
+                    <li><strong>Foundation Priority:</strong> Foundation plays score 2× points</li>
+                    <li><strong>Goal Scaling:</strong> ~25% increase per encounter</li>
+                    <li><strong>Progress Bar:</strong> Shows current score vs. goal</li>
+                    <li><strong>Time Pressure:</strong> No strict timer, but efficiency matters</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Advanced Strategy */}
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('advanced')}>
+              <h2>⚔️ Advanced Strategy & Registry Items</h2>
+              <span className={`expand-icon ${expandedSections.has('advanced') ? 'expanded' : ''}`}>▼</span>
+            </div>
+            {expandedSections.has('advanced') && (
+              <div className="section-content">
+                <div className="strategy-section">
+                  <h3>Registry Items Overview</h3>
+                  <div className="registry-overview">
+                    <div className="registry-type">
+                      <h4>🔮 Fortunes (Run-Level)</h4>
+                      <p>Persistent modifiers chosen at run start and swapped after Dangers. Define your core strategy.</p>
+                    </div>
+                    <div className="registry-type">
+                      <h4>⚔️ Exploits (Build Power)</h4>
+                      <p>Powerful passive effects (max 4 equipped). Examples: bonus scoring, extra resources, special moves.</p>
+                    </div>
+                    <div className="registry-type">
+                      <h4>✨ Blessings (Card Upgrades)</h4>
+                      <p>Permanent upgrades applied to individual cards. Apply to Kings, Aces, or frequently played cards.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="strategy-section">
+                  <h3>Trading Strategy</h3>
+                  <p><strong>Critical:</strong> Once you leave Trade, you cannot return! Plan purchases carefully.</p>
+                  <ul>
+                    <li><strong>Early Game:</strong> Focus on reliable scoring and resource generation</li>
+                    <li><strong>Mid Game:</strong> Build synergies between your Fortune and Exploits</li>
+                    <li><strong>Late Game:</strong> Optimize for your specific playstyle</li>
+                    <li><strong>Rerolls:</strong> Cost 50 coins +25 per reroll (escalating)</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Complete Rules Reference */}
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('rules')}>
+              <h2>📚 Complete Rules Reference</h2>
+              <span className={`expand-icon ${expandedSections.has('rules') ? 'expanded' : ''}`}>▼</span>
+            </div>
+            {expandedSections.has('rules') && (
+              <div className="section-content">
+                <div className="rules-grid">
+                  <div className="rule-card">
+                    <h3>🏔️ Run Structure</h3>
+                    <ul>
+                      <li><strong>5 Trials, 15 Encounters:</strong> Fear → Fear → Danger × 5</li>
+                      <li><strong>Victory:</strong> Meet score goals to progress</li>
+                      <li><strong>After Fears:</strong> Trade + 2 random Wanders</li>
+                      <li><strong>After Dangers:</strong> Fortune swap + 50% bonus Trade</li>
+                      <li><strong>Final Boss:</strong> Usurper encounter</li>
+                    </ul>
+                  </div>
+
+                  <div className="rule-card">
+                    <h3>🃏 Card Rules</h3>
+                    <ul>
+                      <li><strong>Tableau:</strong> Descending, alternating colors</li>
+                      <li><strong>Foundation:</strong> Ascending by suit (2× score)</li>
+                      <li><strong>King Rule:</strong> Only Kings fill empty columns</li>
+                      <li><strong>Stack Moves:</strong> Properly sequenced groups</li>
+                    </ul>
+                  </div>
+
+                  <div className="rule-card">
+                    <h3>💰 Economy</h3>
+                    <ul>
+                      <li><strong>Starting:</strong> 50 coins</li>
+                      <li><strong>Rewards:</strong> 25/40/60 per encounter</li>
+                      <li><strong>Shuffles:</strong> 3 per encounter</li>
+                      <li><strong>Discards:</strong> 3 per encounter</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="coronata-features">
@@ -135,18 +247,58 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
           </section>
 
           <section className="progression-flow">
-            <h2>⚠️ Important: Progression Flow</h2>
+            <h2>⚠️ Critical: Your Decision Points</h2>
             <div className="feature-section">
+              <h3>🎯 After Fear Encounters</h3>
               <p>
-                <strong>After each Fear encounter:</strong> You get 1 Trade + 2 Wander events in random order.{' '}
-                <strong>Once you leave the Trade window, you cannot return.</strong>{' '}
-                Wanders are randomly selected by the game - you choose how to respond, not which event occurs.
-                Plan your purchases carefully before leaving Trade!
+                You receive <strong>1 Trade + 2 Wander events</strong> in random order.
+                <strong>⚠️ CRITICAL:</strong> Once you leave the Trade window, you cannot return!
+                Wanders are randomly selected by the game - you choose responses, not events.
+                <em>Plan purchases carefully - timing is everything!</em>
               </p>
+
+              <h3>⚡ After Danger Encounters</h3>
               <p>
-                <strong>After each Danger encounter:</strong> You must swap your Fortune for a new one, 
-                plus there's a 50% chance for a bonus Trade opportunity.
+                <strong>Mandatory Fortune swap</strong> - exchange your current Fortune for a new one.
+                Plus <strong>50% chance for bonus Trade</strong> opportunity.
+                Use this to adapt your strategy mid-run!
               </p>
+
+              <h3>🏆 Final Challenge</h3>
+              <p>
+                After completing all 15 encounters, face the <strong>Usurper</strong> - the ultimate boss.
+                Your build, resources, and choices determine victory or defeat.
+              </p>
+            </div>
+          </section>
+
+          <section className="beginner-tips">
+            <h2>💡 Beginner Tips</h2>
+            <div className="tips-grid">
+              <div className="tip-card">
+                <h3>🎯 Focus on Foundations</h3>
+                <p>Foundation plays score 2× points and are your primary victory path. Prioritize building suits over complex tableau maneuvers.</p>
+              </div>
+              <div className="tip-card">
+                <h3>🪙 Save Early, Spend Wisely</h3>
+                <p>Don't blow your starting coins on the first trade. Save for powerful items that appear later in your run.</p>
+              </div>
+              <div className="tip-card">
+                <h3>🔮 Choose Fortunes Carefully</h3>
+                <p>Your starting Fortune defines your playstyle. Some favor aggressive foundation building, others enable complex tableau strategies.</p>
+              </div>
+              <div className="tip-card">
+                <h3>⚔️ Build Synergies</h3>
+                <p>Exploits work best in combination. Look for items that complement your Fortune and playing style.</p>
+              </div>
+              <div className="tip-card">
+                <h3>✨ Bless Key Cards</h3>
+                <p>Apply blessings to cards you play frequently (Kings for empty columns, Aces for foundations, high-value cards).</p>
+              </div>
+              <div className="tip-card">
+                <h3>🎲 Embrace the Chaos</h3>
+                <p>Every run is different! Failed runs teach you more than successful ones. Learn from each attempt.</p>
+              </div>
             </div>
           </section>
 

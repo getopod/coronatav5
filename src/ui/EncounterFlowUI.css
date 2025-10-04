@@ -1,5 +1,23 @@
+/* Screen Overlay */
+.screen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Encounter Flow UI Styles */
 /* Encounter Flow UI Styles */
 .encounter-flow-ui {
+  max-width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
   padding: 20px;
   background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
   border-radius: 12px;

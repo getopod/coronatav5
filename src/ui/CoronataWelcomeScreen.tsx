@@ -7,7 +7,6 @@ interface CoronataWelcomeScreenProps {
   onGlossary: () => void;
   onHistory: () => void;
   onOptions: () => void;
-  onBack: () => void;
 }
 
 export function CoronataWelcomeScreen({
@@ -15,8 +14,7 @@ export function CoronataWelcomeScreen({
   onHowToPlay,
   onGlossary,
   onHistory,
-  onOptions,
-  onBack
+  onOptions
 }: CoronataWelcomeScreenProps) {
   return (
     <div className="coronata-welcome-screen">
@@ -78,10 +76,6 @@ export function CoronataWelcomeScreen({
         
         <button className="welcome-button secondary" onClick={onOptions}>
           Options
-        </button>
-        
-        <button className="welcome-button back" onClick={onBack}>
-          Back
         </button>
       </div>
     </div>

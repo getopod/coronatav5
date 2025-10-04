@@ -34,7 +34,7 @@ export interface PlayerState {
   exploits?: string[]; // IDs of equipped exploits
   curses?: string[]; // IDs of active curses
   ownedBlessings?: string[]; // IDs of purchased blessings (not yet applied to cards)
-  fortunes?: string[]; // IDs of active fortunes
+  activeFortune?: string; // ID of the single active fortune
   coinMultiplier?: number; // Multiplier for coin rewards
   [key: string]: any;
 }
@@ -155,6 +155,7 @@ export interface GameState {
   unlockedTableaux?: number;
   blockedActions?: string[];
   resourceLimits?: Record<string, number>;
+  allowedTableaux?: number[];
 }
 
 export interface Move {

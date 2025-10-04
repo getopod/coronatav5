@@ -1,0 +1,148 @@
+/* Fortune Swap Activity */
+.fortune-swap-activity {
+  background: linear-gradient(135deg, #4a1a4a 0%, #2a0d2a 100%);
+  border: 2px solid #9932CC;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.fortune-swap-header {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #DDA0DD;
+}
+
+.fortune-swap-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+  color: #DA70D6;
+}
+
+.fortune-swap-header p {
+  margin: 5px 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.current-fortune-section {
+  margin-bottom: 20px;
+}
+
+.current-fortune-section h4 {
+  margin: 0 0 15px 0;
+  color: #DA70D6;
+  font-size: 12px;
+  text-align: center;
+}
+
+.current-fortune-card {
+  background: rgba(153, 50, 204, 0.1);
+  border: 1px solid #9932CC;
+  border-radius: 8px;
+  padding: 15px;
+  color: #DDA0DD;
+}
+
+.fortune-card-header h5 {
+  margin: 0 0 8px 0;
+  color: #DA70D6;
+  font-size: 12px;
+}
+
+.fortune-card-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.available-fortunes-section h4 {
+  margin: 0 0 15px 0;
+  color: #DA70D6;
+  font-size: 12px;
+  text-align: center;
+}
+
+.fortunes-grid {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 20px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fortune-card {
+  background: rgba(153, 50, 204, 0.1);
+  border: 2px solid #9932CC;
+  border-radius: 10px;
+  padding: 20px;
+  color: #DDA0DD;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.fortune-card:hover {
+  background: rgba(153, 50, 204, 0.2);
+  border-color: #DDA0DD;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(153, 50, 204, 0.3);
+}
+
+.fortune-card.selected {
+  background: rgba(153, 50, 204, 0.3);
+  border-color: #DA70D6;
+  box-shadow: 0 0 20px rgba(153, 50, 204, 0.5);
+}
+
+.fortune-swap-actions {
+  text-align: center;
+}
+
+.btn-swap {
+  background: linear-gradient(135deg, #9932CC 0%, #4B0082 100%);
+  color: white;
+  border: 2px solid #DA70D6;
+  border-radius: 8px;
+  padding: 12px 30px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-swap:hover:not(:disabled) {
+  background: linear-gradient(135deg, #DA70D6 0%, #9932CC 100%);
+  transform: translateY(-2px);
+}
+
+.btn-swap:disabled {
+  background: #666;
+  border-color: #888;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fortune-swap-activity {
+    padding: 15px;
+  }
+
+  .fortune-options {
+    gap: 10px;
+  }
+
+  .fortune-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .swap-btn {
+    width: 100%;
+    max-width: 200px;
+  }
+}

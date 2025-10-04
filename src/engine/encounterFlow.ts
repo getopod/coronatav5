@@ -182,8 +182,7 @@ export class EncounterFlowManager {
    */
   private prepareWanderEvent(): WanderEvent {
     // Select random wander from registry appropriate for current difficulty
-    const currentEncounter = this.state.run?.encounter?.id || 1;
-    const wanderPool = registry.wander.filter(wander => {
+    const wanderPool = registry.wander.filter(_wander => {
       // Filter by difficulty/encounter level if wander has such metadata
       return true; // For now, use all wanders
     });
@@ -369,15 +368,134 @@ export class EncounterFlowManager {
 
   private parseAndApplyWanderOutcome(outcome: string): void {
     // Parse text-based outcomes and apply effects
-    // This would be similar to the existing wander parsing logic
+    console.log('Parsing wander outcome:', outcome);
+
+    // Handle coin gains
     if (outcome.includes('Gain') && outcome.includes('coin')) {
       const coinMatch = outcome.match(/(\d+)\s*coin/i);
       if (coinMatch) {
         const coins = parseInt(coinMatch[1]);
         this.state.player.coins = (this.state.player.coins || 0) + coins;
+        console.log(`Applied coin gain: +${coins}`);
       }
     }
-    // Add more parsing logic as needed
+
+    // Handle coin losses
+    if (outcome.includes('lose') && outcome.includes('Coin')) {
+      const coinMatch = outcome.match(/lose.*?(\d+)\s*Coin/i) || outcome.match(/(\d+)\s*Coin.*?lose/i);
+      if (coinMatch) {
+        const coins = parseInt(coinMatch[1]);
+        this.state.player.coins = Math.max(0, (this.state.player.coins || 0) - coins);
+        console.log(`Applied coin loss: -${coins}`);
+      }
+    }
+
+    // Handle losing all coins
+    if (outcome.includes('lose all of your Coin')) {
+      this.state.player.coins = 0;
+      console.log('Applied coin loss: all coins lost');
+    }
+
+    // Handle point gains
+    if (outcome.includes('points')) {
+      const pointMatch = outcome.match(/(\d+)\s*points/i);
+      if (pointMatch) {
+        const points = parseInt(pointMatch[1]);
+        this.state.player.score = (this.state.player.score || 0) + points;
+        console.log(`Applied point gain: +${points}`);
+      }
+    }
+
+    // Handle random blessing gain
+    if (outcome.includes('random Blessing')) {
+      const blessings = registry.blessing;
+      if (blessings.length > 0) {
+        const randomBlessing = blessings[Math.floor(Math.random() * blessings.length)];
+        // Add to owned blessings for later application to cards
+        this.state.player.ownedBlessings = [...(this.state.player.ownedBlessings || []), randomBlessing.id];
+        console.log(`Applied blessing gain: ${randomBlessing.label}`);
+      }
+    }
+
+    // Handle random curse gain
+    if (outcome.includes('random Curse')) {
+      const curses = registry.curse;
+      if (curses.length > 0) {
+        const randomCurse = curses[Math.floor(Math.random() * curses.length)];
+        this.state.player.curses = [...(this.state.player.curses || []), randomCurse.id];
+        console.log(`Applied curse gain: ${randomCurse.label}`);
+      }
+    }
+
+    // Handle random exploit gains
+    if (outcome.includes('random Rare Exploit')) {
+      const rareExploits = registry.exploit.filter(e => e.rarity === 'rare');
+      if (rareExploits.length > 0) {
+        const randomExploit = rareExploits[Math.floor(Math.random() * rareExploits.length)];
+        this.state.player.exploits = [...(this.state.player.exploits || []), randomExploit.id];
+        console.log(`Applied rare exploit gain: ${randomExploit.label}`);
+      }
+    }
+
+    if (outcome.includes('random Uncommon Exploit')) {
+      const uncommonExploits = registry.exploit.filter(e => e.rarity === 'uncommon');
+      if (uncommonExploits.length > 0) {
+        const randomExploit = uncommonExploits[Math.floor(Math.random() * uncommonExploits.length)];
+        this.state.player.exploits = [...(this.state.player.exploits || []), randomExploit.id];
+        console.log(`Applied uncommon exploit gain: ${randomExploit.label}`);
+      }
+    }
+
+    if (outcome.includes('random Epic Exploit')) {
+      const epicExploits = registry.exploit.filter(e => e.rarity === 'epic');
+      if (epicExploits.length > 0) {
+        const randomExploit = epicExploits[Math.floor(Math.random() * epicExploits.length)];
+        this.state.player.exploits = [...(this.state.player.exploits || []), randomExploit.id];
+        console.log(`Applied epic exploit gain: ${randomExploit.label}`);
+      }
+    }
+
+    // Handle shuffle/discard count reductions
+    if (outcome.includes('shuffle count is permanently reduced')) {
+      this.state.player.shuffles = Math.max(0, (this.state.player.shuffles || 3) - 1);
+      console.log('Applied shuffle count reduction: -1');
+    }
+
+    if (outcome.includes('discard and shuffle counts are reduced')) {
+      this.state.player.shuffles = Math.max(0, (this.state.player.shuffles || 3) - 1);
+      this.state.player.discards = Math.max(0, (this.state.player.discards || 2) - 1);
+      console.log('Applied shuffle and discard count reduction: -1 each');
+    }
+
+    // Handle chance-based effects
+    if (outcome.includes('25% chance') || outcome.includes('50% chance')) {
+      const chance = outcome.includes('25%') ? 0.25 : 0.5;
+      if (Math.random() < chance) {
+        if (outcome.includes('card with a value of 1, 5, or 10 is permanently removed')) {
+          // Remove a random card with value 1, 5, or 10 from deck
+          const deck = this.state.piles?.deck?.cards || [];
+          const targetValues = [1, 5, 10];
+          const validCards = deck.filter(card => targetValues.includes(card.value));
+          if (validCards.length > 0) {
+            const cardToRemove = validCards[Math.floor(Math.random() * validCards.length)];
+            const index = deck.indexOf(cardToRemove);
+            if (index !== -1) {
+              deck.splice(index, 1);
+              console.log(`Applied chance effect: removed card ${cardToRemove.value} from deck`);
+            }
+          }
+        }
+
+        if (outcome.includes('also receive a random Curse')) {
+          const curses = registry.curse;
+          if (curses.length > 0) {
+            const randomCurse = curses[Math.floor(Math.random() * curses.length)];
+            this.state.player.curses = [...(this.state.player.curses || []), randomCurse.id];
+            console.log(`Applied chance effect: gained curse ${randomCurse.label}`);
+          }
+        }
+      }
+    }
   }
 
   // Public getters

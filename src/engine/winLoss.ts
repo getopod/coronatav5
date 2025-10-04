@@ -1,12 +1,7 @@
-// Coronata win/loss detection stub
+// Coronata win/loss detection
 export const coronataWinCondition: WinCondition = (state) => {
-  // Coronata wins when all cards are moved to foundations
-  const foundations = Object.values(state.piles).filter(pile => pile.type === 'foundation');
-  
-  // Check if all foundation piles have 13 cards (complete suit)
-  return foundations.every(foundation => 
-    foundation.cards && foundation.cards.length === 13
-  );
+  // Coronata wins when the current encounter is completed
+  return checkEncounterCompletion(state);
 };
 
 export const coronataLossCondition: LossCondition = (_state) => {
@@ -17,6 +12,7 @@ export const coronataLossCondition: LossCondition = (_state) => {
 };
 // Win/Loss Detection Module for Card Game Engine
 import { GameState } from './types';
+import { checkEncounterCompletion } from './encounterSystem';
 
 export type WinCondition = (state: GameState) => boolean;
 export type LossCondition = (state: GameState) => boolean;

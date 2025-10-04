@@ -9,7 +9,7 @@
   align-items: center;
   justify-content: center;
   font-family: 'Courier New', monospace;
-  color: #ffffff;
+  color: #2d1b1b;
   z-index: 2000;
 }
 
@@ -36,23 +36,42 @@
   margin-bottom: 40px;
 }
 
-.game-title {
-  font-size: 48px;
-  font-weight: bold;
+.game-logo {
+  width: 300px;
+  height: auto;
   margin: 0 0 10px 0;
-  background: linear-gradient(45deg, #6366f1, #8b5cf6, #ec4899);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
-  letter-spacing: 3px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .game-subtitle {
   font-size: 18px;
-  color: #94a3b8;
+  color: #654321;
   margin: 0 0 20px 0;
   font-style: italic;
+}
+
+.ascension-indicator {
+  font-size: 14px;
+  color: #d4af37;
+  margin: 5px 0 0 0;
+  font-weight: bold;
+}
+
+.welcome-header-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.3s ease;
+}
+
+.welcome-header-button:hover {
+  transform: scale(1.02);
+}
+
+.welcome-header-button:focus {
+  outline: 2px solid #d4af37;
+  outline-offset: 4px;
 }
 
 .game-description {
@@ -73,12 +92,104 @@
   margin-bottom: 30px;
 }
 
+.ascension-selector {
+  background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a8 100%);
+  border: 2px solid #d4af37;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.ascension-selector h3 {
+  color: #2d1b1b;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  text-align: center;
+}
+
+.ascension-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ascension-btn {
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+  border: 2px solid #d4af37;
+  border-radius: 8px;
+  padding: 12px 8px;
+  color: #f4e4bc;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ascension-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
+  border-color: #ffd700;
+  transform: translateY(-2px);
+}
+
+.ascension-btn.selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.4);
+}
+
+.ascension-btn.locked {
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+  border-color: #888;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ascension-btn.locked:hover {
+  transform: none;
+  background: linear-gradient(135deg, #666 0%, #555 100%);
+}
+
+.ascension-level {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.ascension-name {
+  font-size: 11px;
+  margin-bottom: 2px;
+  line-height: 1.1;
+}
+
+.ascension-desc {
+  font-size: 9px;
+  opacity: 0.9;
+  line-height: 1.1;
+}
+
+.lock-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 12px;
+}
+
 .menu-btn {
-  background: linear-gradient(135deg, #374151, #4b5563);
-  border: 2px solid #6b7280;
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+  border: 2px solid #d4af37;
   border-radius: 12px;
   padding: 12px 16px;
-  color: #ffffff;
+  color: #f4e4bc;
   font-family: 'Courier New', monospace;
   font-size: 14px;
   font-weight: bold;
@@ -94,47 +205,16 @@
 }
 
 .menu-btn:hover {
+  background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
+  border-color: #ffd700;
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-.menu-btn.primary {
-  background: linear-gradient(135deg, #1e40af, #3730a3);
-  border-color: #6366f1;
-  font-size: 16px;
-  min-height: 56px;
-  padding: 14px 20px;
-}
-
-.menu-btn.primary:hover {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  border-color: #8b5cf6;
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
 .menu-btn.secondary {
   font-size: 13px;
   min-height: 44px;
   padding: 10px 12px;
-}
-
-.menu-btn.secondary:hover {
-  background: linear-gradient(135deg, #4b5563, #6b7280);
-  border-color: #9ca3af;
-}
-
-.menu-btn.back {
-  background: linear-gradient(135deg, #7c2d12, #92400e);
-  border-color: #d97706;
-  font-size: 13px;
-  min-height: 40px;
-  padding: 8px 16px;
-}
-
-.menu-btn.back:hover {
-  background: linear-gradient(135deg, #92400e, #b45309);
-  border-color: #f59e0b;
-  box-shadow: 0 8px 25px rgba(217, 119, 6, 0.3);
 }
 
 .btn-description {
