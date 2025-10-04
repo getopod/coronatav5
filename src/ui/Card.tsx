@@ -26,13 +26,20 @@ const suitSymbols: Record<string, string> = {
   spades: '♠',
 };
 
-const suitColors: Record<string, string> = {
-  hearts: '#e53935',
-  diamonds: '#e53935',
-  clubs: '#222',
-  spades: '#222',
+const blessingSymbols: Record<string, string> = {
+  "blessing-midas-touch": "M",
+  "blessing-golden-touch": "G",
+  "blessing-harvest": "H",
+  "blessing-architects-blueprint": "A",
+  "blessing-jokers-disguise": "J",
+  "blessing-wayfarers-freedom": "W",
+  "blessing-alchemists-transmutation": "T",
+  "blessing-apparition": "P",
+  "blessing-seers-eye": "S",
+  "blessing-shepherds-call": "C",
+  "blessing-fools-gambit": "F",
+  "blessing-locksmith": "L",
 };
-
 
 function getCardLabel(value: number) {
   if (value === 1) return 'A';
@@ -42,9 +49,9 @@ function getCardLabel(value: number) {
   return value.toString();
 }
 
-export function Card({ 
-  id, suit, value, faceUp, design, style, selected, shake, draggable, blessings,
-  onClick, onDoubleClick, onDragStart, onDragEnd, onDrop 
+export function Card({
+  id, suit, value, faceUp, design: _design, style: _style, selected, shake, draggable, blessings,
+  onClick, onDoubleClick, onDragStart, onDragEnd, onDrop
 }: CardProps) {
   const [isFlipping, setIsFlipping] = useState(false);
   const prevFaceUp = useRef(faceUp);
@@ -100,8 +107,8 @@ export function Card({
           </div>
           {blessings && blessings.length > 0 && (
             <div className="card-blessings">
-              {blessings.slice(0, 3).map((_, index) => (
-                <span key={index} className="blessing-indicator">✨</span>
+              {blessings.slice(0, 3).map((blessingId, index) => (
+                <span key={index} className="blessing-stamp">{blessingSymbols[blessingId] || "?"}</span>
               ))}
               {blessings.length > 3 && (
                 <span className="blessing-count">+{blessings.length - 3}</span>
@@ -113,7 +120,7 @@ export function Card({
         <div className={`card-back default-back`}>
           {blessings && blessings.length > 0 && (
             <div className="card-blessings-back">
-              <span className="blessing-indicator-back">✨</span>
+              <span className="blessing-stamp-back">{blessingSymbols[blessings[0]] || "?"}</span>
             </div>
           )}
         </div>

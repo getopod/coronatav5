@@ -1,6 +1,6 @@
 // Enhanced scoring system with encounter goal integration
 import { GameState, Move } from './types';
-import { initializeRun, selectEncounter, defaultCoronataConfig, progressEncounter } from './encounterSystem';
+import { initializeRun, selectEncounter, defaultCoronataConfig, progressEncounter, checkRunCompletion } from './encounterSystem';
 import { EncounterFlowManager } from './encounterFlow';
 
 // Import from relative paths since we're consolidating into /engine/
@@ -16,11 +16,7 @@ export interface EnhancedScoringSystem {
 }
 
 export class CoronataScoringSystem implements EnhancedScoringSystem {
-  private variant: string;
 
-  constructor(variant: string = 'coronata') {
-    this.variant = variant;
-  }
 
   calculateMoveScore(move: Move, state: GameState): number {
     // Step 1: Calculate base score (card face value)
@@ -28,7 +24,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     
     // Step 2: Apply foundation multiplier (default 2x for foundation moves)
     console.log('Move destination:', move.to, 'includes foundation?', move.to?.includes('foundation'));
-    if (move.to && move.to.includes('foundation')) {
+  if (move.to?.includes('foundation')) {
       baseScore *= 2; // Foundation multiplier from master doc
       console.log('Applied foundation multiplier: base score', baseScore / 2, '→', baseScore);
     }
@@ -103,7 +99,6 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 
   calculateTotalScore(state: GameState): number {
     // For now, just use player accumulated score
-    // TODO: Integrate with core scoring system if needed
     return state.player.score || 0;
   }
 
@@ -186,21 +181,21 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
 
     // Check encounter completion using proper goal
     const encounterComplete = this.checkEncounterGoals(state);
-    
+
     if (encounterComplete && !state.run.encounter?.completed) {
       // Mark encounter as completed
       if (state.run.encounter) {
         state.run.encounter.completed = true;
-        
+
         // NEW: Use EncounterFlowManager for proper post-encounter flow
         const encounterType = state.run.encounter.type || 'fear';
-        
+
         // Initialize encounter flow manager
         const flowManager = new EncounterFlowManager(state);
-        
+
         // Set up post-encounter activities based on Master Doc
         const flowState = flowManager.onEncounterComplete(encounterType);
-        
+
         // Store flow state in run for UI to access
         state.run.encounterFlow = {
           active: true,
@@ -209,13 +204,46 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
           queuedActivities: flowState.queuedActivities,
           completedActivities: flowState.completedActivities
         };
-        
+
         console.log(`Encounter completed! Starting ${encounterType} flow:`, state.run.encounterFlow);
-        
+
         // DEPRECATED: Remove old choice system
         // state.run.awaitingPlayerChoice = true;
         // state.run.availableChoices = [...];
       }
+    }
+
+    // Process pending encounter reset (when encounter flow is complete)
+    if (state.meta?.pendingEncounterReset && state.run) {
+      const newEncounterNumber = state.meta.pendingEncounterReset;
+      console.log(`Processing pending encounter reset for encounter ${newEncounterNumber}`);
+
+      // Reset the board for the new encounter
+      state = this.resetForNewEncounter(state, newEncounterNumber);
+
+      // Progress to the next encounter
+      // Get registry entries from the engine state
+      const registryEntries = state.registry?.entries || [];
+      const newRunState = progressEncounter(state.run, defaultCoronataConfig, registryEntries);
+
+      // Check if run is complete (all 15 encounters done)
+      if (checkRunCompletion(newRunState)) {
+        console.log('Run completed! All 15 encounters finished.');
+        state.run = {
+          ...newRunState,
+          completed: true,
+          completionTime: new Date().toISOString()
+        };
+      } else {
+        state.run = newRunState;
+      }
+
+      // Clear the pending reset flag
+      if (state.meta) {
+        delete state.meta.pendingEncounterReset;
+      }
+
+      console.log(`Encounter reset complete. New encounter:`, state.run.encounter);
     }
 
     return state;
@@ -232,12 +260,12 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Award bonus points for special achievements
-  awardBonus(state: GameState, bonusType: string, amount: number): GameState {
+  awardBonus(state: GameState, _bonusType: string, amount: number): GameState {
     let bonus = amount;
 
     // Apply blessing multipliers
     if (state.player.blessings) {
-      state.player.blessings.forEach(blessingId => {
+      state.player.blessings.forEach((blessingId: string) => {
         switch (blessingId) {
           case 'golden_touch':
             bonus *= 1.5;
@@ -256,7 +284,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
   }
 
   // Special scoring for completing card sequences
-  scoreSequence(state: GameState, sequenceLength: number): number {
+  scoreSequence(_state: GameState, sequenceLength: number): number {
     let score = sequenceLength * 5; // Base 5 points per card in sequence
 
     // Exponential bonus for longer sequences
@@ -401,7 +429,9 @@ export function integrateEnhancedScoring(engineController: any, variant: string)
   
   // Initialize Coronata-specific state if needed
   if (variant === 'coronata') {
-    engineController.state = initializeCoronataState(engineController);
+    // Always assign the result of initializeCoronataState to engineController.state
+    // to ensure immediate effects (like Windfall) are applied and reflected in the state
+    engineController.state = initializeCoronataState(engineController, engineController.registryEntries);
   }
   
   // Add encounter-specific event handlers
@@ -477,7 +507,7 @@ export function integrateEnhancedScoring(engineController: any, variant: string)
 }
 
 // Initialize Coronata-specific state
-function initializeCoronataState(engineController: any) {
+function initializeCoronataState(engineController: any, registryEntries?: any[]) {
   const state = engineController.state;
   
   // Initialize player defaults for Coronata
@@ -510,6 +540,11 @@ function initializeCoronataState(engineController: any) {
         ...(state.player.curses || []),
         ...(state.player.fortunes || [])
       ];
+
+      // Include active fortune for immediate effects processing
+      if (state.player.activeFortune) {
+        activeRegistryIds.push(state.player.activeFortune);
+      }
 
       const immediateEffects = [];
       for (const registryId of activeRegistryIds) {
@@ -596,7 +631,7 @@ function initializeCoronataState(engineController: any) {
     };
     
     const runState = initializeRun(1, coronataConfig);
-    const firstEncounter = selectEncounter(runState, coronataConfig);
+    const firstEncounter = selectEncounter(runState, coronataConfig, undefined, registryEntries);
     
     // Create a scoring system instance to calculate the goal
     const scoringSystem = new CoronataScoringSystem();

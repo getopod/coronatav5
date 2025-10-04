@@ -1,6 +1,6 @@
 export default {
   preset: 'ts-jest',
-  testMatch: ['**/test/**/*.test.ts'],
+  testMatch: ['**/test/**/*.test.{ts,js}'],
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
   globals: {

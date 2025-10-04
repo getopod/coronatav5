@@ -327,33 +327,17 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
             </button>
           </div>
 
-          {/* Search and Filter */}
+          {/* Search */}
           <div className="filter-controls">
             <div className="search-box">
               <span className="search-icon">🔍</span>
               <input
                 type="text"
-                placeholder="Search by name, description, or tags..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            {availableRarities.length > 0 && (
-              <select 
-                className="rarity-filter"
-                title="Filter by rarity"
-                value={selectedRarity}
-                onChange={(e) => setSelectedRarity(e.target.value)}
-              >
-                <option value="all">All Rarities</option>
-                {availableRarities.map(rarity => (
-                  <option key={rarity} value={rarity}>
-                    {rarity.charAt(0).toUpperCase() + rarity.slice(1)}
-                  </option>
-                ))}
-              </select>
-            )}
           </div>
         </div>
 

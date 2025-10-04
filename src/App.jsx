@@ -2,121 +2,117 @@
 import React, { useState } from 'react';
 import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History, Options } from './ui';
 import { EngineController } from './engine/engineController';
-import { makeKlondikeRegistryConfig } from '../test/engine/testUtils';
-import { GameModeMenu } from './ui/GameModeMenu';
 import { startGameSession } from './engine/persistenceManager';
-import { exploits } from './registry/registry'; // Import registry items
+import { registry } from './registry/index';
+import { createDefaultCoronataPiles } from './engine/gameInitialization';
+// Helper to generate a RegistryConfig for Coronata with piles, cards, and initialCards
+function createCoronataRegistryConfig() {
+  const pilesObj = createDefaultCoronataPiles();
+  const allCards = [];
+  const pilesArray = Object.values(pilesObj).map(pile => {
+    // Collect all cards for the global card list
+    if (pile.cards && pile.cards.length > 0) {
+      for (const card of pile.cards) {
+        allCards.push(card);
+      }
+    }
+    return {
+      id: pile.id,
+      type: pile.type,
+      rules: pile.rules,
+      meta: pile.meta,
+      initialCards: pile.cards ? pile.cards.map(card => card.id) : []
+    };
+  });
+  // Remove duplicate cards (shouldn't be any, but just in case)
+  const uniqueCards = Array.from(new Map(allCards.map(card => [card.id, card])).values());
+  // Convert to CardConfig[]
+  const cardsArray = uniqueCards.map(card => ({
+    id: card.id,
+    suit: card.suit,
+    value: card.value,
+    faceUp: card.faceUp,
+    design: card.design,
+    tags: card.tags,
+    meta: card.meta
+  }));
+  return {
+    piles: pilesArray,
+    cards: cardsArray,
+    // Add any other config properties needed by the engine here
+  };
+}
 // Debug utilities
 import './debug/gameDebug';
 // Removed unused imports: gameModeProfiles, reactLogo, vieLogo, setupCoronataEngine
 import './App.css';
 
 
+
 function App() {
-  const [selectedMode, setSelectedMode] = useState(null);
-  const [showCoronataWelcome, setShowCoronataWelcome] = useState(false);
+  // Always Coronata mode, always show welcome first
+  const [showCoronataWelcome, setShowCoronataWelcome] = useState(true);
   const [showFortuneSelection, setShowFortuneSelection] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedFortune, setSelectedFortune] = useState(null);
-  // Create engine instance for selected mode
+
+  // Engine always in Coronata mode
   const engine = React.useMemo(() => {
-    // For demo, use Klondike registry config for all modes (replace with correct config per mode)
-    const config = makeKlondikeRegistryConfig();
+    // Construct a valid RegistryConfig for Coronata with 'piles'
+    // Use the full RegistryConfig with piles, cards, and initialCards
+    const coronataConfig = createCoronataRegistryConfig();
+    // Flatten the registry object into a single array of entries
+    const allRegistryEntries = Object.values(registry).flat();
     const engineController = new EngineController({
-      registryConfig: config,
-      registryEntries: exploits, // Use actual exploits from registry
+      registryConfig: coronataConfig,
+      registryEntries: allRegistryEntries,
       customHandlers: {}
-    }, selectedMode || 'klondike'); // Engine will auto-configure based on game mode
-    
-    console.log(`${selectedMode || 'klondike'} engine initialized with profile:`, engineController.config);
-    console.log('Registry entries loaded:', exploits.length, 'exploits');
-    
-    // Expose engine to window for debugging
+    }, 'coronata');
     window.gameEngine = engineController;
-    
     return engineController;
-  }, [selectedMode]);
+  }, []);
 
-  // Handle mode selection
-  const handleModeSelect = (mode) => {
-    setSelectedMode(mode);
-    if (mode === 'coronata') {
-      setShowCoronataWelcome(true);
-    }
-    // For other modes, go directly to game
-  };
-
-  // Handle Coronata welcome actions
+  // Handlers for navigation
   const handleCoronataStart = () => {
     setShowCoronataWelcome(false);
     setShowFortuneSelection(true);
   };
-
   const handleCoronataBack = () => {
-    setSelectedMode(null);
-    setShowCoronataWelcome(false);
+    setShowCoronataWelcome(true);
     setShowFortuneSelection(false);
     setShowHowToPlay(false);
     setShowGlossary(false);
     setShowHistory(false);
     setShowOptions(false);
   };
-
-  // Handle Fortune Selection actions
   const handleFortuneSelected = (fortune) => {
     setSelectedFortune(fortune);
     setShowFortuneSelection(false);
-    
-    // Start a new game session for persistence
-    try {
-      startGameSession();
-      console.log('New game session started');
-    } catch (error) {
-      console.error('Error starting game session:', error);
-    }
-    
-    console.log('Fortune selected:', fortune);
+  try { startGameSession(); } catch { /* ignore */ }
   };
-
   const handleFortuneBack = () => {
     setShowCoronataWelcome(true);
     setShowFortuneSelection(false);
   };
-
-  // Handle navigation back to welcome from game
-  const handleGameToWelcome = () => {
-    if (selectedMode === 'coronata') {
-      setShowCoronataWelcome(true);
-    } else {
-      setSelectedMode(null);
-    }
-  };
-
-  // Handle navigation to different screens from welcome
   const handleShowHowToPlay = () => {
     setShowCoronataWelcome(false);
     setShowHowToPlay(true);
   };
-
   const handleShowGlossary = () => {
     setShowCoronataWelcome(false);
     setShowGlossary(true);
   };
-
   const handleShowHistory = () => {
     setShowCoronataWelcome(false);
     setShowHistory(true);
   };
-
   const handleShowOptions = () => {
     setShowCoronataWelcome(false);
     setShowOptions(true);
   };
-
-  // Handle back navigation from sub-screens
   const handleBackToWelcome = () => {
     setShowHowToPlay(false);
     setShowGlossary(false);
@@ -125,47 +121,31 @@ function App() {
     setShowCoronataWelcome(true);
   };
 
-  // Show game mode menu
-  if (!selectedMode) {
-    return <GameModeMenu onSelect={handleModeSelect} />;
-  }
-
   // Show Coronata welcome screen
-  if (selectedMode === 'coronata' && showCoronataWelcome) {
+  if (showCoronataWelcome) {
     return (
-      <CoronataWelcomeScreen 
+      <CoronataWelcomeScreen
         onStart={handleCoronataStart}
         onHowToPlay={handleShowHowToPlay}
         onGlossary={handleShowGlossary}
         onHistory={handleShowHistory}
         onOptions={handleShowOptions}
-        onBack={handleCoronataBack}
       />
     );
   }
-
-  // Show HowToPlay screen
-  if (selectedMode === 'coronata' && showHowToPlay) {
+  if (showHowToPlay) {
     return <HowToPlay onBack={handleBackToWelcome} />;
   }
-
-  // Show Glossary screen
-  if (selectedMode === 'coronata' && showGlossary) {
+  if (showGlossary) {
     return <Glossary onBack={handleBackToWelcome} />;
   }
-
-  // Show History screen
-  if (selectedMode === 'coronata' && showHistory) {
+  if (showHistory) {
     return <History onBack={handleBackToWelcome} />;
   }
-
-  // Show Options screen
-  if (selectedMode === 'coronata' && showOptions) {
+  if (showOptions) {
     return <Options onBack={handleBackToWelcome} engine={engine} />;
   }
-
-  // Show Fortune Selection screen
-  if (selectedMode === 'coronata' && showFortuneSelection) {
+  if (showFortuneSelection) {
     return (
       <FortuneSelectionScreen
         onFortuneSelected={handleFortuneSelected}
@@ -173,12 +153,11 @@ function App() {
       />
     );
   }
-
   // Show game screen
   return (
     <EngineEventProvider engine={engine}>
       <GameScreen 
-        onNavigateToWelcome={handleGameToWelcome}
+        onNavigateToWelcome={handleCoronataBack}
         selectedFortune={selectedFortune}
       />
     </EngineEventProvider>

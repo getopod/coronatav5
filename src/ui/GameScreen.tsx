@@ -1,57 +1,263 @@
+
 import React from 'react';
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
 import { Card } from './Card';
-import { getMovableStack, validateMove } from '../engine/moveLogic';
+import { getMovableStack, validateMove, refillHandFromDeck } from '../engine/moveLogic';
 import { PlayerHUD } from './PlayerHUD';
-import { GameState } from '../engine/types'; // Changed from core_engine to engine
 import TradeScreen from './TradeScreen';
 import WanderScreen from './WanderScreen';
+import FortuneSwapActivity from './FortuneSwapActivity';
 import { endGameSession } from '../engine/persistenceManager';
 import { EncounterFlowManager } from '../engine/encounterFlow';
+import { startNewRun, checkEncounterCompletion, progressEncounter, checkRunCompletion, selectEncounter, resetEncounterState } from '../engine/encounterSystem';
 import './GameScreen.css';
+
+// Helper to safely get piles as an array of any
+const getPiles = (piles: any): any[] => Array.isArray(piles) ? piles : Object.values(piles || {});
 
 interface GameScreenProps {
   onNavigateToWelcome?: () => void;
   selectedFortune?: any;
 }
 
+
+
+
 export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenProps = {}) {
-  // Always declare hooks and variables at the top level
+
+  // --- Hooks: always call at the top, unconditionally ---
   const ctx = useEngineEvent();
-  if (!ctx) return <div>No engine context</div>;
-  const { engine, event } = ctx;
-  const config = engine.config || {};
-  
-  // Cast engine state to extended GameState for Coronata features
+  const [selectedCardId, setSelectedCardId] = React.useState<string | null>(null);
+  const [draggedCardId, setDraggedCardId] = React.useState<string | null>(null);
+  const [dragOverPileId, setDragOverPileId] = React.useState<string | null>(null);
+  const [shakeCardId, setShakeCardId] = React.useState<string | null>(null);
+  // Ref to store shake timeout
+  const shakeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
+  const [showResignModal, setShowResignModal] = React.useState(false);
+  const [showRunRecap, setShowRunRecap] = React.useState(false);
+  // Choice screen state
+  const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander' | 'fortune-swap'>('game');
+  // Debug/Testing features
+  const [showDebugPanel, setShowDebugPanel] = React.useState(false);
+  const [selectedBlessingForCard, setSelectedBlessingForCard] = React.useState<string>('');
+  const [selectedCardForBlessing, setSelectedCardForBlessing] = React.useState<string>('');
+  const [registryEffectLog, setRegistryEffectLog] = React.useState<any[]>([]);
+  const [showRegistryLog, setShowRegistryLog] = React.useState(false);
+  // Zoom state for floating zoom window
+  const [zoomLevel, setZoomLevel] = React.useState(100);
+  // Provide fallback values for engine, event, config for hook dependencies
+  const engine = ctx?.engine ?? ({} as any);
+  const event = ctx?.event ?? null;
+  const config = engine?.config ?? {};
+  // Detect if Coronata mode is active (define unconditionally for hooks)
+  const isCoronata = config?.rules === 'coronata';
   // Use event dependency to re-render when engine state changes
-  const gameState = React.useMemo(() => engine.state as GameState, [engine.state, event]);
-  // const player = gameState.player || {}; // Remove duplicate, use inside useMemo or where needed
-  const cardHeight = config.cardHeight || 72;
+  const gameState = React.useMemo(() => engine?.state ?? {}, [engine?.state, event]);
+
+  // Debug/Testing handlers
+  const handleApplyBlessingToCard = () => {
+    if (!selectedBlessingForCard || !selectedCardForBlessing) return;
+
+    const blessingEffect = {
+      type: 'apply_blessing_to_card',
+      target: selectedCardForBlessing,
+      value: selectedBlessingForCard
+    };
+
+    engine.state = engine.effectEngine.applyEffects([blessingEffect], engine.state);
+    engine.emitEvent('stateChange', engine.state);
+
+    console.log(`Debug: Applied blessing ${selectedBlessingForCard} to card ${selectedCardForBlessing}`);
+    setSelectedBlessingForCard('');
+    setSelectedCardForBlessing('');
+  };
+
+  const handleJumpToScreen = (screen: string) => {
+    switch (screen) {
+      case 'trade':
+        setCurrentScreen('trade');
+        break;
+      case 'wander':
+        setCurrentScreen('wander');
+        break;
+      case 'fortune-swap':
+        setCurrentScreen('fortune-swap');
+        break;
+      case 'game':
+        setCurrentScreen('game');
+        break;
+      default:
+        console.log(`Unknown screen: ${screen}`);
+    }
+  };
+
+  const handleJumpToEncounter = (trial: number, encounter: number) => {
+    if (!engine?.state?.run) return;
+
+    // Update run state to jump to specific encounter
+    engine.state.run.currentTrial = trial;
+    engine.state.run.currentEncounter = encounter;
+
+    // Generate new encounter
+    const newEncounter = selectEncounter(engine.state.run, undefined, undefined, Object.values(registry).flat());
+    engine.state.run.encounter = newEncounter;
+
+    engine.emitEvent('stateChange', engine.state);
+    console.log(`Debug: Jumped to Trial ${trial}, Encounter ${encounter}`);
+  };
+
+  // Registry effect logging
+  React.useEffect(() => {
+    if (!showRegistryLog) return;
+
+    const handleRegistryEffect = (event: any) => {
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        type: event.type,
+        payload: event.payload,
+        effect: event.effect || 'unknown'
+      };
+      setRegistryEffectLog(prev => [...prev.slice(-49), logEntry]); // Keep last 50 entries
+    };
+
+    // Listen to engine events that might involve registry effects
+    engine?.eventEmitter?.on('move', handleRegistryEffect);
+    engine?.eventEmitter?.on('on_play_from_hand', handleRegistryEffect);
+    engine?.eventEmitter?.on('on_foundation_play', handleRegistryEffect);
+    engine?.eventEmitter?.on('on_tableau_play', handleRegistryEffect);
+
+    return () => {
+      engine?.eventEmitter?.off('move', handleRegistryEffect);
+      engine?.eventEmitter?.off('on_play_from_hand', handleRegistryEffect);
+      engine?.eventEmitter?.off('on_foundation_play', handleRegistryEffect);
+      engine?.eventEmitter?.off('on_tableau_play', handleRegistryEffect);
+    };
+  }, [showRegistryLog, engine]);
+  const cardHeight = config?.cardHeight ?? 72;
   const overlapPercent = 0.5; // 50% overlap
   const tableauRowHeight = 14 * (cardHeight * overlapPercent);
-  
   // Debug logging
   console.log('GameScreen rendering with engine state:', gameState);
   console.log('Engine config:', config);
   console.log('Last engine event:', event);
   console.log('Selected fortune:', selectedFortune);
-  
-  // Detect if Coronata mode is active
-  const isCoronata = (config.rules === 'coronata');
   console.log('Is Coronata mode:', isCoronata);
 
+  // Integrate selected fortune into game state for registry effects
+  React.useEffect(() => {
+    // Only run logic if all conditions are met
+    if (!selectedFortune || !engine?.state?.player || !isCoronata) return;
+    const currentFortunes = engine.state.player.fortunes || [];
+    // Only add if not already present (avoid duplicates)
+    if (!currentFortunes.includes(selectedFortune.id)) {
+      console.log('Adding selected fortune to player registry:', selectedFortune.label);
+      // Add the fortune to player registry
+      engine.state.player.fortunes = [...currentFortunes, selectedFortune.id];
+      // Set as active fortune for immediate effects processing
+      engine.state.player.activeFortune = selectedFortune.id;
+      console.log('Added fortune to player registry and set as active, calling applyImmediateEffects');
+      // Apply immediate effects for the new fortune
+      engine.applyImmediateEffects([selectedFortune.id]);
+      console.log('Immediate effects applied, player coins:', engine.state.player.coins);
+      // Refill hand if maxHandSize was increased
+      if (engine.state.player.maxHandSize && engine.state.player.maxHandSize > 5) {
+        const refilledState = refillHandFromDeck(engine.state);
+        engine.state = refilledState;
+        console.log('Hand refilled after fortune application, new hand size:', engine.state.piles.hand?.cards?.length || 0);
+      }
+      // Emit state change to trigger re-render and effect processing
+      engine.emitEvent('stateChange', engine.state);
+      console.log('Player fortunes updated:', engine.state.player.fortunes);
+    }
+  }, [selectedFortune, engine, isCoronata]);
+
+  // Auto-start first encounter when entering game screen
+  React.useEffect(() => {
+    if (!engine?.state || !selectedFortune || !isCoronata) return;
+
+    // Check if we need to start a new run (no existing run state)
+    if (!engine.state.run || !engine.state.run.encounter) {
+      console.log('Auto-starting first encounter...');
+      try {
+        const registryEntries = Object.values(registry).flat();
+        engine.state = startNewRun(engine.state, 1, registryEntries);
+        engine.emitEvent('stateChange', engine.state);
+        console.log('First encounter started successfully');
+      } catch (error) {
+        console.error('Failed to auto-start first encounter:', error);
+      }
+    }
+  }, [selectedFortune, engine, isCoronata]);
+
+  // Auto-progress to next encounter when current encounter is completed
+  React.useEffect(() => {
+    if (!engine?.state?.run?.encounter || !isCoronata) return;
+
+    const isCompleted = checkEncounterCompletion(engine.state);
+
+    if (isCompleted && !engine.state.run.encounterFlow?.active) {
+      console.log('Encounter completed, auto-progressing to next encounter...');
+      try {
+        const registryEntries = Object.values(registry).flat();
+        engine.state.run = progressEncounter(engine.state.run, undefined, registryEntries);
+
+        // Reset player score for new encounter
+        engine.state = resetEncounterState(engine.state);
+
+        // Check if run is now completed
+        if (checkRunCompletion(engine.state.run)) {
+          console.log('🎉 Run completed! All encounters finished.');
+          engine.emitEvent('win', engine.state);
+        } else {
+          console.log('Progressed to next encounter successfully');
+        }
+
+        engine.emitEvent('stateChange', engine.state);
+      } catch (error) {
+        console.error('Failed to auto-progress encounter:', error);
+      }
+    }
+  }, [gameState.player?.score, gameState.run?.encounter?.scoreGoal, engine, isCoronata]);
+
+  // Responsive scaling effect
+  React.useEffect(() => {
+    const handleResize = () => {
+      const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
+      if (!gameScreen) return;
+
+      const minWidth = 266; // Minimum width to show all cards
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      // Calculate scale factor to fit content while respecting minimum width
+      let scaleX = viewportWidth / minWidth;
+      let scaleY = viewportHeight / 600; // Approximate game height
+      let scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+      // Ensure we don't go below minimum width
+      if (viewportWidth < minWidth) {
+        scale = viewportWidth / minWidth;
+      }
+      // Apply scaling
+      if (scale < 1) {
+        gameScreen.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        gameScreen.style.transformOrigin = 'center center';
+      } else {
+        gameScreen.style.transform = 'translate(-50%, -50%)';
+      }
+    };
+    // Initial resize
+    handleResize();
+    // Add resize listener
+    window.addEventListener('resize', handleResize);
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Only render fallback UI after all hooks have been called
+  if (!ctx) return <div>No engine context</div>;
+
   // --- State hooks ---
-  const [selectedCardId, setSelectedCardId] = React.useState<string | null>(null);
-  const [draggedCardId, setDraggedCardId] = React.useState<string | null>(null);
-  const [dragOverPileId, setDragOverPileId] = React.useState<string | null>(null);
-  const [shakeCardId, setShakeCardId] = React.useState<string | null>(null);
-  const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
-  const [showResignModal, setShowResignModal] = React.useState(false);
-  const [showRunRecap, setShowRunRecap] = React.useState(false);
-  
-  // Zoom state for floating zoom window
-  const [zoomLevel, setZoomLevel] = React.useState(100);
 
   // --- Registry-driven effect HUD ---
   // Get only truly active effects from game state (equipped exploits, active fears/dangers, etc.)
@@ -131,87 +337,64 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
   
   // Choice screen states
-  const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander'>('game');
-  
-  // Integrate selected fortune into game state for registry effects
-  React.useEffect(() => {
-    if (selectedFortune && engine.state.player && isCoronata) {
-      const currentFortunes = engine.state.player.fortunes || [];
-      
-      // Only add if not already present (avoid duplicates)
-      if (!currentFortunes.includes(selectedFortune.id)) {
-        console.log('Adding selected fortune to player registry:', selectedFortune.label);
-        
-        // Add the fortune to player registry
-        engine.state.player.fortunes = [...currentFortunes, selectedFortune.id];
-        
-        // Emit state change to trigger re-render and effect processing
-        engine.emitEvent('stateChange', engine.state);
-        
-        console.log('Player fortunes updated:', engine.state.player.fortunes);
-      }
-    }
-  }, [selectedFortune, engine, isCoronata]);
 
-  // Responsive scaling effect
-  React.useEffect(() => {
-    const handleResize = () => {
-      const gameScreen = document.querySelector('.game-screen-root') as HTMLElement;
-      if (!gameScreen) return;
 
-      const minWidth = 266; // Minimum width to show all cards
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      // Calculate scale factor to fit content while respecting minimum width
-      let scaleX = viewportWidth / minWidth;
-      let scaleY = viewportHeight / 600; // Approximate game height
-      let scale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
-      
-      // Ensure we don't go below minimum width
-      if (viewportWidth < minWidth) {
-        scale = viewportWidth / minWidth;
-      }
-      
-      // Apply scaling
-      if (scale < 1) {
-        gameScreen.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        gameScreen.style.transformOrigin = 'center center';
-      } else {
-        gameScreen.style.transform = 'translate(-50%, -50%)';
-      }
-    };
-
-    // Initial resize
-    handleResize();
-    
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
   
   // Function to trigger shake animation for invalid moves
   // Helper function to check if a move actually succeeded despite exceptions
   const checkMoveSuccess = (cardId: string, beforeState: any) => {
-    // Check if the card still exists in its original position
-    const cardStillInOriginalPosition = Object.values(beforeState.piles).some((pile: any) => 
-      pile.cards && pile.cards.some((card: any) => card.id === cardId)
-    ) && Object.values(engine.state.piles).some((pile: any) => 
-      pile.cards && pile.cards.some((card: any) => card.id === cardId)
-    ) && JSON.stringify(beforeState.piles) === JSON.stringify(engine.state.piles);
-    
-    // If the card is no longer in the same position or the state changed, the move succeeded
-    return !cardStillInOriginalPosition || engine.state !== beforeState;
+    // Find the pile and index of the card before the move
+    let beforePileId = null;
+    let beforeIndex = null;
+    for (const [pileId, pile] of Object.entries(beforeState.piles)) {
+      const pileAny = pile as any;
+      if (Array.isArray(pileAny.cards)) {
+        const idx = pileAny.cards.findIndex((card: any) => card.id === cardId);
+        if (idx !== -1) {
+          beforePileId = pileId;
+          beforeIndex = idx;
+          break;
+        }
+      }
+    }
+    // Find the pile and index of the card after the move
+    let afterPileId = null;
+    let afterIndex = null;
+    for (const [pileId, pile] of Object.entries(engine.state.piles)) {
+      const pileAny = pile as any;
+      if (Array.isArray(pileAny.cards)) {
+        const idx = pileAny.cards.findIndex((card: any) => card.id === cardId);
+        if (idx !== -1) {
+          afterPileId = pileId;
+          afterIndex = idx;
+          break;
+        }
+      }
+    }
+    // If the card is in the same pile and position, the move failed
+    if (beforePileId === afterPileId && beforeIndex === afterIndex) {
+      return false; // move failed
+    }
+    // Otherwise, the move succeeded
+    return true;
   };
 
   const triggerShake = (cardId: string) => {
-    console.log('Triggering shake for card:', cardId);
+    // Only shake if the card is present in the UI (visible in any pile)
+    const cardIsVisible = Object.values(gameState.piles || {}).some((pile: any) =>
+      Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
+    );
+    if (!cardIsVisible) return;
+
+    // Prevent overlapping shakes by clearing any existing timeout
+    if (shakeTimeoutRef.current) {
+      clearTimeout(shakeTimeoutRef.current);
+      shakeTimeoutRef.current = null;
+    }
     setShakeCardId(cardId);
-    setTimeout(() => {
-      console.log('Clearing shake for card:', cardId);
+    shakeTimeoutRef.current = setTimeout(() => {
       setShakeCardId(null);
+      shakeTimeoutRef.current = null;
     }, 600);
   };
 
@@ -221,41 +404,51 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     if (gameState.run?.encounterFlow?.active) {
       // Use EncounterFlowManager to progress to next activity
       const flowManager = new EncounterFlowManager(gameState);
-      
+
       // Complete the current trade activity
       flowManager.completeCurrentActivity({ skipped: true });
-      
-      // Update game state with new flow state
-      const updatedState = flowManager.getUpdatedGameState();
-      const newFlowState = flowManager.getFlowState();
-      
-      engine.state = {
-        ...updatedState,
-        run: {
-          ...updatedState.run,
-          encounterFlow: {
-            active: !flowManager.isFlowComplete(),
-            phase: newFlowState.phase,
-            currentActivity: newFlowState.currentActivity,
-            queuedActivities: newFlowState.queuedActivities,
-            completedActivities: newFlowState.completedActivities
-          }
-        }
-      };
-      
-      // Emit state change for React updates
-      engine.emitEvent('stateChange', engine.state);
-      
-      // Check if flow is complete or has next activity
+
+      // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        // Flow complete, return to game
+        const updatedState = flowManager.onFlowComplete();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: false,
+              phase: 'encounter',
+              currentActivity: null,
+              queuedActivities: [],
+              completedActivities: []
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
         setCurrentScreen('game');
-      } else if (newFlowState.currentActivity?.type === 'wander') {
-        // Next activity is wander, show wander screen
-        setCurrentScreen('wander');
       } else {
-        // No more activities or unknown state, return to game
-        setCurrentScreen('game');
+        // Otherwise, update game state with new flow state and continue
+        const updatedState = flowManager.getUpdatedGameState();
+        const newFlowState = flowManager.getFlowState();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: !flowManager.isFlowComplete(),
+              phase: newFlowState.phase,
+              currentActivity: newFlowState.currentActivity,
+              queuedActivities: newFlowState.queuedActivities,
+              completedActivities: newFlowState.completedActivities
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        if (newFlowState.currentActivity?.type === 'wander') {
+          setCurrentScreen('wander');
+        } else {
+          setCurrentScreen('game');
+        }
       }
     } else {
       // Fallback to legacy behavior
@@ -373,44 +566,53 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     if (gameState.run?.encounterFlow?.active) {
       // Use EncounterFlowManager to progress to next activity
       const flowManager = new EncounterFlowManager(gameState);
-      
+
       // Complete the current wander activity
       flowManager.completeCurrentActivity({ skipped: true });
-      
-      // Update game state with new flow state
-      const updatedState = flowManager.getUpdatedGameState();
-      const newFlowState = flowManager.getFlowState();
-      
-      engine.state = {
-        ...updatedState,
-        run: {
-          ...updatedState.run,
-          encounterFlow: {
-            active: !flowManager.isFlowComplete(),
-            phase: newFlowState.phase,
-            currentActivity: newFlowState.currentActivity,
-            queuedActivities: newFlowState.queuedActivities,
-            completedActivities: newFlowState.completedActivities
-          }
-        }
-      };
-      
-      // Emit state change for React updates
-      engine.emitEvent('stateChange', engine.state);
-      
-      // Check if flow is complete or has next activity
+
+      // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        // Flow complete, return to game
+        const updatedState = flowManager.onFlowComplete();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: false,
+              phase: 'encounter',
+              currentActivity: null,
+              queuedActivities: [],
+              completedActivities: []
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
         setCurrentScreen('game');
-      } else if (newFlowState.currentActivity?.type === 'trade') {
-        // Next activity is trade, show trade screen
-        setCurrentScreen('trade');
-      } else if (newFlowState.currentActivity?.type === 'wander') {
-        // Next activity is another wander, stay on wander screen with new content
-        setCurrentScreen('wander');
       } else {
-        // No more activities or unknown state, return to game
-        setCurrentScreen('game');
+        // Otherwise, update game state with new flow state and continue
+        const updatedState = flowManager.getUpdatedGameState();
+        const newFlowState = flowManager.getFlowState();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: !flowManager.isFlowComplete(),
+              phase: newFlowState.phase,
+              currentActivity: newFlowState.currentActivity,
+              queuedActivities: newFlowState.queuedActivities,
+              completedActivities: newFlowState.completedActivities
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        if (newFlowState.currentActivity?.type === 'trade') {
+          setCurrentScreen('trade');
+        } else if (newFlowState.currentActivity?.type === 'wander') {
+          setCurrentScreen('wander');
+        } else {
+          setCurrentScreen('game');
+        }
       }
     } else {
       // Fallback to legacy behavior
@@ -519,9 +721,128 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     setCurrentScreen('game');
   };
 
+  // Handle fortune swap screen actions
+  const handleFortuneSwapBack = () => {
+    // Check if we're in an encounter flow context
+    if (gameState.run?.encounterFlow?.active) {
+      // Use EncounterFlowManager to progress to next activity
+      const flowManager = new EncounterFlowManager(gameState);
+
+      // Complete the current fortune swap activity
+      flowManager.completeCurrentActivity({ skipped: true });
+
+      // If flow is now complete, immediately advance to next encounter
+      if (flowManager.isFlowComplete()) {
+        const updatedState = flowManager.onFlowComplete();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: false,
+              phase: 'encounter',
+              currentActivity: null,
+              queuedActivities: [],
+              completedActivities: []
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        setCurrentScreen('game');
+      } else {
+        // Otherwise, update game state with new flow state and continue
+        const updatedState = flowManager.getUpdatedGameState();
+        const newFlowState = flowManager.getFlowState();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: !flowManager.isFlowComplete(),
+              phase: newFlowState.phase,
+              currentActivity: newFlowState.currentActivity,
+              queuedActivities: newFlowState.queuedActivities,
+              completedActivities: newFlowState.completedActivities
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        if (newFlowState.currentActivity?.type === 'trade') {
+          setCurrentScreen('trade');
+        } else if (newFlowState.currentActivity?.type === 'wander') {
+          setCurrentScreen('wander');
+        } else {
+          setCurrentScreen('game');
+        }
+      }
+    } else {
+      // Fallback to legacy behavior
+      setCurrentScreen('choice');
+    }
+  };
+
+  const handleFortuneSwapSelection = (fortuneId: string) => {
+    console.log('Fortune swap selected:', fortuneId);
+
+    // Apply fortune swap through encounter flow manager
+    if (gameState.run?.encounterFlow?.active) {
+      const flowManager = new EncounterFlowManager(gameState);
+
+      // Complete the fortune swap activity with the selected fortune
+      flowManager.completeCurrentActivity({ selectedFortune: fortuneId });
+
+      // If flow is now complete, immediately advance to next encounter
+      if (flowManager.isFlowComplete()) {
+        const updatedState = flowManager.onFlowComplete();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: false,
+              phase: 'encounter',
+              currentActivity: null,
+              queuedActivities: [],
+              completedActivities: []
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        setCurrentScreen('game');
+      } else {
+        // Otherwise, update game state with new flow state and continue
+        const updatedState = flowManager.getUpdatedGameState();
+        const newFlowState = flowManager.getFlowState();
+        engine.state = {
+          ...updatedState,
+          run: {
+            ...updatedState.run,
+            encounterFlow: {
+              active: !flowManager.isFlowComplete(),
+              phase: newFlowState.phase,
+              currentActivity: newFlowState.currentActivity,
+              queuedActivities: newFlowState.queuedActivities,
+              completedActivities: newFlowState.completedActivities
+            }
+          }
+        };
+        engine.emitEvent('stateChange', engine.state);
+        if (newFlowState.currentActivity?.type === 'trade') {
+          setCurrentScreen('trade');
+        } else if (newFlowState.currentActivity?.type === 'wander') {
+          setCurrentScreen('wander');
+        } else {
+          setCurrentScreen('game');
+        }
+      }
+    }
+
+    console.log('Fortune swap completed, returning to game');
+  };
+
   // Function to find all valid move destinations for a card
   const findValidMoves = (cardId: string): string[] => {
-    const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+    const fromPileId = getPiles(engine.state.piles).find((pile: any) => 
       Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
     )?.id;
     
@@ -534,7 +855,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     const validDestinations: string[] = [];
     
     // Test all possible destination piles
-    Object.values(engine.state.piles).forEach((pile: any) => {
+    getPiles(engine.state.piles).forEach((pile: any) => {
       // Skip the source pile, deck/stock piles, and waste pile (can't move cards there manually)
       if (pile.id === fromPileId || pile.type === 'stock' || pile.type === 'deck' || pile.type === 'waste') return;
       
@@ -568,89 +889,51 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     
     if (selectedCardId && selectedCardId !== cardId) {
       // Block moves to deck pile (stock)
-      const targetPile = Object.values(gameState.piles).find((pile: any) => pile.id === pileId);
-      console.log('Target pile:', targetPile);
-      
+      const targetPile = getPiles(gameState.piles).find((pile: any) => pile.id === pileId);
       if (targetPile && (targetPile.type === 'stock' || targetPile.type === 'deck')) {
-        console.log('BLOCKED: Cannot move to stock/deck pile');
         triggerShake(selectedCardId);
         return;
       }
-      
       // Try to move selected card to this pile
-      const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+      const fromPileId = getPiles(engine.state.piles).find((pile: any) =>
         Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === selectedCardId)
       )?.id;
-      
-      console.log('From pile ID:', fromPileId);
-      
       if (fromPileId) {
         // Test move validation BEFORE attempting the move
         const testMove = { from: fromPileId, to: pileId, cardId: selectedCardId };
-        console.log('Testing move:', testMove);
-        
+        let isValid = false;
         try {
-          const isValid = validateMove(testMove, engine.state);
-          console.log('Move validation result:', isValid);
-          
-          if (!isValid) {
-            console.log('BLOCKED: Move failed validation');
-            triggerShake(selectedCardId);
-            setSelectedCardId(null);
-            return;
-          }
+          isValid = validateMove(testMove, engine.state);
         } catch (validationError) {
-          console.error('Validation error:', validationError);
+          isValid = false;
+        }
+        if (!isValid) {
           triggerShake(selectedCardId);
           setSelectedCardId(null);
           return;
         }
-        
-        // If clicking on a foundation, try the specific foundation clicked
-        const targetPile = Object.values(engine.state.piles).find((pile: any) => pile.id === pileId);
-        if (targetPile?.type === 'foundation') {
-          console.log('Foundation clicked:', pileId);
-          try {
-            console.log('Attempting move from', fromPileId, 'to foundation', pileId, 'for card', selectedCardId);
-            engine.moveCard({ from: fromPileId, to: pileId, cardId: selectedCardId });
-            console.log('Move successful to foundation:', pileId);
-            setSelectedCardId(null);
-            setHighlightedDestinations([]);
-          } catch (e) {
-            console.error('Foundation move failed:', e);
-            // Check if the move actually succeeded despite the exception
-            const beforeState = gameState; // Use the React state as "before" reference
-            if (checkMoveSuccess(selectedCardId, beforeState)) {
-              console.log('Move actually succeeded despite exception');
-              setSelectedCardId(null);
-              setHighlightedDestinations([]);
-            } else {
-              triggerShake(selectedCardId);
-              setSelectedCardId(null);
-            }
+        // Use gameState as beforeState (true snapshot)
+        const beforeState = gameState;
+        // If valid, attempt the move and update state using return value
+        try {
+          // Use moveCard to get new state
+          let newState = engine.moveCard(engine.state, { from: fromPileId, to: pileId, cardId: selectedCardId });
+          // If the card was played from the hand, refill hand and update state
+          const handPile = getPiles(beforeState.piles).find((pile: any) => pile.type === 'hand');
+          if (handPile && handPile.cards.some((card: any) => card.id === selectedCardId)) {
+            newState = refillHandFromDeck(newState);
           }
-        } else {
-          // Regular move to non-foundation pile
-          try {
-            console.log('Attempting move from', fromPileId, 'to', pileId, 'for card', selectedCardId);
-            console.log('Before move - Player score:', gameState.player?.score || 0);
-            engine.moveCard({ from: fromPileId, to: pileId, cardId: selectedCardId });
-            console.log('Move successful! After move - Player score:', engine.state.player?.score || 0);
-            setSelectedCardId(null);
-            setHighlightedDestinations([]); // Clear highlights after successful move
-          } catch (e) {
-            console.error('Move failed:', e);
-            // Check if the move actually succeeded despite the exception
-            const beforeState = gameState; // Use the React state as "before" reference
-            if (checkMoveSuccess(selectedCardId, beforeState)) {
-              console.log('Move actually succeeded despite exception');
-              setSelectedCardId(null);
-              setHighlightedDestinations([]);
-            } else {
-              triggerShake(selectedCardId);
-              setSelectedCardId(null); // Deselect card after failed move
-            }
+          engine.state = newState;
+          if (engine.emitEvent) engine.emitEvent('stateChange', engine.state);
+          setSelectedCardId(null);
+          setHighlightedDestinations([]);
+        } catch (e) {
+          // Only shake if the move truly failed (not if it succeeded but threw)
+          if (!checkMoveSuccess(selectedCardId, beforeState)) {
+            triggerShake(selectedCardId);
           }
+          setSelectedCardId(null);
+          setHighlightedDestinations([]);
         }
       }
     } else if (selectedCardId === cardId) {
@@ -664,22 +947,22 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const handlePileClick = (pileId: string) => {
     if (selectedCardId) {
       // Block moves to deck pile (stock)
-      const targetPile = Object.values(engine.state.piles).find((pile: any) => pile.id === pileId);
+      const targetPile = getPiles(engine.state.piles).find((pile: any) => pile.id === pileId);
       if (targetPile && (targetPile.type === 'stock' || targetPile.type === 'deck')) {
         triggerShake(selectedCardId);
         return;
       }
-      
-      const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+      const fromPileId = getPiles(engine.state.piles).find((pile: any) => 
         Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === selectedCardId)
       )?.id;
-      
       if (fromPileId) {
         try {
           engine.moveCard({ from: fromPileId, to: pileId, cardId: selectedCardId });
           setSelectedCardId(null);
         } catch (e) {
-          triggerShake(selectedCardId);
+          if (!checkMoveSuccess(selectedCardId, gameState)) {
+            triggerShake(selectedCardId);
+          }
           setSelectedCardId(null); // Deselect card after failed move
         }
       }
@@ -690,7 +973,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const isCardInMovableStack = (cardId: string, pileId: string): boolean => {
     if (!selectedCardId) return false;
     
-    const pile = Object.values(gameState.piles).find((p: any) => p.id === pileId);
+    const pile = getPiles(gameState.piles).find((p: any) => p.id === pileId);
     if (!pile) return false;
     
     // Get the movable stack from the selected card
@@ -699,10 +982,13 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   };
 
   // Background click handler (deselect card when clicking empty areas)
-  const handleBackgroundClick = (e: React.MouseEvent) => {
+  const handleBackgroundClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     // Only deselect if clicking directly on the background container,
     // not on any child elements (cards, piles, etc.)
-    if (e.target === e.currentTarget && selectedCardId) {
+    if (
+      ('target' in e && 'currentTarget' in e && e.target === e.currentTarget && selectedCardId) ||
+      (e.type === 'keydown' && selectedCardId)
+    ) {
       setSelectedCardId(null);
     }
   };
@@ -711,87 +997,63 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const handleCardDoubleClick = (cardId: string) => {
     // Prevent double-click interference with normal selection by adding a small delay
     setTimeout(() => {
-      // Clear any existing highlights
       setHighlightedDestinations([]);
-      
-      // Find all valid moves for this card
       const validMoves = findValidMoves(cardId);
-      
       if (validMoves.length === 0) {
-        // No valid moves - shake to indicate invalid move
         triggerShake(cardId);
         return;
       }
-    
       // Special case for aces: if multiple foundation moves are available, just pick the first one
       const foundationMoves = validMoves.filter(pileId => {
-        const pile = Object.values(engine.state.piles).find((p: any) => p.id === pileId);
-        return pile?.type === 'foundation';
+        const pile = getPiles(engine.state.piles).find((p: any) => p.id === pileId);
+        return pile && typeof pile === 'object' && 'type' in pile && pile.type === 'foundation';
       });
-      
-      const card = Object.values(engine.state.piles)
+      const card = getPiles(engine.state.piles)
         .flatMap((pile: any) => pile.cards)
         .find((c: any) => c.id === cardId);
-      
       if (card?.value === 1 && foundationMoves.length > 0) {
-        // Ace with available foundation(s) - auto-place on first available foundation
-        const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+        const fromPile = getPiles(engine.state.piles).find((pile: any) =>
           Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
-        )?.id;
-        
+        );
+        const fromPileId = fromPile && typeof fromPile === 'object' && 'id' in fromPile ? fromPile.id : undefined;
         if (fromPileId) {
           try {
-            console.log('Auto-moving ace', cardId, 'from', fromPileId, 'to first available foundation', foundationMoves[0]);
             engine.moveCard({ from: fromPileId, to: foundationMoves[0], cardId });
             setSelectedCardId(null);
           } catch (e) {
-            console.error('Ace auto-move failed:', e);
-            // Check if the move actually succeeded despite the exception
-            if (checkMoveSuccess(cardId, gameState)) {
-              console.log('Ace auto-move actually succeeded despite exception');
-              setSelectedCardId(null);
-            } else {
+            if (!checkMoveSuccess(cardId, gameState)) {
               triggerShake(cardId);
             }
+            setSelectedCardId(null);
           }
         }
         return;
       }
-      
       if (validMoves.length === 1) {
-        // Single valid move - auto-move there without highlighting
-        const fromPileId = Object.values(engine.state.piles).find((pile: any) => 
+        const fromPile = getPiles(engine.state.piles).find((pile: any) =>
           Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
-        )?.id;
-        
+        );
+        const fromPileId = fromPile && typeof fromPile === 'object' && 'id' in fromPile ? fromPile.id : undefined;
         if (fromPileId) {
           try {
-            console.log('Auto-moving card', cardId, 'from', fromPileId, 'to', validMoves[0]);
             engine.moveCard({ from: fromPileId, to: validMoves[0], cardId });
             setSelectedCardId(null);
           } catch (e) {
-            console.error('Auto-move failed:', e);
-            // Check if the move actually succeeded despite the exception
-            if (checkMoveSuccess(cardId, gameState)) {
-              console.log('Auto-move actually succeeded despite exception');
-              setSelectedCardId(null);
-            } else {
+            if (!checkMoveSuccess(cardId, gameState)) {
               triggerShake(cardId);
             }
+            setSelectedCardId(null);
           }
         }
       } else {
-        // Multiple valid moves - highlight destinations for user selection
-        console.log('Multiple valid moves found:', validMoves.length, 'destinations');
+        // Multiple valid moves - highlight destinations for user selection, do NOT shake
         setHighlightedDestinations(validMoves);
-        setSelectedCardId(cardId); // Select the card so user can click destination
-        
-        // Clear highlights after 5 seconds if no action taken
+        setSelectedCardId(cardId);
         setTimeout(() => {
           setHighlightedDestinations([]);
         }, 5000);
       }
-    }, 100); // Small delay to prevent interference with single clicks
+    }, 100);
   };
 
   // Drag handlers
@@ -809,7 +1071,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const handleDrop = (pileId: string) => {
     if (draggedCardId) {
       // Find source pile
-      const fromPileId = Object.values(engine.state.piles).find((pile: any) => Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === draggedCardId))?.id;
+    const fromPileId = getPiles(engine.state.piles).find((pile: any) => Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === draggedCardId))?.id;
       if (fromPileId) {
         try {
           console.log('Drag drop: moving card', draggedCardId, 'from', fromPileId, 'to', pileId);
@@ -839,20 +1101,17 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   console.log('GameScreen - piles before separation:', piles);
   console.log('GameScreen - available pile types:', Object.values(piles).map((p: any) => p.type));
   
-  const tableauPiles = Object.values(piles)
-    .filter((pile: any) => pile.type === 'tableau')
-    .sort((a: any, b: any) => a.id.localeCompare(b.id));
-  const deckPile = Object.values(piles).find((pile: any) => pile.type === 'deck' || pile.type === 'stock');
-  const wastePile = Object.values(piles).find((pile: any) => pile.type === 'waste');
-  const handPile = Object.values(piles).find((pile: any) => pile.type === 'hand');
+  const pileArray = getPiles(piles);
+  const tableauPiles = pileArray.filter((pile: any) => pile && pile.type === 'tableau').sort((a: any, b: any) => a.id.localeCompare(b.id));
+  const deckPile = pileArray.find((pile: any) => pile && (pile.type === 'deck' || pile.type === 'stock'));
+  const wastePile = pileArray.find((pile: any) => pile && pile.type === 'waste');
+  const handPile = pileArray.find((pile: any) => pile && pile.type === 'hand');
   
   console.log('GameScreen - deckPile found:', deckPile);
   console.log('GameScreen - deckPile cards:', deckPile?.cards?.length || 0);
   console.log('GameScreen - handPile found:', handPile);
   console.log('GameScreen - handPile cards:', handPile?.cards?.length || 0);
-  const foundationPiles = Object.values(piles)
-    .filter((pile: any) => pile.type === 'foundation')
-    .sort((a: any, b: any) => a.id.localeCompare(b.id));
+  const foundationPiles = pileArray.filter((pile: any) => pile && pile.type === 'foundation').sort((a: any, b: any) => a.id.localeCompare(b.id));
 
   // Debug deck pile
   console.log('Debug deck pile:', deckPile);
@@ -868,6 +1127,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     const card = { ...topCard, faceUp: true };
     let newWaste = wastePile ? [...wastePile.cards] : [];
     newWaste.push(card);
+    // Ensure the new top card in the deck is always face down
+    if (newDeck.length > 0) {
+      newDeck[newDeck.length - 1].faceUp = false;
+    }
     // Update piles
     const newPiles = { ...engine.state.piles };
     newPiles[deckPile.id] = { ...deckPile, cards: newDeck };
@@ -934,6 +1197,8 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     className="game-screen-root" 
     data-tableau-row-height={tableauRowHeight}
     onClick={handleBackgroundClick}
+    aria-label="Game area"
+  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleBackgroundClick(e); }}
   >
       {/* Floating Zoom Window */}
       <div className="floating-zoom-window">
@@ -1033,6 +1298,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
             )}
           </div>
         </div>
+  
         {/* Waste */}
         <div>
           <div className="pile-cards">
@@ -1096,7 +1362,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
           ))}
         </div>
       </div>
-      
+
       {/* Resign confirmation modal */}
       {showResignModal && (
         <div className="modal-overlay" onClick={() => setShowResignModal(false)}>
@@ -1261,22 +1527,251 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       
       {/* Player HUD */}
       {isCoronata && (
-        <PlayerHUD 
-          gameState={gameState} 
-          selectedFortune={selectedFortune} 
-          onNavigateToWelcome={onNavigateToWelcome} 
+        <PlayerHUD
+          gameState={gameState}
+          selectedFortune={selectedFortune}
+          onNavigateToWelcome={onNavigateToWelcome}
           onShowRunRecap={() => setShowRunRecap(true)}
           onOpenTrade={() => setCurrentScreen('trade')}
           onOpenWander={() => setCurrentScreen('wander')}
           onNextEncounter={() => {
-            // For testing purposes, complete the current encounter and move to the next one
-            console.log('Testing: Moving to next encounter');
-            if (engine) {
-              // This is a simplified implementation for testing
+            // Actually advance to the next encounter using EncounterFlowManager
+            if (engine && gameState.run?.encounterFlow) {
+              const flowManager = new EncounterFlowManager(engine.state);
+              // Complete the flow and advance to the next encounter
+              const updatedState = flowManager.onFlowComplete();
+              // Update engine state and encounterFlow
+              engine.state = {
+                ...updatedState,
+                run: {
+                  ...updatedState.run,
+                  encounterFlow: {
+                    active: false,
+                    phase: 'encounter',
+                    currentActivity: null,
+                    queuedActivities: [],
+                    completedActivities: []
+                  }
+                }
+              };
+              // Emit state change for React/UI update
+              engine.emitEvent('stateChange', engine.state);
               setCurrentScreen('game');
             }
           }}
         />
+      )}
+
+      {/* Debug Panel Toggle Button */}
+      <button
+        className="debug-toggle-button"
+        onClick={() => setShowDebugPanel(!showDebugPanel)}
+        title="Toggle Debug Panel"
+        style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          zIndex: 1000,
+          padding: '8px 12px',
+          background: '#333',
+          color: '#fff',
+          border: '1px solid #666',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '12px'
+        }}
+      >
+        🐛 Debug
+      </button>
+
+      {/* Debug Panel */}
+      {showDebugPanel && (
+        <div
+          className="debug-panel"
+          style={{
+            position: 'fixed',
+            top: '50px',
+            right: '10px',
+            width: '400px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            background: 'rgba(0, 0, 0, 0.9)',
+            color: '#fff',
+            padding: '15px',
+            borderRadius: '8px',
+            zIndex: 999,
+            fontSize: '12px'
+          }}
+        >
+          <h3 style={{ margin: '0 0 15px 0', color: '#ffd700' }}>Debug Panel</h3>
+
+          {/* Blessing Application */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Apply Blessing to Card</h4>
+            <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+              <select
+                value={selectedBlessingForCard}
+                onChange={(e) => setSelectedBlessingForCard(e.target.value)}
+                style={{ flex: 1, padding: '4px', fontSize: '11px' }}
+              >
+                <option value="">Select Blessing</option>
+                {Object.values(registry.blessing || {}).flat().map((blessing: any) => (
+                  <option key={blessing.id} value={blessing.id}>
+                    {blessing.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedCardForBlessing}
+                onChange={(e) => setSelectedCardForBlessing(e.target.value)}
+                style={{ flex: 1, padding: '4px', fontSize: '11px' }}
+              >
+                <option value="">Select Card</option>
+                {Object.values(gameState.piles || {}).flatMap((pile: any) =>
+                  pile.cards?.map((card: any) => (
+                    <option key={card.id} value={card.id}>
+                      {card.id} ({pile.id})
+                    </option>
+                  )) || []
+                )}
+              </select>
+            </div>
+            <button
+              onClick={handleApplyBlessingToCard}
+              disabled={!selectedBlessingForCard || !selectedCardForBlessing}
+              style={{
+                padding: '4px 8px',
+                fontSize: '11px',
+                background: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer'
+              }}
+            >
+              Apply Blessing
+            </button>
+          </div>
+
+          {/* Jump to Screen */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Jump to Screen</h4>
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+              {['game', 'trade', 'wander', 'fortune-swap'].map(screen => (
+                <button
+                  key={screen}
+                  onClick={() => handleJumpToScreen(screen)}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    background: '#2196F3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {screen.charAt(0).toUpperCase() + screen.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Jump to Encounter */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Jump to Encounter</h4>
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+              <span>Trial:</span>
+              <input
+                type="number"
+                min="1"
+                max="5"
+                defaultValue="1"
+                id="debug-trial-input"
+                style={{ width: '50px', padding: '2px', fontSize: '11px' }}
+              />
+              <span>Encounter:</span>
+              <input
+                type="number"
+                min="1"
+                max="3"
+                defaultValue="1"
+                id="debug-encounter-input"
+                style={{ width: '50px', padding: '2px', fontSize: '11px' }}
+              />
+              <button
+                onClick={() => {
+                  const trial = parseInt((document.getElementById('debug-trial-input') as HTMLInputElement)?.value || '1');
+                  const encounter = parseInt((document.getElementById('debug-encounter-input') as HTMLInputElement)?.value || '1');
+                  handleJumpToEncounter(trial, encounter);
+                }}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  background: '#FF9800',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer'
+                }}
+              >
+                Jump
+              </button>
+            </div>
+          </div>
+
+          {/* Registry Effect Logging */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Registry Effect Log</h4>
+            <button
+              onClick={() => setShowRegistryLog(!showRegistryLog)}
+              style={{
+                padding: '4px 8px',
+                fontSize: '11px',
+                background: showRegistryLog ? '#f44336' : '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                marginBottom: '10px'
+              }}
+            >
+              {showRegistryLog ? 'Stop Logging' : 'Start Logging'}
+            </button>
+            {showRegistryLog && registryEffectLog.length > 0 && (
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                background: 'rgba(255, 255, 255, 0.1)',
+                padding: '5px',
+                borderRadius: '3px',
+                fontSize: '10px'
+              }}>
+                {registryEffectLog.slice(-10).map((entry, idx) => (
+                  <div key={idx} style={{ marginBottom: '3px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                    <div><strong>{entry.timestamp.split('T')[1].split('.')[0]}</strong> - {entry.type}</div>
+                    <div style={{ color: '#ccc', fontSize: '9px' }}>
+                      {entry.effect} → {entry.payload?.cardId || 'N/A'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Current Game State */}
+          <div>
+            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Current State</h4>
+            <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+              <div>Screen: {currentScreen}</div>
+              <div>Score: {gameState.player?.score || 0}</div>
+              <div>Coins: {gameState.player?.coins || 0}</div>
+              <div>Trial: {gameState.run?.currentTrial || 0}</div>
+              <div>Encounter: {gameState.run?.currentEncounter || 0}</div>
+              <div>Encounter Type: {gameState.run?.encounter?.type || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Resign confirmation modal */}
@@ -1315,8 +1810,8 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
             onSell={handleTradeSell}
             onBlessingApplication={handleBlessingApplication}
             playerCoin={gameState.player?.coins || 0}
-            equippedExploits={gameState.player?.exploits?.map(id => 
-              registry.exploit.find(e => e.id === id)).filter((item): item is any => item !== undefined) || []}
+            equippedExploits={gameState.player?.exploits?.map((id: string) =>
+              registry.exploit.find((e: any) => e.id === id)).filter((item: any): item is any => item !== undefined) || []}
             gameState={gameState}
           />
         </div>
@@ -1327,6 +1822,17 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
           <WanderScreen
             onChoiceMade={handleWanderChoice}
             onBack={handleWanderBack}
+          />
+        </div>
+      )}
+
+      {currentScreen === 'fortune-swap' && (
+        <div className="screen-overlay">
+          <FortuneSwapActivity
+            currentFortune={gameState.player?.activeFortune ? registry.fortune.find(f => f.id === gameState.player.activeFortune) : undefined}
+            availableFortunes={gameState.run?.encounterFlow?.currentActivity?.data?.options || []}
+            onFortuneSelected={handleFortuneSwapSelection}
+            onBack={handleFortuneSwapBack}
           />
         </div>
       )}

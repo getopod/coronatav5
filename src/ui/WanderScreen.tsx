@@ -46,21 +46,6 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
     }
   };
 
-  const handleNewWander = () => {
-    const selectRandomWander = () => {
-      // Filter out the current wander to ensure we get a different one
-      const availableWanders = wanders.filter(w => w.id !== currentWander?.id);
-      if (availableWanders.length === 0) return wanders[0]; // Fallback if only one wander
-      
-      const randomIndex = Math.floor(Math.random() * availableWanders.length);
-      return availableWanders[randomIndex];
-    };
-    
-    setCurrentWander(selectRandomWander());
-    setSelectedChoice(null);
-    setShowOutcome(false);
-    setOutcome('');
-  };
 
   if (!currentWander) {
     return (
@@ -135,13 +120,6 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
               >
                 Make Your Choice
               </button>
-              
-              <button
-                className="btn-reroll"
-                onClick={handleNewWander}
-              >
-                Seek Different Path
-              </button>
             </div>
           </div>
         ) : (
@@ -162,13 +140,6 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
                 onClick={handleProceed}
               >
                 Continue Journey
-              </button>
-              
-              <button
-                className="btn-reroll"
-                onClick={handleNewWander}
-              >
-                Find Another Path
               </button>
             </div>
           </div>

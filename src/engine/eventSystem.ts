@@ -5,6 +5,9 @@ export type EngineEventType =
   | 'win'
   | 'loss'
   | 'score'
+  | 'encounter_completed'
+  | 'encounter_started'
+  | 'run_completed'
   | 'custom';
 
 export interface EngineEvent {

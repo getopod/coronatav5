@@ -16,16 +16,23 @@ interface SettingsState {
 }
 
 export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'display'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'display' | 'testing'>('general');
   const [settings, setSettings] = useState<SettingsState>({
     audioEnabled: true,
     animationsEnabled: true,
     difficulty: 'normal',
     autoSave: true
   });
-  const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
-  const [completedFeats, setCompletedFeats] = useState<string[]>([]);
-  const [featStats, setFeatStats] = useState<Record<string, number>>({});
+  const [_playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
+  const [_completedFeats, setCompletedFeats] = useState<string[]>([]);
+  const [_featStats, setFeatStats] = useState<Record<string, number>>({});
+
+  // Testing state
+  const [selectedBlessing, setSelectedBlessing] = useState<string>('');
+  const [selectedCard, setSelectedCard] = useState<string>('');
+  const [selectedWindow, setSelectedWindow] = useState<string>('welcome');
+  const [registryEffectLogging, setRegistryEffectLogging] = useState<boolean>(false);
+  const [effectLog, setEffectLog] = useState<Array<{timestamp: string, effect: string, value: any, source: string}>>([]);
 
   // Load user preferences and data on component mount
   useEffect(() => {
@@ -142,7 +149,7 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
   const renderDisplaySettings = () => (
     <div className="options-section">
       <h3>Display Settings</h3>
-      
+
       <div className="setting-item">
         <label className="setting-label" htmlFor="animations-checkbox">Animations</label>
         <input
@@ -157,7 +164,7 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
 
       <div className="setting-item">
         <label className="setting-label" htmlFor="animation-speed-select">Card Animation Speed</label>
-        <select 
+        <select
           id="animation-speed-select"
           className="setting-select"
           disabled={!settings.animationsEnabled}
@@ -171,7 +178,7 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
 
       <div className="setting-item">
         <label className="setting-label" htmlFor="theme-select">Theme</label>
-        <select 
+        <select
           id="theme-select"
           className="setting-select"
           aria-label="Select theme"
@@ -184,118 +191,160 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
     </div>
   );
 
-  const renderAchievements = () => (
-    <div className="options-section">
-      <h3>Achievements</h3>
-      
-      <div className="achievements-stats">
-        <div className="achievement-summary">
-          <div className="stat-card">
-            <span className="stat-number">{completedFeats.length}</span>
-            <span className="stat-label">Completed</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-number">{featStats.moves || 0}</span>
-            <span className="stat-label">Total Moves</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-number">{featStats.wins || 0}</span>
-            <span className="stat-label">Games Won</span>
+  const renderTestingSettings = () => {
+    // Get available blessings and cards from registry and game state
+    const availableBlessings = engine?.state?.registry ? Object.values(engine.state.registry).flat().filter((item: any) => item.type === 'blessing') : [];
+    const allCards = engine?.state?.piles ? Object.values(engine.state.piles).flatMap((pile: any) => pile.cards || []) : [];
+
+    return (
+      <div className="options-section">
+        <h3>Testing Tools</h3>
+
+        {/* Blessing Application */}
+        <div className="setting-item">
+          <label className="setting-label">Apply Blessing to Card</label>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <select
+              className="setting-select"
+              value={selectedBlessing}
+              onChange={(e) => setSelectedBlessing(e.target.value)}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <option value="">Select Blessing</option>
+              {availableBlessings.map((blessing: any) => (
+                <option key={blessing.id} value={blessing.id}>
+                  {blessing.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="setting-select"
+              value={selectedCard}
+              onChange={(e) => setSelectedCard(e.target.value)}
+              style={{ flex: '1', minWidth: '150px' }}
+            >
+              <option value="">Select Card</option>
+              {allCards.map((card: any) => (
+                <option key={card.id} value={card.id}>
+                  {card.suit} {card.value} ({card.id})
+                </option>
+              ))}
+            </select>
+            <button
+              className="setting-button"
+              onClick={() => {
+                if (selectedBlessing && selectedCard && engine) {
+                  const blessingEffect = {
+                    type: 'apply_blessing_to_card',
+                    target: selectedCard,
+                    value: selectedBlessing
+                  };
+                  engine.state = engine.effectEngine.applyEffects([blessingEffect], engine.state);
+                  engine.emitEvent('stateChange', engine.state);
+                  alert(`Applied ${selectedBlessing} to card ${selectedCard}`);
+                }
+              }}
+              disabled={!selectedBlessing || !selectedCard}
+            >
+              Apply
+            </button>
           </div>
         </div>
+
+        {/* Window/Stage Jump */}
+        <div className="setting-item">
+          <label className="setting-label" htmlFor="window-select">Jump to Window/Stage</label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <select
+              id="window-select"
+              className="setting-select"
+              value={selectedWindow}
+              onChange={(e) => setSelectedWindow(e.target.value)}
+              style={{ flex: '1' }}
+            >
+              <option value="welcome">Welcome Screen</option>
+              <option value="fortune-selection">Fortune Selection</option>
+              <option value="game">Game Screen</option>
+              <option value="trade">Trade Screen</option>
+              <option value="wander">Wander Screen</option>
+              <option value="options">Options</option>
+              <option value="glossary">Glossary</option>
+              <option value="history">History</option>
+              <option value="next-encounter">Next Encounter</option>
+              <option value="next-trial">Next Trial</option>
+            </select>
+            <button
+              className="setting-button"
+              onClick={() => {
+                // This would need to be handled by the parent component
+                // For now, we'll emit a custom event that the app can listen to
+                if (engine) {
+                  engine.emitEvent('jump_to_window', { window: selectedWindow });
+                }
+                alert(`Attempting to jump to: ${selectedWindow}`);
+              }}
+            >
+              Jump
+            </button>
+          </div>
+        </div>
+
+        {/* Registry Effect Logging */}
+        <div className="setting-item">
+          <label className="setting-label" htmlFor="effect-logging-checkbox">Registry Effect Logging</label>
+          <input
+            id="effect-logging-checkbox"
+            type="checkbox"
+            className="setting-checkbox"
+            checked={registryEffectLogging}
+            onChange={(e) => {
+              setRegistryEffectLogging(e.target.checked);
+              if (engine) {
+                engine.emitEvent('toggle_effect_logging', { enabled: e.target.checked });
+              }
+            }}
+          />
+        </div>
+
+        {/* Effect Log Display */}
+        {registryEffectLogging && (
+          <div className="setting-item">
+            <label className="setting-label">Effect Log</label>
+            <div style={{
+              maxHeight: '200px',
+              overflowY: 'auto',
+              background: '#f5f5f5',
+              padding: '10px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontFamily: 'monospace'
+            }}>
+              {effectLog.length === 0 ? (
+                <div>No effects logged yet</div>
+              ) : (
+                effectLog.map((entry, index) => (
+                  <div key={index} style={{ marginBottom: '5px', borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>
+                    <div><strong>{entry.timestamp}</strong></div>
+                    <div>Effect: {entry.effect}</div>
+                    <div>Value: {JSON.stringify(entry.value)}</div>
+                    <div>Source: {entry.source}</div>
+                  </div>
+                ))
+              )}
+            </div>
+            <button
+              className="setting-button"
+              onClick={() => setEffectLog([])}
+              style={{ marginTop: '10px' }}
+            >
+              Clear Log
+            </button>
+          </div>
+        )}
       </div>
+    );
+  };
 
-      {completedFeats.length > 0 ? (
-        <div className="completed-feats">
-          <h4>Recent Achievements</h4>
-          {completedFeats.slice(-5).map((featId) => (
-            <div key={featId} className="feat-item">
-              <span className="feat-icon">🏆</span>
-              <span className="feat-name">{featId}</span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="no-achievements">
-          <p>No achievements unlocked yet. Keep playing to earn your first feat!</p>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderStatistics = () => (
-    <div className="options-section">
-      <h3>Statistics</h3>
-      
-      {playerProfile ? (
-        <div className="statistics-grid">
-          <div className="stat-category">
-            <h4>Game Performance</h4>
-            <div className="stat-row">
-              <span>Total Sessions:</span>
-              <span>{playerProfile.totalSessions}</span>
-            </div>
-            <div className="stat-row">
-              <span>Total Score:</span>
-              <span>{playerProfile.totalScore.toLocaleString()}</span>
-            </div>
-            <div className="stat-row">
-              <span>Best Score:</span>
-              <span>{playerProfile.bestScore.toLocaleString()}</span>
-            </div>
-            <div className="stat-row">
-              <span>Win Rate:</span>
-              <span>{(playerProfile.winRate * 100).toFixed(1)}%</span>
-            </div>
-          </div>
-
-          <div className="stat-category">
-            <h4>Game History</h4>
-            <div className="stat-row">
-              <span>Victories:</span>
-              <span>{playerProfile.totalVictories}</span>
-            </div>
-            <div className="stat-row">
-              <span>Defeats:</span>
-              <span>{playerProfile.totalDefeats}</span>
-            </div>
-            <div className="stat-row">
-              <span>Resigned:</span>
-              <span>{playerProfile.totalResigns}</span>
-            </div>
-            <div className="stat-row">
-              <span>Average Score:</span>
-              <span>{Math.round(playerProfile.averageScore).toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div className="stat-category">
-            <h4>Progress</h4>
-            <div className="stat-row">
-              <span>Coins Earned:</span>
-              <span>{playerProfile.totalCoinsEarned}</span>
-            </div>
-            <div className="stat-row">
-              <span>Exploits Found:</span>
-              <span>{playerProfile.unlockedExploits.length}</span>
-            </div>
-            <div className="stat-row">
-              <span>Blessings Found:</span>
-              <span>{playerProfile.unlockedBlessings.length}</span>
-            </div>
-            <div className="stat-row">
-              <span>Fears Faced:</span>
-              <span>{playerProfile.encounteredFears.length}</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="no-statistics">
-          <p>No statistics available yet. Play some games to build your profile!</p>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="options">
@@ -308,13 +357,13 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
         </header>
 
         <div className="options-navigation">
-          <button 
+          <button
             className={`nav-button ${activeTab === 'general' ? 'active' : ''}`}
             onClick={() => setActiveTab('general')}
           >
             ⚙️ General
           </button>
-          <button 
+          <button
             className={`nav-button ${activeTab === 'audio' ? 'active' : ''}`}
             onClick={() => setActiveTab('audio')}
           >
@@ -326,12 +375,19 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
           >
             🎨 Display
           </button>
+          <button
+            className={`nav-button ${activeTab === 'testing' ? 'active' : ''}`}
+            onClick={() => setActiveTab('testing')}
+          >
+            🧪 Testing
+          </button>
         </div>
 
         <div className="options-content">
           {activeTab === 'general' && renderGeneralSettings()}
           {activeTab === 'audio' && renderAudioSettings()}
           {activeTab === 'display' && renderDisplaySettings()}
+          {activeTab === 'testing' && renderTestingSettings()}
         </div>
 
         <div className="options-footer">

@@ -4,7 +4,7 @@
  */
 
 import { GameState, RunState, EncounterState } from './types';
-import { registry } from '../registry/index';
+import { RegistryEntry } from '../registry/index';
 
 export interface EncounterConfig {
   totalTrials: number;
@@ -37,105 +37,74 @@ export function initializeRun(difficulty: number = 1, config: EncounterConfig = 
 }
 
 /**
+ * Create a fallback encounter when no registry entries are available
+ */
+function createFallbackEncounter(encounterType: 'fear' | 'danger', runState: RunState, config: EncounterConfig): EncounterState {
+  const fallbackEntry = {
+    id: `fallback-${encounterType}`,
+    label: `Test ${encounterType.charAt(0).toUpperCase() + encounterType.slice(1)}`,
+    description: `A temporary ${encounterType} encounter for testing`,
+    type: encounterType,
+    effects: []
+  };
+
+  const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
+  const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
+
+  return {
+    id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
+    type: encounterType,
+    registryId: fallbackEntry.id,
+    name: fallbackEntry.label,
+    description: fallbackEntry.description,
+    effects: fallbackEntry.effects,
+    scoreGoal,
+    completed: false,
+  };
+}
+
+/**
  * Select a random Fear or Danger for the current encounter
  */
 export function selectEncounter(
-  runState: RunState, 
+  runState: RunState,
   config: EncounterConfig = defaultCoronataConfig,
-  customSeed?: string
+  customSeed?: string,
+  registryEntries?: RegistryEntry[]
 ): EncounterState {
   const seed = customSeed || runState.seed || Date.now().toString();
   const seededRandom = createSeededRandom(seed + runState.currentTrial + runState.currentEncounter);
-  
-  // Determine encounter type based on master doc pattern: Fear, Fear, Danger per trial
-  // Encounter 1,2: Fear, Encounter 3: Danger (within each trial)
-  const encounterInTrial = runState.currentEncounter;
-  const isDanger = encounterInTrial === 3; // 3rd encounter in each trial is always Danger
-  const encounterType = isDanger ? 'danger' : 'fear';
-  
-  console.log(`Trial ${runState.currentTrial}, Encounter ${encounterInTrial}: ${encounterType.toUpperCase()}`);
-  
+
+  // Determine encounter type: Fear for encounters 1-(n-1), Danger for encounter n
+  const encounterType: 'fear' | 'danger' = runState.currentEncounter === config.encountersPerTrial ? 'danger' : 'fear';
+
+  console.log(`Trial ${runState.currentTrial}, Encounter ${runState.currentEncounter}: ${encounterType.toUpperCase()}`);
+
   // Get available encounters of the chosen type
-  const rawEncounters = encounterType === 'fear' ? registry.fear : registry.danger;
-  const availableEncounters = rawEncounters?.filter(encounter => encounter && encounter.id && encounter.label) || [];
-  
-  console.log('Encounter type:', encounterType);
-  console.log('Registry fear length:', registry.fear?.length);
-  console.log('Registry danger length:', registry.danger?.length);
-  console.log('Raw encounters length:', rawEncounters?.length);
-  console.log('Available encounters length:', availableEncounters.length);
-  console.log('First few encounters:', availableEncounters.slice(0, 3));
-  console.log('First encounter structure:', availableEncounters[0]);
-  
-  if (!availableEncounters || availableEncounters.length === 0) {
-    console.warn(`No ${encounterType} encounters available in registry, using fallback`);
-    const fallbackEntry = {
-      id: `fallback-${encounterType}`,
-      label: `Test ${encounterType.charAt(0).toUpperCase() + encounterType.slice(1)}`,
-      description: `A temporary ${encounterType} encounter for testing`,
-      type: encounterType,
-      effects: []
-    };
-    
-    const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
-    const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
-    
-    return {
-      id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
-      type: encounterType,
-      registryId: fallbackEntry.id,
-      name: fallbackEntry.label,
-      description: fallbackEntry.description,
-      effects: fallbackEntry.effects || [],
-      scoreGoal,
-      completed: false,
-    };
+  const availableEncounters = registryEntries?.filter(entry =>
+    entry?.type === encounterType && entry?.id && entry?.label
+  ) || [];
+
+  // Use fallback if no encounters available
+  if (availableEncounters.length === 0) {
+    console.warn(`No ${encounterType} encounters available, using fallback`);
+    return createFallbackEncounter(encounterType, runState, config);
   }
-  
+
   // Select random encounter
-  const randomValue = seededRandom();
-  const index = Math.floor(randomValue * availableEncounters.length);
-  console.log('Random value:', randomValue);
-  console.log('Array length:', availableEncounters.length);
-  console.log('Calculated index:', index);
-  console.log('Index in bounds?', index >= 0 && index < availableEncounters.length);
-  
-  const selectedEntry = availableEncounters[index];
-  console.log('Selected entry:', selectedEntry);
-  
-  // Double-check selectedEntry is valid
-  if (!selectedEntry || !selectedEntry.id) {
-    console.error('Selected entry is invalid:', selectedEntry);
-    console.error('Available encounters:', availableEncounters);
-    console.error('Index used:', index);
-    console.error('Array length:', availableEncounters.length);
-    
-    // Use first available encounter as fallback
-    if (availableEncounters.length > 0 && availableEncounters[0]) {
-      console.warn('Using first encounter as fallback');
-      const fallbackEntry = availableEncounters[0];
-      const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
-      const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
-      
-      return {
-        id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
-        type: encounterType,
-        registryId: fallbackEntry.id,
-        name: fallbackEntry.label,
-        description: fallbackEntry.description,
-        effects: fallbackEntry.effects || [],
-        scoreGoal,
-        completed: false,
-      };
-    }
-    
-    throw new Error(`Failed to select valid ${encounterType} encounter`);
+  const randomIndex = Math.floor(seededRandom() * availableEncounters.length);
+  const selectedEntry = availableEncounters[randomIndex];
+
+  // Validate selection and fallback if needed
+  if (!selectedEntry?.id) {
+    console.error('Invalid encounter selected, using fallback');
+    return createFallbackEncounter(encounterType, runState, config);
   }
-  
-  // Calculate score goal based on trial and encounter
+
+  // Calculate score goal
   const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
   const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
-  
+
   return {
     id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
     type: encounterType,
@@ -151,27 +120,41 @@ export function selectEncounter(
 /**
  * Progress to the next encounter in the run
  */
-export function progressEncounter(runState: RunState, config: EncounterConfig = defaultCoronataConfig): RunState {
+export function progressEncounter(runState: RunState, config: EncounterConfig = defaultCoronataConfig, registryEntries?: RegistryEntry[]): RunState {
   const newRunState = { ...runState };
-  
+
   // Move to next encounter
   newRunState.currentEncounter++;
-  
+
   // Check if we need to move to next trial
   if (newRunState.currentEncounter > config.encountersPerTrial) {
     newRunState.currentTrial++;
     newRunState.currentEncounter = 1;
   }
-  
+
   // Generate new encounter if still within run bounds
   if (newRunState.currentTrial <= config.totalTrials) {
-    newRunState.encounter = selectEncounter(newRunState, config);
+    newRunState.encounter = selectEncounter(newRunState, config, undefined, registryEntries);
   } else {
     // Run completed
     newRunState.encounter = undefined;
   }
-  
+
   return newRunState;
+}
+
+/**
+ * Reset player state for a new encounter
+ */
+export function resetEncounterState(gameState: GameState): GameState {
+  return {
+    ...gameState,
+    player: {
+      ...gameState.player,
+      score: 0, // Reset score for new encounter
+      // Keep other player state like coins, exploits, etc.
+    }
+  };
 }
 
 /**
@@ -234,9 +217,9 @@ function createSeededRandom(seed: string): () => number {
 /**
  * Update game state with a new run
  */
-export function startNewRun(gameState: GameState, difficulty: number = 1): GameState {
+export function startNewRun(gameState: GameState, difficulty: number = 1, registryEntries?: RegistryEntry[]): GameState {
   const newRunState = initializeRun(difficulty);
-  const initialEncounter = selectEncounter(newRunState);
+  const initialEncounter = selectEncounter(newRunState, defaultCoronataConfig, undefined, registryEntries);
   
   return {
     ...gameState,

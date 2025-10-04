@@ -9,6 +9,7 @@ import { gameModeProfiles } from './gameModeProfiles';
 import type { GameModeProfile } from './gameModeProfiles';
 import { integrateEnhancedScoring, EnhancedScoringSystem } from './enhancedScoring';
 import { FeatTrackingSystem } from './featTracking';
+import { checkEncounterCompletion, progressEncounter, checkRunCompletion } from './encounterSystem';
 
 export interface EngineControllerConfig {
   registryConfig: RegistryConfig;
@@ -149,13 +150,16 @@ export class EngineController {
   // Collect all active effects from registry entries, optionally filtered by context
   getActiveEffects(state?: GameState, context?: string, moveData?: any): Effect[] {
     const currentState = state || this.state;
-    
-    // Get player's active exploits, curses, fortunes
+
+    // Get player's active exploits, curses, and fortunes
     const activeRegistryIds = [
       ...(currentState.player?.exploits || []),
       ...(currentState.player?.curses || []),
       ...(currentState.player?.fortunes || [])
     ];
+    if (currentState.player?.activeFortune) {
+      activeRegistryIds.push(currentState.player.activeFortune);
+    }
     
     // Collect blessing IDs from all cards
     const cardBlessingIds: string[] = [];
@@ -177,33 +181,35 @@ export class EngineController {
     
     console.log('Active registry entries:', activeEntries.length, 'out of', this.registryEntries.length, '(including card blessings)');
     
-    // Map RegistryEffect to Effect
+    // Map RegistryEffect to Effect, but skip event-based effects (handled by event system)
     const allEffects = activeEntries.flatMap(entry =>
-      (entry.effects || []).map(eff => ({
-        type: eff.action, // map 'action' to 'type'
-        target: eff.target,
-        value: eff.value,
-        condition: eff.condition,
-        meta: { 
-          context, 
-          moveData, 
-          sourceEntry: entry.id,
-          sourceLabel: entry.label 
-        },
-        // Add other fields as needed
-      }))
+      (entry.effects || [])
+        .filter(eff => !(eff.condition && typeof eff.condition === 'object' && eff.condition.event))
+        .map(eff => ({
+          type: eff.action, // map 'action' to 'type'
+          target: eff.target,
+          value: eff.value,
+          condition: eff.condition,
+          meta: { 
+            context, 
+            moveData, 
+            sourceEntry: entry.id,
+            sourceLabel: entry.label 
+          },
+          // Add other fields as needed
+        }))
     );
-    
+
     // If no context filtering requested, return all effects
     if (!context || !currentState || !moveData) {
       return allEffects;
     }
-    
+
     // Filter effects for move context
     if (context === 'move') {
       return allEffects.filter(effect => this.checkMoveEffectConditions(effect, moveData));
     }
-    
+
     return allEffects;
   }
 
@@ -275,13 +281,100 @@ export class EngineController {
       }
     }
     this.state = this.effectEngine.applyEffects(effects, this.state);
-    
+
     // Check if score changed and update encounter progress if needed
     const newScore = this.state.player?.score ?? 0;
     if (newScore !== oldScore && this.scoringSystem) {
       console.log(`Score changed from ${oldScore} to ${newScore}, updating encounter progress`);
       this.state = this.scoringSystem.updateEncounterProgress(this.state);
       this.emitEvent('stateChange', this.state);
+    }
+
+    // Check for encounter progression
+    this.checkEncounterProgression();
+  }
+
+  // Check if current encounter is completed and progress to next
+  private checkEncounterProgression() {
+    if (!this.state.run?.encounter || this.config?.rules !== 'coronata') return;
+
+    // Check if current encounter is completed
+    if (checkEncounterCompletion(this.state)) {
+      console.log('Encounter completed! Progressing to next encounter...');
+
+      // Mark current encounter as completed
+      this.state.run.encounter.completed = true;
+
+      // Progress to next encounter/trial
+      const newRunState = progressEncounter(this.state.run, undefined, this.registryEntries);
+
+      // Check if run is completed
+      if (checkRunCompletion(newRunState)) {
+        console.log('Run completed! All trials finished.');
+        this.emitEvent('run_completed', { runState: newRunState });
+        // Don't update the run state - let the UI handle victory screen
+        return;
+      }
+
+      // Update run state with new encounter
+      this.state = {
+        ...this.state,
+        run: newRunState
+      };
+
+      // Emit encounter completion and progression events
+      this.emitEvent('encounter_completed', {
+        completedEncounter: this.state.run.encounter,
+        nextEncounter: newRunState.encounter
+      });
+
+      // Apply immediate effects for the new encounter
+      if (newRunState.encounter) {
+        this.emitEvent('encounter_started', { encounter: newRunState.encounter });
+        this.applyImmediateEffects([newRunState.encounter.registryId]);
+      }
+
+      this.emitEvent('stateChange', this.state);
+    }
+  }
+
+  // Apply immediate effects for newly activated registry entries
+  applyImmediateEffects(registryIds: string[]) {
+    console.log('Applying immediate effects for registry entries:', registryIds);
+    console.log('Registry entries available:', this.registryEntries.length);
+    const immediateEffects: Effect[] = [];
+
+    for (const registryId of registryIds) {
+      console.log('Looking for registry entry:', registryId);
+      const entry = this.registryEntries.find(e => e.id === registryId);
+      console.log('Found entry:', entry ? entry.label : 'NOT FOUND');
+      if (entry && entry.effects) {
+        console.log('Entry effects:', entry.effects);
+        for (const effect of entry.effects) {
+          console.log('Checking effect:', effect);
+          if (effect.condition && typeof effect.condition === 'object' && effect.condition.event === 'immediate') {
+            console.log('Found immediate effect:', effect);
+            // Remove the event condition since we're applying immediately
+            const { event, ...otherConditions } = effect.condition;
+            immediateEffects.push({
+              type: effect.action,
+              target: effect.target,
+              value: effect.value,
+              condition: Object.keys(otherConditions).length > 0 ? otherConditions : undefined,
+              meta: { sourceEntry: entry.id, sourceLabel: entry.label }
+            });
+          }
+        }
+      }
+    }
+
+    if (immediateEffects.length > 0) {
+      console.log(`Applying ${immediateEffects.length} immediate effects:`, immediateEffects);
+      this.state = this.effectEngine.applyEffects(immediateEffects, this.state);
+      console.log('State after applying effects:', { coins: this.state.player.coins, score: this.state.player.score });
+      this.emitEvent('stateChange', this.state);
+    } else {
+      console.log('No immediate effects found to apply');
     }
   }
 
@@ -328,15 +421,15 @@ export class EngineController {
   wireEvents() {
     // Set up event-based effect handlers for coin earning, etc.
     this.setupEventBasedEffects();
-    
+
     // On move: apply effects, update score, check win/loss, record undo/redo
     this.eventEmitter.on('move', (event: EngineEvent) => {
       this.applyActiveEffects();
-      
+
       // Handle feat tracking
       const { move } = event.payload as { move: Move, state: GameState };
       this.handleFeatTracking(move);
-      
+
       // Scoring - Skip base scoring if enhanced scoring is active (Coronata mode)
       console.log('Base scoring check - config.rules:', this.config?.rules, 'scoringSystem exists:', !!this.scoringSystem);
       if (this.scoringSystem && this.config?.rules !== 'coronata') {
@@ -374,6 +467,19 @@ export class EngineController {
         }
       }
       // UI hooks: can add event consumers here
+    });
+    // On encounter events: handle progression
+    this.eventEmitter.on('encounter_completed', (event: EngineEvent) => {
+      console.log('Encounter completed:', event.payload);
+      // UI can show encounter completion feedback here
+    });
+    this.eventEmitter.on('encounter_started', (event: EngineEvent) => {
+      console.log('New encounter started:', event.payload);
+      // UI can show new encounter introduction here
+    });
+    this.eventEmitter.on('run_completed', (event: EngineEvent) => {
+      console.log('Run completed! Victory achieved.');
+      this.emitEvent('win', this.state); // Trigger win state
     });
     // On win/loss: UI hooks and feat tracking
   this.eventEmitter.on('win', () => {
@@ -483,6 +589,28 @@ export class EngineController {
         // Emit specific events for registry effects to catch
         console.log('ENGINE: Emitting specific move events...');
         this.emitSpecificMoveEvents(move, fromPile, toPile);
+        // --- BEGIN PATCH: Lucky Streak (on_next_3_plays) event emission ---
+        // If player has a fortune with on_next_3_plays, emit event and decrement counter
+        if (fromPile.type === 'hand' && newState.player && newState.player.activeFortune) {
+          // Find the active fortune with on_next_3_plays event condition
+          const registry = this.registryEntries;
+          const fortuneEntry = registry.find(e => e.id === newState.player.activeFortune);
+          if (fortuneEntry && Array.isArray(fortuneEntry.effects) && fortuneEntry.effects.some(eff => eff.condition && eff.condition.event === 'on_next_3_plays')) {
+            // Track remaining plays in player._luckyStreakPlays
+            if (typeof newState.player._luckyStreakPlays !== 'number') {
+              newState.player._luckyStreakPlays = 3;
+            }
+            if (newState.player._luckyStreakPlays > 0) {
+              this.emitEvent('on_next_3_plays', { move, fromPile, toPile });
+              newState.player._luckyStreakPlays--;
+              if (newState.player._luckyStreakPlays === 0) {
+                // Optionally, remove the fortune or mark it as completed
+                // (leave as is for now)
+              }
+            }
+          }
+        }
+        // --- END PATCH ---
         console.log('ENGINE: Specific move events emitted successfully');
       } catch (eventError) {
         console.error('ENGINE: Error during event emission:', eventError);
@@ -519,17 +647,16 @@ export class EngineController {
       }
       
       console.log('ENGINE: About to update state and emit event...');
-      this.state = { ...newState }; // Create new object reference
+      this.state = { ...newState };
       console.log('ENGINE: State updated, about to emit move event...');
-      
       try {
         this.emitEvent('move', { move, state: this.state });
-        console.log('ENGINE: Move event emitted successfully');
+        this.emitEvent('stateChange', this.state); // Force UI update after move
+        console.log('ENGINE: Move and stateChange events emitted successfully');
       } catch (emitError) {
         console.error('ENGINE: Error during move event emission:', emitError);
         console.log('ENGINE: Move completed despite event emission error');
       }
-      
       console.log('ENGINE: Move completed successfully');
       
     } catch (error) {
@@ -585,9 +712,8 @@ export class EngineController {
       'on_play_from_hand', 'on_play_from_deck', 'on_tableau_play', 
       'on_foundation_play', 'on_play_to_foundation', 'on_any_play',
       'on_discard_from_hand', 'on_tableau_cleared', 'on_encounter_start',
-      'on_encounter_complete' // Add encounter completion events
+      'on_encounter_complete', 'on_next_5_draws' // Add encounter completion events and custom draw event
     ];
-    
     eventTypes.forEach(eventType => {
       this.eventEmitter.on(eventType as any, (eventData: any) => {
         this.applyEventBasedEffects(eventType, eventData);
@@ -604,56 +730,66 @@ export class EngineController {
       ...(this.state.player?.blessings || []),
       ...(this.state.player?.fortunes || [])
     ];
-    
+    if (this.state.player?.activeFortune) {
+      activeRegistryIds.push(this.state.player.activeFortune);
+    }
     // Filter registry entries to only active ones
     const activeEntries = this.registryEntries.filter(entry => 
       activeRegistryIds.includes(entry.id)
     );
-    
     // Find effects that match this event type
     const applicableEffects = [];
-    
     // Add base coin earning for key actions to ensure steady coin flow
     if (eventType === 'on_foundation_play' || eventType === 'on_play_to_foundation') {
-      // Base coin reward for foundation plays (1 coin per foundation card)
       applicableEffects.push({
         type: 'award_coin',
         value: 1,
         meta: { sourceEntry: 'base_game', sourceLabel: 'Base Foundation Reward' }
       });
     } else if (eventType === 'on_tableau_cleared') {
-      // Base coin reward for clearing tableaux (5 coins per cleared tableau)
       applicableEffects.push({
         type: 'award_coin',
         value: 5,
         meta: { sourceEntry: 'base_game', sourceLabel: 'Tableau Clear Bonus' }
       });
     }
-    
     for (const entry of activeEntries) {
       for (const effect of entry.effects || []) {
         if (effect.condition && effect.condition.event === eventType) {
-          applicableEffects.push({
-            type: effect.action,
-            target: effect.target,
-            value: effect.value,
-            condition: effect.condition,
-            meta: { sourceEntry: entry.id, sourceLabel: entry.label }
-          });
+          // Special handling for 'on_next_5_draws' (Blessed Draw)
+          if (eventType === 'on_next_5_draws') {
+            // Track how many draws remain for this effect
+            if (!this.state.player._blessedDraws) {
+              this.state.player._blessedDraws = 5;
+            }
+            if (this.state.player._blessedDraws > 0) {
+              applicableEffects.push({
+                type: effect.action,
+                target: effect.target,
+                value: effect.value,
+                condition: effect.condition,
+                meta: { sourceEntry: entry.id, sourceLabel: entry.label }
+              });
+              this.state.player._blessedDraws--;
+            }
+          } else {
+            applicableEffects.push({
+              type: effect.action,
+              target: effect.target,
+              value: effect.value,
+              condition: effect.condition,
+              meta: { sourceEntry: entry.id, sourceLabel: entry.label }
+            });
+          }
         }
       }
     }
-    
     if (applicableEffects.length > 0) {
       console.log(`Applying ${applicableEffects.length} event-based effects for ${eventType}`);
-      
-      // Apply the effects
       let newState = this.state;
       for (const effect of applicableEffects) {
         newState = this.effectEngine.applyEffect(effect, newState);
       }
-      
-      // State was modified, emit change event
       this.emitEvent('stateChange', this.state);
     }
   }

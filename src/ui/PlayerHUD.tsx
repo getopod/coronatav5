@@ -9,14 +9,18 @@ function fastShuffle(array: any[]) {
 
 // Helper: create new game state after discard - optimized for performance
 function getDiscardedState(gameState: any, handPile: any, deckPile: any, player: any) {
-  // Simply shuffle the existing deck and draw new cards (don't mix with hand)
+  // Use player's maxHandSize (default 5) for hand draw
+  const handSize = player.maxHandSize || 5;
+  // Shuffle the existing deck
   const shuffledDeck = [...deckPile.cards];
   fastShuffle(shuffledDeck);
-  
-  // Draw 5 new cards from shuffled deck
-  const newHandCards = shuffledDeck.slice(0, 5);
-  const remainingDeckCards = shuffledDeck.slice(5);
-  
+  // Draw up to handSize cards from shuffled deck
+  const newHandCards = shuffledDeck.slice(0, handSize).map(card => ({ ...card, faceUp: true }));
+  const remainingDeckCards = shuffledDeck.slice(handSize);
+  // Logging for debugging
+  console.log('[Discard] Discarding hand. Drawing', handSize, 'cards. Deck before:', deckPile.cards.length, 'Hand before:', handPile.cards.length);
+  console.log('[Discard] New hand cards:', newHandCards.map(c => c.id));
+  console.log('[Discard] Remaining deck cards:', remainingDeckCards.length);
   return {
     ...gameState,
     piles: {
@@ -112,12 +116,12 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
   // Testing admin functions
   const handleAddCoins = () => {
-    if (!engine || !engine.state?.player) return;
+    if (!engine?.state?.player) return;
     try {
       // Directly modify the player's coins
       engine.state.player.coins = (engine.state.player.coins || 0) + 100;
       // Try to trigger a re-render by calling any available update method
-      if (engine.emit) engine.emit('state-changed', engine.state);
+      if (engine.emitEvent) engine.emitEvent('stateChange', engine.state);
     } catch (error) {
       console.error('Failed to add coins:', error);
     }
@@ -187,18 +191,30 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
       return;
     }
 
-    const handPile = gameState.piles?.hand;
-    const deckPile = gameState.piles?.deck;
-
-    if (!handPile || !deckPile || handPile.cards.length === 0) {
+    // Find hand pile by type
+    const handPile = Object.values(gameState.piles || {}).find((p: any) => p.type === 'hand');
+    // Find deck pile by type 'deck' or 'stock'
+    const deckPile = Object.values(gameState.piles || {}).find((p: any) => p.type === 'deck' || p.type === 'stock');
+    if (!handPile || !deckPile) {
+      alert('Hand or deck pile missing!');
+      return;
+    }
+    if (!Array.isArray(handPile.cards)) {
+      alert('Hand pile cards missing!');
+      return;
+    }
+    if (handPile.cards.length === 0) {
       alert('No cards in hand to discard!');
       return;
     }
-
     // Fast discard and redraw
     const newState = getDiscardedState(gameState, handPile, deckPile, player);
     engine.state = { ...newState };
+    // Emit both stateChange and handDiscarded for robust UI update
+    if (engine.emitEvent) engine.emitEvent('stateChange', engine.state);
     engine.emitEvent('handDiscarded', { source: 'playerHUD' });
+    // Logging for debugging
+    console.log('[Discard] Discarded hand. New hand:', newState.piles.hand.cards.map((c: any) => c.id));
   };
 
   // Get counts for different item types
@@ -224,8 +240,12 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   };
   
   const getPlayerFortunes = () => {
-    const fortunes = (player.fortunes || []).map(id => registry.fortune.find(f => f.id === id)).filter(Boolean);
-    if (selectedFortune) fortunes.push(selectedFortune);
+    const fortuneIds = new Set(player.fortunes || []);
+    const fortunes = (player.fortunes || []).map((id: string) => registry.fortune.find(f => f.id === id)).filter(Boolean);
+    // Only add selectedFortune if it is not already in player.fortunes
+    if (selectedFortune && !fortuneIds.has(selectedFortune.id)) {
+      fortunes.push(selectedFortune);
+    }
     return fortunes;
   };
   
@@ -300,249 +320,250 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
         </div>
       )}
 
-      {/* Encounter Flow Interface */}
-      <EncounterFlowUI 
-        gameState={gameState}
-        engine={engine}
-        onFlowComplete={() => {
-          console.log('Encounter flow completed');
-        }}
-      />
+                {/* Encounter Flow Interface */}
+                <EncounterFlowUI 
+                  gameState={gameState}
+                  engine={engine}
+                  onFlowComplete={() => {
+                    console.log('Encounter flow completed');
+                  }}
+                />
 
-      {/* Player Resources */}
-      <div className="effects-section">
-        <div className="effects-grid">
-          <div className="effect-count has-items">
-            <div className="resource-header">
-              <span className="effect-icon">🪙</span>
-              <span className="effect-value">{player.coins || 0}</span>
-            </div>
-          </div>
-          <div className="effect-count has-items">
-            <div className="resource-header">
-              <span className="effect-icon">🔄</span>
-              <span className="effect-value">{player.shuffles || 0}</span>
-            </div>
-          </div>
-          <div className="effect-count has-items">
-            <div className="resource-header">
-              <span className="effect-icon">🗑️</span>
-              <span className="effect-value">{player.discards || 0}</span>
-            </div>
-          </div>
-          <div className="effect-count has-items">
-            <div className="resource-header">
-              <span className="effect-icon">✋</span>
-              <span className="effect-value">{player.maxHandSize || 5}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Active Effects Summary */}
-      <div className="effects-section">
-        <div className="effects-grid">
-          <button
-            className={`effect-count ${exploitCount > 0 ? 'has-items clickable' : ''}`}
-            type="button"
-            onClick={() => exploitCount > 0 && handleEffectClick('exploits')}
-          >
-            <div className="resource-header">
-              <span className="effect-icon">⚔️</span>
-              <span className="effect-value">{exploitCount}</span>
-            </div>
-          </button>
-          <button
-            className={`effect-count ${curseCount > 0 ? 'has-items clickable' : ''}`}
-            type="button"
-            onClick={() => curseCount > 0 && handleEffectClick('curses')}
-          >
-            <div className="resource-header">
-              <span className="effect-icon">💀</span>
-              <span className="effect-value">{curseCount}</span>
-            </div>
-          </button>
-          <button
-            className={`effect-count ${blessingCount > 0 ? 'has-items clickable' : ''}`}
-            type="button"
-            onClick={() => blessingCount > 0 && handleEffectClick('blessings')}
-          >
-            <div className="resource-header">
-              <span className="effect-icon">✨</span>
-              <span className="effect-value">{blessingCount}</span>
-            </div>
-          </button>
-          <button
-            className={`effect-count ${fortuneCount > 0 ? 'has-items clickable' : ''}`}
-            type="button"
-            onClick={() => {
-              if (fortuneCount > 0) {
-                setShowFortunePopup(!showFortunePopup);
-              }
-            }}
-          >
-            <div className="resource-header">
-              <span className="effect-icon">🍀</span>
-              <span className="effect-value">{fortuneCount}</span>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* HUD Controls */}
-      <div className="hud-controls">
-        <button 
-          className="testing-button hud-action-button" 
-          title="Testing functions (admin)"
-          onClick={handleTestingClick}
-        >
-          Testing
-        </button>
-
-        <button 
-          className="options-button hud-action-button" 
-          title="Options"
-          onClick={handleOptionsClick}
-        >
-          Options
-        </button>
-
-        <button 
-          className="resign-button hud-action-button" 
-          title="Resign and view run summary"
-          onClick={() => {
-            if (confirm('Are you sure you want to resign and view the run recap?')) {
-              console.log('Player resigned - showing run recap');
-              if (onShowRunRecap) {
-                onShowRunRecap();
-              } else if (onNavigateToWelcome) {
-                onNavigateToWelcome();
-              }
-            }
-          }}
-        >
-          Resign
-        </button>
-
-        <button 
-          className="discard-button hud-action-button" 
-          title="Discard selected cards from hand"
-          onClick={handleDiscardHand}
-        >
-          Discard
-        </button>
-      </div>
-      
-      {/* Fortune Popup */}
-      {showFortunePopup && selectedFortune && (
-        <div className="fortune-popup">
-          <div className="fortune-popup-content">
-            <div className="fortune-popup-header">
-              <h3>{selectedFortune.label}</h3>
-              <button 
-                className="fortune-popup-close" 
-                onClick={() => setShowFortunePopup(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="fortune-popup-body">
-              <p>{selectedFortune.description}</p>
-              {selectedFortune.effects && selectedFortune.effects.length > 0 && (
-                <div className="fortune-effects">
-                  <strong>Effects:</strong>
-                  {selectedFortune.effects.map((effect: any, effectIndex: number) => (
-                    <div key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
-                      {effect.action} {effect.target} {effect.value && `(${effect.value})`}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Modal */}
-      {showModal && (
-        <div className="effect-modal-overlay">
-          <section className="effect-modal" aria-label="Effect Modal">
-            <button className="modal-close modal-close-abs" type="button" aria-label="Close modal" onClick={() => setShowModal(false)}>&times;</button>
-            <div className="modal-header">
-              <h3>{modalTitle}</h3>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
-            </div>
-            <div className="modal-content">
-              {modalContent.map((item, idx) => (
-                <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
-                  <div className="modal-item-title">{item.label}</div>
-                  <div className="modal-item-description">{item.description}</div>
-                  {item.effects && item.effects.length > 0 && (
-                    <div className="modal-item-effects">
-                      <strong>Effects:</strong>
-                      {item.effects.map((effect: any, effectIndex: number) => (
-                        <div key={typeof effect === 'string' ? effect : effectIndex + '-' + String(effect)} className="effect-detail">
-                          {effect.action} {effect.target} {effect.value && `(${effect.value})`}
+                {/* Player Resources and Active Effects Summary */}
+                <div className="effects-section">
+                  <div className="effects-row">
+                    <div className="effects-grid">
+                      <div className="effect-count has-items">
+                        <div className="resource-header">
+                          <span className="effect-icon">🪙</span>
+                          <span className="effect-value">{player.coins || 0}</span>
                         </div>
-                      ))}
+                      </div>
+                      <div className="effect-count has-items">
+                        <div className="resource-header">
+                          <span className="effect-icon">🔄</span>
+                          <span className="effect-value">{player.shuffles || 0}</span>
+                        </div>
+                      </div>
+                      <div className="effect-count has-items">
+                        <div className="resource-header">
+                          <span className="effect-icon">🗑️</span>
+                          <span className="effect-value">{player.discards || 0}</span>
+                        </div>
+                      </div>
+                      <div className="effect-count has-items">
+                        <div className="resource-header">
+                          <span className="effect-icon">✋</span>
+                          <span className="effect-value">{player.maxHandSize || 5}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                    <div className="effects-grid">
+                      <button
+                        className={`effect-count ${exploitCount > 0 ? 'has-items clickable' : ''}`}
+                        type="button"
+                        onClick={() => exploitCount > 0 && handleEffectClick('exploits')}
+                      >
+                        <div className="resource-header">
+                          <span className="effect-icon">⚔️</span>
+                          <span className="effect-value">{exploitCount}</span>
+                        </div>
+                      </button>
+                      <button
+                        className={`effect-count ${curseCount > 0 ? 'has-items clickable' : ''}`}
+                        type="button"
+                        onClick={() => curseCount > 0 && handleEffectClick('curses')}
+                      >
+                        <div className="resource-header">
+                          <span className="effect-icon">💀</span>
+                          <span className="effect-value">{curseCount}</span>
+                        </div>
+                      </button>
+                      <button
+                        className={`effect-count ${blessingCount > 0 ? 'has-items clickable' : ''}`}
+                        type="button"
+                        onClick={() => blessingCount > 0 && handleEffectClick('blessings')}
+                      >
+                        <div className="resource-header">
+                          <span className="effect-icon">✨</span>
+                          <span className="effect-value">{blessingCount}</span>
+                        </div>
+                      </button>
+                      <button
+                        className={`effect-count ${fortuneCount > 0 ? 'has-items clickable' : ''}`}
+                        type="button"
+                        onClick={() => {
+                          if (fortuneCount > 0) {
+                            setShowFortunePopup(!showFortunePopup);
+                          }
+                        }}
+                      >
+                        <div className="resource-header">
+                          <span className="effect-icon">🍀</span>
+                          <span className="effect-value">{fortuneCount}</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
 
-      {/* Testing Window */}
-      {showTestingWindow && (
-        <div 
-          className="testing-window-draggable"
-          style={{
-            left: `${testingWindowPosition.x}px`,
-            top: `${testingWindowPosition.y}px`
-          }}
-        >
-          <div 
-            className="testing-window-header"
-            onMouseDown={handleMouseDown}
-          >
-            <span>🔧 Testing Admin</span>
-            <button 
-              className="close-testing"
-              onClick={() => setShowTestingWindow(false)}
-            >
-              ×
-            </button>
-          </div>
-          <div className="testing-window-content">
-            <button 
-              className="testing-action-btn"
-              onClick={handleAddCoins}
-            >
-              💰 Add 100 Coins
-            </button>
-            <button 
-              className="testing-action-btn"
-              onClick={handleOpenTrade}
-            >
-              🛒 Open Trade
-            </button>
-            <button 
-              className="testing-action-btn"
-              onClick={handleOpenWander}
-            >
-              🚶 Open Wander
-            </button>
-            <button 
-              className="testing-action-btn"
-              onClick={handleNextEncounter}
-            >
-              ➡️ Next Encounter
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+                {/* HUD Controls */}
+                <div className="hud-controls">
+                  <button 
+                    className="testing-button hud-action-button" 
+                    title="Testing functions (admin)"
+                    onClick={handleTestingClick}
+                  >
+                    Testing
+                  </button>
+
+                  <button 
+                    className="options-button hud-action-button" 
+                    title="Options"
+                    onClick={handleOptionsClick}
+                  >
+                    Options
+                  </button>
+
+                  <button 
+                    className="resign-button hud-action-button" 
+                    title="Resign and view run summary"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to resign and view the run recap?')) {
+                        console.log('Player resigned - showing run recap');
+                        if (onShowRunRecap) {
+                          onShowRunRecap();
+                        } else if (onNavigateToWelcome) {
+                          onNavigateToWelcome();
+                        }
+                      }
+                    }}
+                  >
+                    Resign
+                  </button>
+
+                  <button 
+                    className="discard-button hud-action-button" 
+                    title="Discard selected cards from hand"
+                    onClick={handleDiscardHand}
+                  >
+                    Discard
+                  </button>
+                </div>
+
+                {/* Fortune Popup */}
+                {showFortunePopup && selectedFortune && (
+                  <div className="fortune-popup">
+                    <div className="fortune-popup-content">
+                      <div className="fortune-popup-header">
+                        <h3>{selectedFortune.label}</h3>
+                        <button 
+                          className="fortune-popup-close" 
+                          onClick={() => setShowFortunePopup(false)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="fortune-popup-body">
+                        <p>{selectedFortune.description}</p>
+                        {selectedFortune.effects && selectedFortune.effects.length > 0 && (
+                          <div className="fortune-effects">
+                            <strong>Effects:</strong>
+                            {selectedFortune.effects.map((effect: any, effectIndex: number) => (
+                              <div key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
+                                {effect.action} {effect.target} {effect.value && `(${effect.value})`}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Modal */}
+                {showModal && (
+                  <div className="effect-modal-overlay">
+                    <section className="effect-modal" aria-label="Effect Modal">
+                      <button className="modal-close modal-close-abs" type="button" aria-label="Close modal" onClick={() => setShowModal(false)}>&times;</button>
+                      <div className="modal-header">
+                        <h3>{modalTitle}</h3>
+                        <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+                      </div>
+                      <div className="modal-content">
+                        {modalContent.map((item, idx) => (
+                          <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
+                            <div className="modal-item-title">{item.label}</div>
+                            <div className="modal-item-description">{item.description}</div>
+                            {item.effects && item.effects.length > 0 && (
+                              <div className="modal-item-effects">
+                                <strong>Effects:</strong>
+                                {item.effects.map((effect: any, effectIndex: number) => (
+                                  <div key={typeof effect === 'string' ? effect : effectIndex + '-' + String(effect)} className="effect-detail">
+                                    {effect.action} {effect.target} {effect.value && `(${effect.value})`}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {/* Testing Window */}
+                {showTestingWindow && (
+                  <div 
+                    className="testing-window-draggable"
+                    style={{
+                      left: `${testingWindowPosition.x}px`,
+                      top: `${testingWindowPosition.y}px`
+                    }}
+                  >
+                    <div 
+                      className="testing-window-header"
+                      onMouseDown={handleMouseDown}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleMouseDown(e as any); }}
+                    >
+                      <span>🔧 Testing Admin</span>
+                      <button 
+                        className="close-testing"
+                        onClick={() => setShowTestingWindow(false)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="testing-window-content">
+                      <button 
+                        className="testing-action-btn"
+                        onClick={handleAddCoins}
+                      >
+                        💰 Add 100 Coins
+                      </button>
+                      <button 
+                        className="testing-action-btn"
+                        onClick={handleOpenTrade}
+                      >
+                        🛒 Open Trade
+                      </button>
+                      <button 
+                        className="testing-action-btn"
+                        onClick={handleOpenWander}
+                      >
+                        🚶 Open Wander
+                      </button>
+                      <button 
+                        className="testing-action-btn"
+                        onClick={handleNextEncounter}
+                      >
+                        ➡️ Next Encounter
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          };

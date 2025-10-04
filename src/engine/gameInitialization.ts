@@ -22,7 +22,7 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
     exploits: [],
     curses: [],
     blessings: [],
-    fortunes: []
+    activeFortune: undefined
   };
 
   // Initialize run state with balanced configuration
@@ -58,7 +58,7 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
 export function setupCoronataEngine(engineController: any, config: GameInitConfig) {
   console.log('setupCoronataEngine called with config:', config);
   console.log('engineController.state before setup:', engineController.state);
-  
+
   // Initialize game state
   const initialState = initializeCoronataGame(config);
   console.log('initialState created:', initialState);

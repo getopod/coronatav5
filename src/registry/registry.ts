@@ -1,18 +1,4 @@
-// Coronata registry stub
-export const coronataRegistry = {
-  actions: [
-    // TODO: Define Coronata-specific actions
-  ],
-  effects: [
-    // TODO: Define Coronata-specific effects
-  ],
-  assets: {
-    cardBack: '/src/assets/coronata-card-back.png',
-    background: '/src/assets/coronata-background.txt',
-    icon: '/src/assets/coronata-icon.txt',
-  },
-  // Add more as needed
-};
+
 import type { RegistryEntry } from './index';
 // EXPLOITS 
 export const exploits: RegistryEntry[] = [
@@ -870,21 +856,6 @@ export const fears: RegistryEntry[] = [
       { action: "return_and_shuffle", target: "foundation_to_deck", condition: { event: "on_play" } }
     ]
   },
-  {
-    id: "fear-empty-vessel-2",
-    label: "Fear of the Empty Vessel (Hand)",
-    description: "For the duration of this encounter, all cards in your hand gain 0 points.",
-    type: "fear",
-    rarity: "",
-    category: "",
-    completed: false,
-    tags: ["hand", "scoring"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "award_score", target: "hand", value: 0 }
-    ]
-  }
 ];
 // FEATS
 export const feats: RegistryEntry[] = [

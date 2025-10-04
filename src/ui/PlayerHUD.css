@@ -7,7 +7,7 @@
 }
 .player-hud {
   position: fixed;
-  bottom: 20px;
+  bottom: 45px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 20, 0.95);
@@ -414,13 +414,17 @@
   height: 28px;
 }
 
+.effects-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 .effects-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   justify-items: center;
-  max-width: 200px;
-  margin: 0 auto;
 }
 
 .effect-count {
@@ -428,7 +432,6 @@
   flex-direction: column;
   align-items: center;
   padding: 4px;
-  background: rgba(55, 65, 81, 0.3);
   border-radius: 4px;
   border: 1px solid #374151;
   opacity: 0.6;
@@ -436,12 +439,12 @@
   width: 32px;
   height: 32px;
   justify-content: center;
+  background: transparent !important;
 }
 
 .effect-count.has-items {
   opacity: 1;
   border-color: #6b7280;
-  background: rgba(75, 85, 99, 0.5);
   padding: 2px;
 }
 
@@ -765,8 +768,8 @@
 .hud-action-button {
   border-radius: 6px;
   color: #ffffff;
-  font-size: 10px;
-  padding: 2px 8px;
+  font-size: 8px;
+  padding: 4px 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Courier New', monospace;
@@ -776,6 +779,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 500;
+  min-width: 30px;
 }
 
 .hud-action-button:hover {
@@ -786,6 +790,7 @@
 .testing-button {
   background: linear-gradient(135deg, #ea580c, #c2410c);
   border-color: #f97316;
+  font-size: 8px;
 }
 
 .testing-button:hover {
