@@ -67,6 +67,74 @@ function validateUnknownPile(): boolean {
 }
 import { Card, Pile, GameState, Move } from './types';
 
+function validateTableauMove(card: Card, toPile: Pile): boolean {
+  console.log('Validating tableau move...');
+  const top = toPile.cards[toPile.cards.length - 1];
+  if (!top) {
+    // Only Kings can be placed on empty tableau
+    const isValid = card.value === 13;
+    console.log('Empty tableau - King required:', isValid, `(card is ${card.value})`);
+    return isValid;
+  }
+  // Cannot build on face-down cards
+  if (!top.faceUp) {
+    console.log('INVALID: Cannot build on face-down card');
+    return false;
+  }
+  const isAltColor = (isRed(card.suit) !== isRed(top.suit));
+  const isDescending = card.value === top.value - 1;
+  console.log('Tableau validation:', {
+    topCard: `${top.value} of ${top.suit} (faceUp: ${top.faceUp})`,
+    movingCard: `${card.value} of ${card.suit} (faceUp: ${card.faceUp})`,
+    isAltColor,
+    isDescending
+  });
+  const result = isAltColor && isDescending;
+  console.log('Tableau result:', result);
+  return result;
+}
+
+function validateFoundationMove(card: Card, movableStack: Card[], toPile: Pile): boolean {
+  console.log('Validating foundation move...');
+  // Foundation piles only accept single cards, not stacks
+  if (movableStack.length > 1) {
+    console.log('INVALID: Foundation cannot accept stacks');
+    return false;
+  }
+  const top = toPile.cards[toPile.cards.length - 1];
+  if (!top) {
+    // Only Aces can be placed on empty foundation
+    const isValid = card.value === 1;
+    console.log('Empty foundation - Ace required:', isValid, `(card is ${card.value})`);
+    return isValid;
+  }
+  const sameSuit = card.suit === top.suit;
+  const ascending = card.value === top.value + 1;
+  console.log('Foundation validation:', { 
+    topCard: `${top.value} of ${top.suit}`, 
+    movingCard: `${card.value} of ${card.suit}`,
+    sameSuit, 
+    ascending 
+  });
+  const result = sameSuit && ascending;
+  console.log('Foundation result:', result);
+  return result;
+}
+
+function validateWasteMove(move: Move): boolean {
+  console.log('Validating waste move...');
+  // Cards can only go to waste from the deck (during dealing)
+  const result = move.from === 'deck';
+  console.log('Waste result:', result, `(from: ${move.from})`);
+  return result;
+}
+
+
+function validateUnknownPile(): boolean {
+  console.log('INVALID: Unknown pile type or invalid destination');
+  return false;
+}
+
 // Move a card or stack from one pile to another
 export function moveCard(state: GameState, move: Move): GameState {
   console.log('=== MOVE CARD LOGIC ===');
