@@ -1,17 +1,19 @@
 
 .game-screen-root {
   width: 390px;
-  height: 654px;
+  height: 655px;
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(calc(min(1, 90vw / 390)));
-  transform-origin: center;
+  transform: translate(-50%, -50%) scale(calc(min(1, 100vw / 390px, 100vh / 654px)));
   overflow: hidden;
+  transform-origin: center;
   background-color: #bfa76a;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', monospac
   z-index: 2000;
-  --tableau-row-height: 400px
+
+  --tableau-row-height: 400px;
+
 }
 /* Accessibility: Focus states for all interactive elements */
 .card:focus,
@@ -59,11 +61,18 @@
 
 /* Mobile viewport adjustments */
 @media (max-width: 768px) {
+  .game-screen-root {
+    width: 100vw;
+    height: 100vh;
+
+  }
+
   .deck-area .pile-cards,
   .deck-area .card-outline {
     width: 48px;
     height: 72px;
   }
+  
   .pile-cards-vertical {
     width: 48px;
   }
@@ -164,6 +173,8 @@
 }
 
 /* Responsive adjustments for hand */
+@media (max-width: 768px) {
+  }
   
 .deck-area .foundation-area * {
   margin: 0 !important;
@@ -183,7 +194,7 @@
 body {
   margin: 0;
   padding: 0;
-  width: 100%;
+  width: ;
   height: 100%;
   overflow: hidden;
 }
