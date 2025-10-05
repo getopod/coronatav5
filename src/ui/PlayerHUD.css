@@ -274,55 +274,6 @@
   width: 0%;
 }
 
-/* Run progress width classes */
-.run-progress-0 { width: 0%; }
-.run-progress-5 { width: 5%; }
-.run-progress-10 { width: 10%; }
-.run-progress-15 { width: 15%; }
-.run-progress-20 { width: 20%; }
-.run-progress-25 { width: 25%; }
-.run-progress-30 { width: 30%; }
-.run-progress-35 { width: 35%; }
-.run-progress-40 { width: 40%; }
-.run-progress-45 { width: 45%; }
-.run-progress-50 { width: 50%; }
-.run-progress-55 { width: 55%; }
-.run-progress-60 { width: 60%; }
-.run-progress-65 { width: 65%; }
-.run-progress-70 { width: 70%; }
-.run-progress-75 { width: 75%; }
-.run-progress-80 { width: 80%; }
-.run-progress-85 { width: 85%; }
-.run-progress-90 { width: 90%; }
-.run-progress-95 { width: 95%; }
-.run-progress-100 { width: 100%; }
-
-/* Run Progress */
-.run-section {
-  padding-bottom: 8px;
-  border-bottom: 1px solid #333;
-}
-
-.run-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  font-size: 10px;
-  color: #d1d5db;
-}
-
-.run-progress-bar {
-  width: 100%;
-  height: 6px;
-  background: #374151;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.run-progress-fill[data-progress] {
-  width: calc(var(--progress, 0) * 1%);
-}
-
 /* Resources Section */
 .resources-section {
     padding-bottom: 8px;
