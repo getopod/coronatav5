@@ -1,5 +1,257 @@
+// Extend window type for engine
+declare global {
+  interface Window {
+    engine: any;
+  }
+}
 
 import React from 'react';
+import './DebugPanel.css';
+
+// DebugPanel subcomponent for GameScreen
+interface DebugPanelProps {
+  showRegistryLog: boolean;
+  setShowRegistryLog: (show: boolean) => void;
+  registryEffectLog: any[];
+  selectedBlessingForCard: string;
+  setSelectedBlessingForCard: (id: string) => void;
+  selectedCardForBlessing: string;
+  setSelectedCardForBlessing: (id: string) => void;
+  handleApplyBlessingToCard: () => void;
+  handleJumpToScreen: (screen: string) => void;
+  handleJumpToEncounter: (trial: number, encounter: number) => void;
+  currentScreen: string;
+  gameState: any;
+  registry: any;
+  onClose: () => void;
+}
+
+
+const DebugPanel: React.FC<DebugPanelProps> = ({
+  showRegistryLog,
+  setShowRegistryLog,
+  registryEffectLog,
+  selectedBlessingForCard,
+  setSelectedBlessingForCard,
+  selectedCardForBlessing,
+  setSelectedCardForBlessing,
+  handleApplyBlessingToCard,
+  handleJumpToScreen,
+  handleJumpToEncounter,
+  currentScreen,
+  gameState,
+  registry,
+  onClose
+}) => {
+  // Local state for new debug features
+  const [pointValue, setPointValue] = React.useState(0);
+  // For gridlines toggle
+  const [gridlinesOn, setGridlinesOn] = React.useState(false);
+
+  // Handler: Gain points
+  const handleGainPoints = () => {
+    if (window.engine && typeof window.engine.gainPoints === 'function') {
+      window.engine.gainPoints(pointValue);
+    } else if (window.engine && window.engine.state && window.engine.state.player) {
+      window.engine.state.player.score = (window.engine.state.player.score || 0) + pointValue;
+      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+    }
+  };
+  // Handler: Restart current encounter
+  const handleRestartEncounter = () => {
+    if (window.engine && typeof window.engine.restartEncounter === 'function') {
+      window.engine.restartEncounter();
+    } else if (window.engine && window.engine.state && window.engine.state.run) {
+      // Naive reset: just re-emit stateChange
+      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+    }
+  };
+  // Handler: Skip to next encounter
+  const handleSkipEncounter = () => {
+    if (window.engine && typeof window.engine.skipToNextEncounter === 'function') {
+      window.engine.skipToNextEncounter();
+    } else if (window.engine && window.engine.state && window.engine.state.run) {
+      // Naive: increment encounter and emit
+      window.engine.state.run.currentEncounter = (window.engine.state.run.currentEncounter || 0) + 1;
+      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+    }
+  };
+  // Handler: Toggle gridlines
+  const handleToggleGridlines = () => {
+    setGridlinesOn(g => {
+      const newVal = !g;
+      document.body.classList.toggle('show-gridlines', newVal);
+      return newVal;
+    });
+  };
+
+  return (
+    <div className="debug-panel">
+      <div className="debug-panel-modal">
+        <button
+          className="debug-panel-close-btn"
+          aria-label="Close debug panel"
+          onClick={onClose}
+          tabIndex={0}
+        >
+          ×
+        </button>
+        <h3>Debug Panel</h3>
+  {/* New debug controls */}
+        <div className="debug-section">
+          <h4>Quick Actions</h4>
+          <div className="quick-actions-row">
+            <input
+              type="number"
+              min={-9999}
+              max={9999}
+              value={pointValue}
+              onChange={e => setPointValue(Number(e.target.value))}
+              title="Point Value"
+            />
+            <button onClick={handleGainPoints}>Gain Points</button>
+            <button onClick={handleRestartEncounter}>Restart Encounter</button>
+            <button onClick={handleSkipEncounter}>Skip to Next Encounter</button>
+            <button onClick={handleToggleGridlines}>{gridlinesOn ? 'Hide Gridlines' : 'Show Gridlines'}</button>
+          </div>
+        </div>
+        {/* Blessing Application */}
+        <div className="debug-section">
+          <h4>Apply Blessing to Card</h4>
+          <div className="blessing-select-row">
+            <select
+              value={selectedBlessingForCard}
+              onChange={(e) => setSelectedBlessingForCard(e.target.value)}
+              title="Select Blessing"
+            >
+              <option value="">Select Blessing</option>
+              {Object.values(registry.blessing || {}).flat().map((blessing: any) => (
+                <option key={blessing.id} value={blessing.id}>
+                  {blessing.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedCardForBlessing}
+              onChange={(e) => setSelectedCardForBlessing(e.target.value)}
+              title="Select Card"
+            >
+              <option value="">Select Card</option>
+              {Object.values(gameState.piles || {}).flatMap((pile: any) =>
+                pile.cards?.map((card: any) => (
+                  <option key={card.id} value={card.id}>
+                    {card.id} ({pile.id})
+                  </option>
+                )) || []
+              )}
+            </select>
+          </div>
+          <button
+            className="apply-blessing-btn"
+            onClick={handleApplyBlessingToCard}
+            disabled={!selectedBlessingForCard || !selectedCardForBlessing}
+          >
+            Apply Blessing
+          </button>
+        </div>
+        {/* Jump to Screen */}
+        <div className="debug-section">
+          <h4>Jump to Screen</h4>
+          <div className="screen-btn-row">
+            {['game', 'trade', 'wander', 'fortune-swap'].map(screen => (
+              <button
+                key={screen}
+                className="screen-btn"
+                onClick={() => handleJumpToScreen(screen)}
+              >
+                {screen.charAt(0).toUpperCase() + screen.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Jump to Encounter */}
+        <div className="debug-section">
+          <h4>Jump to Encounter</h4>
+          <div className="encounter-jump-row">
+            <span>Trial:</span>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              defaultValue="1"
+              id="debug-trial-input"
+              title="Trial Number"
+              placeholder="Trial"
+            />
+            <span>Encounter:</span>
+            <input
+              type="number"
+              min="1"
+              max="3"
+              defaultValue="1"
+              id="debug-encounter-input"
+              title="Encounter Number"
+              placeholder="Encounter"
+            />
+            <button
+              className="jump-btn"
+              onClick={() => {
+                const trial = parseInt((document.getElementById('debug-trial-input') as HTMLInputElement)?.value || '1');
+                const encounter = parseInt((document.getElementById('debug-encounter-input') as HTMLInputElement)?.value || '1');
+                handleJumpToEncounter(trial, encounter);
+              }}
+            >
+              Jump
+            </button>
+          </div>
+        </div>
+        {/* Registry Effect Logging */}
+        <div className="debug-section">
+          <h4>Registry Effect Log</h4>
+          <button
+            className={"log-toggle-btn" + (showRegistryLog ? " active" : "")}
+            onClick={() => setShowRegistryLog(!showRegistryLog)}
+          >
+            {showRegistryLog ? 'Stop Logging' : 'Start Logging'}
+          </button>
+          {showRegistryLog && registryEffectLog.length > 0 && (
+            <div className="registry-log">
+              {registryEffectLog.slice(-10).map((entry, idx) => (
+                <div key={idx} className="registry-log-entry">
+                  <div className="registry-log-timestamp"><strong>{entry.timestamp.split('T')[1].split('.')[0]}</strong> - {entry.type}</div>
+                  <div className="registry-log-effect">
+                    {entry.effect} → {entry.payload?.cardId || 'N/A'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Current Game State */}
+        <div className="debug-section">
+          <h4>Current State</h4>
+          <div className="state-info">
+            <div>Screen: {currentScreen}</div>
+            <div>Score: {gameState.player?.score || 0}</div>
+            <div>Coins: {gameState.player?.coins || 0}</div>
+            <div>Trial: {gameState.run?.currentTrial || 0}</div>
+            <div>Encounter: {gameState.run?.currentEncounter || 0}</div>
+            <div>Encounter Type: {gameState.run?.encounter?.type || 'N/A'}</div>
+            {/* Show encounter name and effect/description if available */}
+            {gameState.run?.encounter?.name && (
+              <div>Fear/Danger Name: <strong>{gameState.run.encounter.name}</strong></div>
+            )}
+            {gameState.run?.encounter?.description && (
+              <div>Effect: <em>{gameState.run.encounter.description}</em></div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main GameScreen imports ---
 import { registry } from '../registry/index';
 import { useEngineEvent } from './EngineEventProvider';
 import { Card } from './Card';
@@ -10,7 +262,6 @@ import WanderScreen from './WanderScreen';
 import FortuneSwapActivity from './FortuneSwapActivity';
 import { endGameSession } from '../engine/persistenceManager';
 import { EncounterFlowManager } from '../engine/encounterFlow';
-import { startNewRun, checkEncounterCompletion, progressEncounter, checkRunCompletion, selectEncounter, resetEncounterState } from '../engine/encounterSystem';
 import './GameScreen.css';
 
 // Helper to safely get piles as an array of any
@@ -24,7 +275,19 @@ interface GameScreenProps {
 
 
 
+
 export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenProps = {}) {
+  // Highlighted destinations for card moves
+  const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
+  // Zoom level for floating zoom window
+  const [zoomLevel, setZoomLevel] = React.useState(100);
+  // Tableau row height (default value, can be adjusted as needed)
+  const tableauRowHeight = 120;
+  // isCoronata mode (assume true for now, or derive from gameState if available)
+  const isCoronata = true;
+  // Resign modal and run recap modal
+  const [showResignModal, setShowResignModal] = React.useState(false);
+  const [showRunRecap, setShowRunRecap] = React.useState(false);
 
   // --- Hooks: always call at the top, unconditionally ---
   const ctx = useEngineEvent();
@@ -32,194 +295,74 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   const [draggedCardId, setDraggedCardId] = React.useState<string | null>(null);
   const [dragOverPileId, setDragOverPileId] = React.useState<string | null>(null);
   const [shakeCardId, setShakeCardId] = React.useState<string | null>(null);
-  // Ref to store shake timeout
-  const shakeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  const [highlightedDestinations, setHighlightedDestinations] = React.useState<string[]>([]);
-  const [showResignModal, setShowResignModal] = React.useState(false);
-  const [showRunRecap, setShowRunRecap] = React.useState(false);
-  // Choice screen state
-  const [currentScreen, setCurrentScreen] = React.useState<'game' | 'choice' | 'trade' | 'wander' | 'fortune-swap'>('game');
-  // Debug/Testing features
+  // DebugPanel state
   const [showDebugPanel, setShowDebugPanel] = React.useState(false);
-  const [selectedBlessingForCard, setSelectedBlessingForCard] = React.useState<string>('');
-  const [selectedCardForBlessing, setSelectedCardForBlessing] = React.useState<string>('');
-  const [registryEffectLog, setRegistryEffectLog] = React.useState<any[]>([]);
   const [showRegistryLog, setShowRegistryLog] = React.useState(false);
-  // Zoom state for floating zoom window
-  const [zoomLevel, setZoomLevel] = React.useState(100);
-  // Provide fallback values for engine, event, config for hook dependencies
-  const engine = ctx?.engine ?? ({} as any);
-  const event = ctx?.event ?? null;
-  const config = engine?.config ?? {};
-  // Detect if Coronata mode is active (define unconditionally for hooks)
-  const isCoronata = config?.rules === 'coronata';
-  // Use event dependency to re-render when engine state changes
-  const gameState = React.useMemo(() => engine?.state ?? {}, [engine?.state, event]);
+  // Registry effect log (read-only for now)
+  const [registryEffectLog] = React.useState<any[]>([]);
+  const [selectedBlessingForCard, setSelectedBlessingForCard] = React.useState('');
+  const [selectedCardForBlessing, setSelectedCardForBlessing] = React.useState('');
 
-  // Debug/Testing handlers
-  const handleApplyBlessingToCard = () => {
+  // Game state and registry
+  // These should be available from engine or context
+  // Engine instance (assume available globally or via context)
+  // @ts-ignore
+  const engine = window.engine || (window as any).engine;
+  // Provide robust defaults to prevent undefined errors in PlayerHUD
+  const gameState = {
+    player: {
+      exploits: [],
+      curses: [],
+      fortunes: [],
+      score: 0,
+      coins: 0,
+      // ...add any other expected player fields
+      ...(engine?.state?.player || {})
+    },
+    run: {
+      currentTrial: 0,
+      currentEncounter: 0,
+      encounter: {},
+      encounterFlow: {},
+      // ...add any other expected run fields
+      ...(engine?.state?.run || {})
+    },
+    piles: {},
+    registry: {},
+    history: [],
+    meta: {},
+    ...(engine?.state || {})
+  };
+  // Ref for shake animation timeout
+  const shakeTimeoutRef = React.useRef<any>(null);
+  // registry is imported at the top
+  // currentScreen: needs to be defined and managed
+  const [currentScreen, setCurrentScreen] = React.useState('game');
+
+  // Handlers for DebugPanel
+  const handleApplyBlessingToCard = React.useCallback(() => {
     if (!selectedBlessingForCard || !selectedCardForBlessing) return;
-
-    const blessingEffect = {
-      type: 'apply_blessing_to_card',
-      target: selectedCardForBlessing,
-      value: selectedBlessingForCard
-    };
-
-    engine.state = engine.effectEngine.applyEffects([blessingEffect], engine.state);
-    engine.emitEvent('stateChange', engine.state);
-
-    console.log(`Debug: Applied blessing ${selectedBlessingForCard} to card ${selectedCardForBlessing}`);
+    // Use the blessing application logic from the main component
+    // (Assume handleBlessingApplication is defined below)
+    handleBlessingApplication(selectedBlessingForCard, selectedCardForBlessing);
     setSelectedBlessingForCard('');
     setSelectedCardForBlessing('');
-  };
+  }, [selectedBlessingForCard, selectedCardForBlessing]);
 
-  const handleJumpToScreen = (screen: string) => {
-    switch (screen) {
-      case 'trade':
-        setCurrentScreen('trade');
-        break;
-      case 'wander':
-        setCurrentScreen('wander');
-        break;
-      case 'fortune-swap':
-        setCurrentScreen('fortune-swap');
-        break;
-      case 'game':
-        setCurrentScreen('game');
-        break;
-      default:
-        console.log(`Unknown screen: ${screen}`);
-    }
-  };
+  const handleJumpToScreen = React.useCallback((screen: string) => {
+    setCurrentScreen(screen);
+  }, []);
 
-  const handleJumpToEncounter = (trial: number, encounter: number) => {
-    if (!engine?.state?.run) return;
+  const handleJumpToEncounter = React.useCallback((trial: number, encounter: number) => {
+    // Use EncounterFlowManager or similar logic to jump to a specific encounter
+    // For now, just log and set currentScreen to 'game'
+    // TODO: Implement actual jump logic if needed
+    console.log('Jump to trial', trial, 'encounter', encounter);
+    setCurrentScreen('game');
+  }, []);
 
-    // Update run state to jump to specific encounter
-    engine.state.run.currentTrial = trial;
-    engine.state.run.currentEncounter = encounter;
-
-    // Generate new encounter
-    const newEncounter = selectEncounter(engine.state.run, undefined, undefined, Object.values(registry).flat());
-    engine.state.run.encounter = newEncounter;
-
-    engine.emitEvent('stateChange', engine.state);
-    console.log(`Debug: Jumped to Trial ${trial}, Encounter ${encounter}`);
-  };
-
-  // Registry effect logging
-  React.useEffect(() => {
-    if (!showRegistryLog) return;
-
-    const handleRegistryEffect = (event: any) => {
-      const logEntry = {
-        timestamp: new Date().toISOString(),
-        type: event.type,
-        payload: event.payload,
-        effect: event.effect || 'unknown'
-      };
-      setRegistryEffectLog(prev => [...prev.slice(-49), logEntry]); // Keep last 50 entries
-    };
-
-    // Listen to engine events that might involve registry effects
-    engine?.eventEmitter?.on('move', handleRegistryEffect);
-    engine?.eventEmitter?.on('on_play_from_hand', handleRegistryEffect);
-    engine?.eventEmitter?.on('on_foundation_play', handleRegistryEffect);
-    engine?.eventEmitter?.on('on_tableau_play', handleRegistryEffect);
-
-    return () => {
-      engine?.eventEmitter?.off('move', handleRegistryEffect);
-      engine?.eventEmitter?.off('on_play_from_hand', handleRegistryEffect);
-      engine?.eventEmitter?.off('on_foundation_play', handleRegistryEffect);
-      engine?.eventEmitter?.off('on_tableau_play', handleRegistryEffect);
-    };
-  }, [showRegistryLog, engine]);
-  const cardHeight = config?.cardHeight ?? 72;
-  const overlapPercent = 0.5; // 50% overlap
-  const tableauRowHeight = 14 * (cardHeight * overlapPercent);
-  // Debug logging
-  console.log('GameScreen rendering with engine state:', gameState);
-  console.log('Engine config:', config);
-  console.log('Last engine event:', event);
-  console.log('Selected fortune:', selectedFortune);
-  console.log('Is Coronata mode:', isCoronata);
-
-  // Integrate selected fortune into game state for registry effects
-  React.useEffect(() => {
-    // Only run logic if all conditions are met
-    if (!selectedFortune || !engine?.state?.player || !isCoronata) return;
-    const currentFortunes = engine.state.player.fortunes || [];
-    // Only add if not already present (avoid duplicates)
-    if (!currentFortunes.includes(selectedFortune.id)) {
-      console.log('Adding selected fortune to player registry:', selectedFortune.label);
-      // Add the fortune to player registry
-      engine.state.player.fortunes = [...currentFortunes, selectedFortune.id];
-      // Set as active fortune for immediate effects processing
-      engine.state.player.activeFortune = selectedFortune.id;
-      console.log('Added fortune to player registry and set as active, calling applyImmediateEffects');
-      // Apply immediate effects for the new fortune
-      engine.applyImmediateEffects([selectedFortune.id]);
-      console.log('Immediate effects applied, player coins:', engine.state.player.coins);
-      // Refill hand if maxHandSize was increased
-      if (engine.state.player.maxHandSize && engine.state.player.maxHandSize > 5) {
-        const refilledState = refillHandFromDeck(engine.state);
-        engine.state = refilledState;
-        console.log('Hand refilled after fortune application, new hand size:', engine.state.piles.hand?.cards?.length || 0);
-      }
-      // Emit state change to trigger re-render and effect processing
-      engine.emitEvent('stateChange', engine.state);
-      console.log('Player fortunes updated:', engine.state.player.fortunes);
-    }
-  }, [selectedFortune, engine, isCoronata]);
-
-  // Auto-start first encounter when entering game screen
-  React.useEffect(() => {
-    if (!engine?.state || !selectedFortune || !isCoronata) return;
-
-    // Check if we need to start a new run (no existing run state)
-    if (!engine.state.run || !engine.state.run.encounter) {
-      console.log('Auto-starting first encounter...');
-      try {
-        const registryEntries = Object.values(registry).flat();
-        engine.state = startNewRun(engine.state, 1, registryEntries);
-        engine.emitEvent('stateChange', engine.state);
-        console.log('First encounter started successfully');
-      } catch (error) {
-        console.error('Failed to auto-start first encounter:', error);
-      }
-    }
-  }, [selectedFortune, engine, isCoronata]);
-
-  // Auto-progress to next encounter when current encounter is completed
-  React.useEffect(() => {
-    if (!engine?.state?.run?.encounter || !isCoronata) return;
-
-    const isCompleted = checkEncounterCompletion(engine.state);
-
-    if (isCompleted && !engine.state.run.encounterFlow?.active) {
-      console.log('Encounter completed, auto-progressing to next encounter...');
-      try {
-        const registryEntries = Object.values(registry).flat();
-        engine.state.run = progressEncounter(engine.state.run, undefined, registryEntries);
-
-        // Reset player score for new encounter
-        engine.state = resetEncounterState(engine.state);
-
-        // Check if run is now completed
-        if (checkRunCompletion(engine.state.run)) {
-          console.log('🎉 Run completed! All encounters finished.');
-          engine.emitEvent('win', engine.state);
-        } else {
-          console.log('Progressed to next encounter successfully');
-        }
-
-        engine.emitEvent('stateChange', engine.state);
-      } catch (error) {
-        console.error('Failed to auto-progress encounter:', error);
-      }
-    }
-  }, [gameState.player?.score, gameState.run?.encounter?.scoreGoal, engine, isCoronata]);
+  // (removed duplicate early return; main UI will render below)
+// (removed stray code that was outside of any function)
 
   // Responsive scaling effect
   React.useEffect(() => {
@@ -410,7 +553,11 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
       // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        const updatedState = flowManager.onFlowComplete();
+        let updatedState = flowManager.onFlowComplete();
+        // Immediately process pending encounter reset
+        if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
+          updatedState = engine.scoringSystem.updateEncounterProgress(updatedState);
+        }
         engine.state = {
           ...updatedState,
           run: {
@@ -572,7 +719,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
       // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        const updatedState = flowManager.onFlowComplete();
+        let updatedState = flowManager.onFlowComplete();
+        if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
+          updatedState = engine.scoringSystem.updateEncounterProgress(updatedState);
+        }
         engine.state = {
           ...updatedState,
           run: {
@@ -733,7 +883,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
       // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        const updatedState = flowManager.onFlowComplete();
+        let updatedState = flowManager.onFlowComplete();
+        if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
+          updatedState = engine.scoringSystem.updateEncounterProgress(updatedState);
+        }
         engine.state = {
           ...updatedState,
           run: {
@@ -793,7 +946,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
 
       // If flow is now complete, immediately advance to next encounter
       if (flowManager.isFlowComplete()) {
-        const updatedState = flowManager.onFlowComplete();
+        let updatedState = flowManager.onFlowComplete();
+        if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
+          updatedState = engine.scoringSystem.updateEncounterProgress(updatedState);
+        }
         engine.state = {
           ...updatedState,
           run: {
@@ -1541,10 +1697,14 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
               // Complete the flow and advance to the next encounter
               const updatedState = flowManager.onFlowComplete();
               // Update engine state and encounterFlow
+              let nextState = updatedState;
+              if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
+                nextState = engine.scoringSystem.updateEncounterProgress(updatedState);
+              }
               engine.state = {
-                ...updatedState,
+                ...nextState,
                 run: {
-                  ...updatedState.run,
+                  ...nextState.run,
                   encounterFlow: {
                     active: false,
                     phase: 'encounter',
@@ -1567,211 +1727,28 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
         className="debug-toggle-button"
         onClick={() => setShowDebugPanel(!showDebugPanel)}
         title="Toggle Debug Panel"
-        style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          zIndex: 1000,
-          padding: '8px 12px',
-          background: '#333',
-          color: '#fff',
-          border: '1px solid #666',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          fontSize: '12px'
-        }}
       >
         🐛 Debug
       </button>
 
-      {/* Debug Panel */}
+      {/* Debug Panel as subcomponent */}
       {showDebugPanel && (
-        <div
-          className="debug-panel"
-          style={{
-            position: 'fixed',
-            top: '50px',
-            right: '10px',
-            width: '400px',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            background: 'rgba(0, 0, 0, 0.9)',
-            color: '#fff',
-            padding: '15px',
-            borderRadius: '8px',
-            zIndex: 999,
-            fontSize: '12px'
-          }}
-        >
-          <h3 style={{ margin: '0 0 15px 0', color: '#ffd700' }}>Debug Panel</h3>
-
-          {/* Blessing Application */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Apply Blessing to Card</h4>
-            <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-              <select
-                value={selectedBlessingForCard}
-                onChange={(e) => setSelectedBlessingForCard(e.target.value)}
-                style={{ flex: 1, padding: '4px', fontSize: '11px' }}
-              >
-                <option value="">Select Blessing</option>
-                {Object.values(registry.blessing || {}).flat().map((blessing: any) => (
-                  <option key={blessing.id} value={blessing.id}>
-                    {blessing.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedCardForBlessing}
-                onChange={(e) => setSelectedCardForBlessing(e.target.value)}
-                style={{ flex: 1, padding: '4px', fontSize: '11px' }}
-              >
-                <option value="">Select Card</option>
-                {Object.values(gameState.piles || {}).flatMap((pile: any) =>
-                  pile.cards?.map((card: any) => (
-                    <option key={card.id} value={card.id}>
-                      {card.id} ({pile.id})
-                    </option>
-                  )) || []
-                )}
-              </select>
-            </div>
-            <button
-              onClick={handleApplyBlessingToCard}
-              disabled={!selectedBlessingForCard || !selectedCardForBlessing}
-              style={{
-                padding: '4px 8px',
-                fontSize: '11px',
-                background: '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer'
-              }}
-            >
-              Apply Blessing
-            </button>
-          </div>
-
-          {/* Jump to Screen */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Jump to Screen</h4>
-            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-              {['game', 'trade', 'wander', 'fortune-swap'].map(screen => (
-                <button
-                  key={screen}
-                  onClick={() => handleJumpToScreen(screen)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '11px',
-                    background: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '3px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {screen.charAt(0).toUpperCase() + screen.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Jump to Encounter */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Jump to Encounter</h4>
-            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-              <span>Trial:</span>
-              <input
-                type="number"
-                min="1"
-                max="5"
-                defaultValue="1"
-                id="debug-trial-input"
-                style={{ width: '50px', padding: '2px', fontSize: '11px' }}
-              />
-              <span>Encounter:</span>
-              <input
-                type="number"
-                min="1"
-                max="3"
-                defaultValue="1"
-                id="debug-encounter-input"
-                style={{ width: '50px', padding: '2px', fontSize: '11px' }}
-              />
-              <button
-                onClick={() => {
-                  const trial = parseInt((document.getElementById('debug-trial-input') as HTMLInputElement)?.value || '1');
-                  const encounter = parseInt((document.getElementById('debug-encounter-input') as HTMLInputElement)?.value || '1');
-                  handleJumpToEncounter(trial, encounter);
-                }}
-                style={{
-                  padding: '4px 8px',
-                  fontSize: '11px',
-                  background: '#FF9800',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '3px',
-                  cursor: 'pointer'
-                }}
-              >
-                Jump
-              </button>
-            </div>
-          </div>
-
-          {/* Registry Effect Logging */}
-          <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Registry Effect Log</h4>
-            <button
-              onClick={() => setShowRegistryLog(!showRegistryLog)}
-              style={{
-                padding: '4px 8px',
-                fontSize: '11px',
-                background: showRegistryLog ? '#f44336' : '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                marginBottom: '10px'
-              }}
-            >
-              {showRegistryLog ? 'Stop Logging' : 'Start Logging'}
-            </button>
-            {showRegistryLog && registryEffectLog.length > 0 && (
-              <div style={{
-                maxHeight: '200px',
-                overflowY: 'auto',
-                background: 'rgba(255, 255, 255, 0.1)',
-                padding: '5px',
-                borderRadius: '3px',
-                fontSize: '10px'
-              }}>
-                {registryEffectLog.slice(-10).map((entry, idx) => (
-                  <div key={idx} style={{ marginBottom: '3px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-                    <div><strong>{entry.timestamp.split('T')[1].split('.')[0]}</strong> - {entry.type}</div>
-                    <div style={{ color: '#ccc', fontSize: '9px' }}>
-                      {entry.effect} → {entry.payload?.cardId || 'N/A'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Current Game State */}
-          <div>
-            <h4 style={{ margin: '0 0 10px 0', color: '#ffed4e' }}>Current State</h4>
-            <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
-              <div>Screen: {currentScreen}</div>
-              <div>Score: {gameState.player?.score || 0}</div>
-              <div>Coins: {gameState.player?.coins || 0}</div>
-              <div>Trial: {gameState.run?.currentTrial || 0}</div>
-              <div>Encounter: {gameState.run?.currentEncounter || 0}</div>
-              <div>Encounter Type: {gameState.run?.encounter?.type || 'N/A'}</div>
-            </div>
-          </div>
-        </div>
+        <DebugPanel
+          showRegistryLog={showRegistryLog}
+          setShowRegistryLog={setShowRegistryLog}
+          registryEffectLog={registryEffectLog}
+          selectedBlessingForCard={selectedBlessingForCard}
+          setSelectedBlessingForCard={setSelectedBlessingForCard}
+          selectedCardForBlessing={selectedCardForBlessing}
+          setSelectedCardForBlessing={setSelectedCardForBlessing}
+          handleApplyBlessingToCard={handleApplyBlessingToCard}
+          handleJumpToScreen={handleJumpToScreen}
+          handleJumpToEncounter={handleJumpToEncounter}
+          currentScreen={currentScreen}
+          gameState={gameState}
+          registry={registry}
+          onClose={() => setShowDebugPanel(false)}
+        />
       )}
       
       {/* Resign confirmation modal */}

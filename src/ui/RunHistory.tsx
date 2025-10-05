@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import './RunHistory.css';
 
@@ -21,19 +22,61 @@ interface RunRecord {
   finalEncounter: string;
 }
 
+// GameSessionData from persistenceManager
+interface GameSessionData {
+  id: string;
+  timestamp: number;
+  duration: number;
+  score: number;
+  encountersCompleted: number;
+  finalOutcome: 'victory' | 'defeat' | 'resigned';
+  exploitsGained: string[];
+  blessingsGained: string[];
+  fearsGained: string[];
+  coinsEarned: number;
+  selectedFortune?: string;
+}
+
 export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
   const [selectedRun, setSelectedRun] = useState<RunRecord | null>(null);
   const [runHistory, setRunHistory] = useState<RunRecord[]>([]);
 
-  // Load run history from localStorage
+  // Load run history from localStorage (real data from 'coronata-game-history')
   useEffect(() => {
     try {
-      const savedHistory = localStorage.getItem('coronata-run-history');
+      const savedHistory = localStorage.getItem('coronata-game-history');
       if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        setRunHistory(parsedHistory);
+        const parsedHistory: GameSessionData[] = JSON.parse(savedHistory);
+        // Map GameSessionData to RunRecord for UI
+        const mapped: RunRecord[] = parsedHistory.map((session) => {
+          // Format date
+          const date = new Date(session.timestamp).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          });
+          // Format duration as mm:ss
+          const mins = Math.floor(session.duration / 60);
+          const secs = session.duration % 60;
+          const duration = `${mins}:${secs.toString().padStart(2, '0')}`;
+          return {
+            id: session.id,
+            date,
+            score: session.score,
+            encounters: session.encountersCompleted,
+            fortune: session.selectedFortune || '',
+            exploits: session.exploitsGained || [],
+            blessings: session.blessingsGained || [],
+            curses: session.fearsGained || [],
+            completed: session.finalOutcome === 'victory',
+            duration,
+            coinsEarned: session.coinsEarned || 0,
+            ascensionLevel: 0, // Not tracked in GameSessionData
+            finalEncounter: session.fearsGained?.slice(-1)[0] || ''
+          };
+        });
+  // Use toReversed for lint compliance
+  setRunHistory([...mapped].reverse()); // Most recent first
       } else {
-        // Mock data for demonstration
+        // Fallback to mock data for demonstration
         const mockHistory: RunRecord[] = [
           {
             id: '1',
@@ -49,36 +92,6 @@ export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
             coinsEarned: 245,
             ascensionLevel: 0,
             finalEncounter: 'Fear of the Unknown'
-          },
-          {
-            id: '2',
-            date: '2025-10-01',
-            score: 890,
-            encounters: 4,
-            fortune: 'Warrior\'s Resolve',
-            exploits: ['Iron Will'],
-            blessings: ['Queen of Diamonds'],
-            curses: ['Shaky Hands'],
-            completed: false,
-            duration: '8:15',
-            coinsEarned: 120,
-            ascensionLevel: 0,
-            finalEncounter: 'Danger in the Depths'
-          },
-          {
-            id: '3',
-            date: '2025-09-28',
-            score: 2100,
-            encounters: 15,
-            fortune: 'Scholar\'s Insight',
-            exploits: ['Memory Palace', 'Lucky Coin', 'Swift Draw', 'Iron Will'],
-            blessings: ['Ace of Hearts', 'King of Spades', 'Queen of Diamonds', 'Jack of Clubs'],
-            curses: [],
-            completed: true,
-            duration: '28:45',
-            coinsEarned: 480,
-            ascensionLevel: 1,
-            finalEncounter: 'The Usurper'
           }
         ];
         setRunHistory(mockHistory);
@@ -116,7 +129,7 @@ export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
       <div className="run-history-header">
         <h2>📊 Run History</h2>
         <p>Review your past adventures and track your progress</p>
-        <button className="back-btn" onClick={onBack}>← Back</button>
+  <button className="back-btn" onClick={onBack}>← Back</button>
       </div>
 
       <div className="run-history-content">
@@ -127,10 +140,16 @@ export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
             </div>
           ) : (
             runHistory.map(run => (
-              <div
+              <button
                 key={run.id}
-                className={`run-item ${selectedRun?.id === run.id ? 'selected' : ''} ${run.completed ? 'completed' : 'failed'}`}
+                type="button"
+                className={`run-item ${selectedRun?.id === run.id ? 'selected' : ''} ${run.completed ? 'completed' : 'failed'} run-item-btn`}
                 onClick={() => setSelectedRun(run)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    setSelectedRun(run);
+                  }
+                }}
               >
                 <div className="run-header">
                   <span className="run-date">{formatDate(run.date)}</span>
@@ -148,7 +167,7 @@ export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
                   <span className="completion-rate">{getCompletionRate(run.encounters, run.completed)}</span>
                   <span className="rating">{getPerformanceRating(run.score, run.encounters)}</span>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
@@ -158,35 +177,35 @@ export const RunHistory: React.FC<RunHistoryProps> = ({ onBack }) => {
             <h3>🏆 Run Details</h3>
             <div className="detail-grid">
               <div className="detail-item">
-                <label>Final Score:</label>
+                <span className="label">Final Score:</span>
                 <span className="highlight">{selectedRun.score.toLocaleString()}</span>
               </div>
               <div className="detail-item">
-                <label>Encounters Completed:</label>
+                <span className="label">Encounters Completed:</span>
                 <span>{selectedRun.encounters}/15 ({getCompletionRate(selectedRun.encounters, selectedRun.completed)})</span>
               </div>
               <div className="detail-item">
-                <label>Duration:</label>
+                <span className="label">Duration:</span>
                 <span>{selectedRun.duration}</span>
               </div>
               <div className="detail-item">
-                <label>Coins Earned:</label>
+                <span className="label">Coins Earned:</span>
                 <span className="coins">{selectedRun.coinsEarned}</span>
               </div>
               <div className="detail-item">
-                <label>Ascension Level:</label>
+                <span className="label">Ascension Level:</span>
                 <span>{selectedRun.ascensionLevel}</span>
               </div>
               <div className="detail-item">
-                <label>Final Encounter:</label>
+                <span className="label">Final Encounter:</span>
                 <span>{selectedRun.finalEncounter}</span>
               </div>
               <div className="detail-item">
-                <label>Starting Fortune:</label>
+                <span className="label">Starting Fortune:</span>
                 <span className="fortune">{selectedRun.fortune}</span>
               </div>
               <div className="detail-item">
-                <label>Performance:</label>
+                <span className="label">Performance:</span>
                 <span className="rating">{getPerformanceRating(selectedRun.score, selectedRun.encounters)}</span>
               </div>
             </div>

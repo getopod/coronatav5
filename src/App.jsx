@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, History, Options } from './ui';
+import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, Options } from './ui';
+import RunHistoryScreen from './ui/RunHistoryScreen';
 import { EngineController } from './engine/engineController';
 import { startGameSession } from './engine/persistenceManager';
 import { registry } from './registry/index';
@@ -26,7 +27,7 @@ function createCoronataRegistryConfig() {
   });
   // Remove duplicate cards (shouldn't be any, but just in case)
   const uniqueCards = Array.from(new Map(allCards.map(card => [card.id, card])).values());
-  // Convert to CardConfig[]
+  // Convert to CardConfig[] with all Card fields
   const cardsArray = uniqueCards.map(card => ({
     id: card.id,
     suit: card.suit,
@@ -34,7 +35,9 @@ function createCoronataRegistryConfig() {
     faceUp: card.faceUp,
     design: card.design,
     tags: card.tags,
-    meta: card.meta
+    meta: card.meta,
+    blessings: card.blessings,
+    autoPlay: card.autoPlay
   }));
   return {
     piles: pilesArray,
@@ -71,7 +74,8 @@ function App() {
       registryEntries: allRegistryEntries,
       customHandlers: {}
     }, 'coronata');
-    window.gameEngine = engineController;
+    window.engine = engineController; // Attach to window.engine for UI
+    window.gameEngine = engineController; // (legacy, for compatibility)
     return engineController;
   }, []);
 
@@ -140,7 +144,7 @@ function App() {
     return <Glossary onBack={handleBackToWelcome} />;
   }
   if (showHistory) {
-    return <History onBack={handleBackToWelcome} />;
+    return <RunHistoryScreen onBack={handleBackToWelcome} />;
   }
   if (showOptions) {
     return <Options onBack={handleBackToWelcome} engine={engine} />;

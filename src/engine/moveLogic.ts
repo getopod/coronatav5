@@ -62,7 +62,6 @@ function validateWasteMove(move: Move): boolean {
   return result;
 }
 
-
 function validateUnknownPile(): boolean {
   console.log('INVALID: Unknown pile type or invalid destination');
   return false;

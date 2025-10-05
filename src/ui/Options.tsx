@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { persistenceManager } from '../engine/persistenceManager';
-import type { PlayerProfile } from '../engine/persistenceManager';
-import './Options.css';
+// Removed unused imports
+import './tavern-theme.css';
 
 export interface OptionsProps {
   onBack: () => void;
@@ -23,10 +23,6 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
     difficulty: 'normal',
     autoSave: true
   });
-  const [_playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
-  const [_completedFeats, setCompletedFeats] = useState<string[]>([]);
-  const [_featStats, setFeatStats] = useState<Record<string, number>>({});
-
   // Testing state
   const [selectedBlessing, setSelectedBlessing] = useState<string>('');
   const [selectedCard, setSelectedCard] = useState<string>('');
@@ -34,11 +30,8 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
   const [registryEffectLogging, setRegistryEffectLogging] = useState<boolean>(false);
   const [effectLog, setEffectLog] = useState<Array<{timestamp: string, effect: string, value: any, source: string}>>([]);
 
-  // Load user preferences and data on component mount
   useEffect(() => {
     const profile = persistenceManager.getPlayerProfile();
-    setPlayerProfile(profile);
-    
     if (profile?.preferences) {
       setSettings({
         audioEnabled: profile.preferences.soundEnabled,
@@ -47,27 +40,11 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
         autoSave: profile.preferences.autoSave
       });
     }
+  }, []);
 
-    // Load feat data if engine is available
-    if (engine?.featTracker) {
-      try {
-        const completedFeatsData = engine.featTracker.getCompletedFeats?.() || [];
-        const sessionStatsData = engine.featTracker.getSessionStats?.() || {};
-        setCompletedFeats(completedFeatsData);
-        setFeatStats(sessionStatsData);
-      } catch (error) {
-        console.warn('Error loading feat data:', error);
-        setCompletedFeats([]);
-        setFeatStats({});
-      }
-    }
-  }, [engine]);
-
-  // Save settings to persistence manager
   const saveSettings = (newSettings: Partial<SettingsState>) => {
     const updatedSettings = { ...settings, ...newSettings };
     setSettings(updatedSettings);
-    
     // Update player profile preferences
     const profile = persistenceManager.getPlayerProfile();
     if (profile) {
@@ -177,6 +154,7 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
       </div>
 
       <div className="setting-item">
+
         <label className="setting-label" htmlFor="theme-select">Theme</label>
         <select
           id="theme-select"
@@ -202,13 +180,14 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
 
         {/* Blessing Application */}
         <div className="setting-item">
-          <label className="setting-label">Apply Blessing to Card</label>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <label className="setting-label" htmlFor="blessing-select">Apply Blessing to Card</label>
+          <div className="flex gap-10 flex-wrap">
             <select
-              className="setting-select"
+              id="blessing-select"
+              className="setting-select min-width-150 flex-1"
+              aria-label="Select Blessing"
               value={selectedBlessing}
               onChange={(e) => setSelectedBlessing(e.target.value)}
-              style={{ flex: '1', minWidth: '150px' }}
             >
               <option value="">Select Blessing</option>
               {availableBlessings.map((blessing: any) => (
@@ -218,10 +197,10 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
               ))}
             </select>
             <select
-              className="setting-select"
+              className="setting-select min-width-150 flex-1"
+              aria-label="Select Card"
               value={selectedCard}
               onChange={(e) => setSelectedCard(e.target.value)}
-              style={{ flex: '1', minWidth: '150px' }}
             >
               <option value="">Select Card</option>
               {allCards.map((card: any) => (
@@ -254,13 +233,12 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
         {/* Window/Stage Jump */}
         <div className="setting-item">
           <label className="setting-label" htmlFor="window-select">Jump to Window/Stage</label>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="flex gap-10">
             <select
               id="window-select"
-              className="setting-select"
+              className="setting-select flex-1"
               value={selectedWindow}
               onChange={(e) => setSelectedWindow(e.target.value)}
-              style={{ flex: '1' }}
             >
               <option value="welcome">Welcome Screen</option>
               <option value="fortune-selection">Fortune Selection</option>
@@ -309,21 +287,13 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
         {/* Effect Log Display */}
         {registryEffectLogging && (
           <div className="setting-item">
-            <label className="setting-label">Effect Log</label>
-            <div style={{
-              maxHeight: '200px',
-              overflowY: 'auto',
-              background: '#f5f5f5',
-              padding: '10px',
-              borderRadius: '4px',
-              fontSize: '12px',
-              fontFamily: 'monospace'
-            }}>
+            <div className="setting-label">Effect Log</div>
+            <div className="effect-log-box">
               {effectLog.length === 0 ? (
                 <div>No effects logged yet</div>
               ) : (
-                effectLog.map((entry, index) => (
-                  <div key={index} style={{ marginBottom: '5px', borderBottom: '1px solid #ddd', paddingBottom: '5px' }}>
+                effectLog.map((entry) => (
+                  <div key={entry.timestamp + entry.effect} className="effect-log-entry">
                     <div><strong>{entry.timestamp}</strong></div>
                     <div>Effect: {entry.effect}</div>
                     <div>Value: {JSON.stringify(entry.value)}</div>
@@ -333,9 +303,8 @@ export const Options: React.FC<OptionsProps> = ({ onBack, engine }) => {
               )}
             </div>
             <button
-              className="setting-button"
+              className="setting-button mt-10"
               onClick={() => setEffectLog([])}
-              style={{ marginTop: '10px' }}
             >
               Clear Log
             </button>

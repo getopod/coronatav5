@@ -7,16 +7,16 @@
 }
 .player-hud {
   position: fixed;
-  bottom: 45px;
+  bottom: 10x;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 20, 0.95);
   border: 2px solid #4a4a4a;
   border-radius: 12px;
   padding: 6px;
-  width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
-  max-width: 384px; /* Match tableau width for alignment */
-  margin: 0 2px; /* 2px margin on each side */
+  width: 90vw;
+  max-width: none;
+  margin: 0 2px;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   color: #ffffff;
@@ -61,6 +61,7 @@
 .encounter-name {
   font-weight: bold;
   color: #e5e7eb;
+  font-
 }
 
 .encounter-description {
@@ -71,47 +72,7 @@
   margin-top: 4px;
 }
 
-.score-display {
-  font-size: 11px;
-  color: #f3f4f6;
-  font-weight: bold;
-  text-align: center;
-  padding: 0;
-  background: rgba(55, 65, 81, 0.5);
-  border-radius: 4px;
-  border: 1px solid #4b5563;
-  margin-top: 4px;
-  height: 16px;
-}
 
-.simple-progress-container {
-  width: 100%;
-  height: 8px;
-  background: rgba(75, 85, 99, 0.8);
-  border-radius: 4px;
-  margin: 4px 0;
-  overflow: hidden;
-}
-
-.simple-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #10b981, #34d399);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-  width: 0%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.progress-text-inside {
-  font-size: 10px;
-  font-weight: bold;
-  color: #ffffff;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  z-index: 1;
-}
 
 /* Full-width Progress Bar */
 .progress-container-full {
@@ -203,7 +164,7 @@
 }
 
 .progress-text-centered {
-  font-size: 6px;
+  font-size: 0.8rem;
   font-weight: bold;
   color: #ffffff;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
@@ -213,7 +174,7 @@
 }
 
 .progress-text {
-  font-size: 10px;
+  font-size: 0.9rem;
   color: #d1d5db;
   margin-top: 2px;
   display: none; /* Hide the external percentage */
@@ -248,7 +209,7 @@
 }
 
 .progress-percentage {
-  font-size: 10px;
+  font-size: 0.9rem;
   color: #d1d5db;
   font-weight: bold;
   min-width: 30px;
@@ -263,7 +224,7 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 4px;
-  font-size: 10px;
+  font-size: 0.9rem;
   color: #d1d5db;
 }
 
@@ -397,12 +358,13 @@
 
 .resource-value {
   font-weight: bold;
-  font-size: 11px;
+  font-size: 1rem;
   color: #f3f4f6;
 }
 
 .resource-label {
   font-size: 8px;
+    font-size: 0.8rem;
   color: #9ca3af;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -450,6 +412,7 @@
 
 .effect-icon {
   font-size: 12px;
+    font-size: 1.1rem;
   margin-bottom: 1px;
   height: 16px;
 }
@@ -457,39 +420,18 @@
 .effect-value {
   font-weight: bold;
   font-size: 10px;
+    font-size: 0.9rem;
   color: #f3f4f6;
 }
 
 .effect-label {
   font-size: 7px;
+    font-size: 0.7rem;
   color: #9ca3af;
   text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-/* HUD Toggle */
-.hud-toggle {
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
-}
-
-.toggle-button {
-  background: linear-gradient(135deg, #374151, #4b5563);
-  border: 1px solid #6b7280;
-  border-radius: 6px;
-  color: #ffffff;
-  font-size: 12px;
-  padding: 4px 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 30px;
-}
-
-.toggle-button:hover {
-  background: linear-gradient(135deg, #4b5563, #6b7280);
-  transform: translateY(-1px);
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -498,10 +440,34 @@
     position: fixed;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%);
-    width: calc(100vw - 4px); /* Full width minus 2px margin on each side */
+  -webkit-user-select: none;
+  user-select: none;
+    width: 384px;
     margin: 0 2px; /* 2px margin on each side */
+    font-size: 1.1rem;
   }
+@media (max-width: 600px) {
+  .player-hud {
+    font-size: 1.2rem;
+    padding: 0.5rem;
+  }
+  .choice-btn, .hud-action-button, .toggle-button {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.1rem;
+    padding: 12px 18px;
+  }
+  .fortune-popup, .testing-window, .testing-window-draggable {
+    max-width: 90vw;
+    max-height: 80vh;
+    padding: 0.5rem;
+    font-size: 1.1rem;
+    overflow-y: auto;
+  }
+  .modal-header h3, .fortune-popup-header h3 {
+    font-size: 1.2rem;
+  }
+}
   
   .resource-grid {
     grid-template-columns: repeat(3, 1fr);
@@ -773,7 +739,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Courier New', monospace;
-  height: 16px;
+  height: 8px;
   border: 1px solid;
   display: flex;
   align-items: center;
@@ -975,6 +941,8 @@
   z-index: 10000;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   overflow: hidden;
+  left: var(--testing-window-left, 100px);
+  top: var(--testing-window-top, 100px);
 }
 
 .testing-window-header {
@@ -986,6 +954,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  -webkit-user-select: none;
   user-select: none;
 }
 

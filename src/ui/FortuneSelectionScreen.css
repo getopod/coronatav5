@@ -10,19 +10,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-family: 'Courier New', monospace;
-  z-index: 2000;
+   z-index: 2000;
 }
 
 .fortune-selection-header {
   text-align: center;
-  margin-bottom: 3rem;
-}
-
-.fortune-selection-header h1 {
-  font-size: 36px;
   font-weight: bold;
-  margin-bottom: 1rem;
   background: linear-gradient(45deg, #ffd700, #ffed4e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -31,10 +24,9 @@
 }
 
 .fortune-selection-header p {
-  font-size: 12px;
   color: #b8c5d6;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 10px auto;
 }
 
 .fortune-selection-content {
@@ -46,45 +38,9 @@
   justify-content: center;
 }
 
-.fortunes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(282px, 1fr));
-  gap: 6px;
-  margin-bottom: 2rem;
-  justify-content: center;
-  width: 100%;
-  justify-items: center;
-}
-
-.fortune-card {
-  background: linear-gradient(145deg, #2a2a40, #1e1e30);
-  border: 2px solid #3a3a5c;
-  border-radius: 15px;
-  padding: 0.8rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  min-height: 140px;
-  max-height: 160px;
-  max-width: 282px;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  width: 100%;
-  font-family: inherit;
-  color: inherit;
-  font-size: 12px;
-}
-
 .fortune-card:hover {
   box-shadow: 0 10px 25px rgba(255, 215, 0, 0.2);
   border-color: #ffd700;
-}
-
-.fortune-card.selected {
-  border-color: #ffd700;
-  background: linear-gradient(145deg, #3a3a50, #2e2e40);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
 }
 
 .fortune-card.selected::before {
@@ -101,30 +57,18 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 1.2rem;
 }
 
-.fortune-card-header {
-  margin-bottom: 1rem;
-  text-align: center;
+.fortune-card.selected {
+  border-color: #ffd700;
+  background: linear-gradient(145deg, #3a3a50, #2e2e40);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
 }
 
 .fortune-card-header h3 {
-  font-size: 12px;
   font-weight: bold;
   color: #ffd700;
-  margin: 0;
-}
-
-.fortune-card-body {
-  flex: 1;
-  margin-bottom: 1rem;
-}
-
-.fortune-card-body p {
-  color: #e0e0e0;
-  line-height: 1.6;
-  margin: 0;
+  margin-bottom: 10px;
 }
 
 .fortune-selection-actions {
@@ -139,14 +83,16 @@
 .btn-primary,
 .btn-secondary,
 .btn-back {
-  padding: 1rem 2rem;
+  padding: 5px;
   border: none;
   border-radius: 8px;
-  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 150px;
+  min-width: 50px;
+  width: 100px;
+  max-width: 250px;
+  height: 40px
 }
 
 .btn-primary {
@@ -193,10 +139,6 @@
     padding: 0.5rem;
   }
 
-  .fortune-selection-header {
-    margin-bottom: 1.5rem;
-  }
-
   .fortune-selection-header h1 {
     font-size: 36px;
   }
@@ -205,30 +147,14 @@
     font-size: 16px;
   }
 
-  .fortunes-grid {
-    grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-
   .fortune-card {
     min-height: 100px;
     max-height: 120px;
     padding: 0.6rem;
-    font-size: 0.75rem;
   }
 
   .fortune-selection-actions {
     flex-direction: column;
     align-items: center;
-    gap: 0.8rem;
+    gap: 10px;
   }
-
-  .btn-primary,
-  .btn-secondary,
-  .btn-back {
-    width: 100%;
-    max-width: 250px;
-    height: 40px;
-    font-size: 16px;
-  }
-}

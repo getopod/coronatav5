@@ -1,3 +1,12 @@
+/* Accessibility and style for run-item button */
+.run-item-btn {
+  text-align: left;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
 .run-history-screen {
   position: fixed;
   top: 0;

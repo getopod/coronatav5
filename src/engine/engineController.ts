@@ -479,6 +479,28 @@ export class EngineController {
     });
     this.eventEmitter.on('run_completed', (event: EngineEvent) => {
       console.log('Run completed! Victory achieved.');
+      // Record run completion in run history (victory)
+      try {
+        const PersistenceManager = require('./persistenceManager').default || require('./persistenceManager');
+        const pm = PersistenceManager?.getInstance?.();
+        let run: any = {};
+        if (event?.payload?.runState) {
+          run = event.payload.runState as any;
+        } else if (this.state?.run) {
+          run = this.state.run as any;
+        }
+        pm?.endSession?.('victory', {
+          score: run.score || 0,
+          encountersCompleted: run.completedEncounters || 0,
+          exploitsGained: run.exploitsGained || [],
+          blessingsGained: run.blessingsGained || [],
+          fearsGained: run.fearsGained || [],
+          coinsEarned: run.coinsEarned || 0,
+          selectedFortune: run.selectedFortune || undefined
+        });
+      } catch (e) {
+        console.error('[EngineController] Failed to record run completion in history:', e);
+      }
       this.emitEvent('win', this.state); // Trigger win state
     });
     // On win/loss: UI hooks and feat tracking
@@ -492,6 +514,23 @@ export class EngineController {
       // Update feat tracking for losses
       this.featTracker.updateStats('losses', 1);
       this.featTracker.checkFeats(this.state);
+      // Record run completion in run history (defeat)
+      try {
+        const PersistenceManager = require('./persistenceManager').default || require('./persistenceManager');
+        const pm = PersistenceManager?.getInstance?.();
+        const run: any = this.state?.run || {};
+        pm?.endSession?.('defeat', {
+          score: run.score || 0,
+          encountersCompleted: run.completedEncounters || 0,
+          exploitsGained: run.exploitsGained || [],
+          blessingsGained: run.blessingsGained || [],
+          fearsGained: run.fearsGained || [],
+          coinsEarned: run.coinsEarned || 0,
+          selectedFortune: run.selectedFortune || undefined
+        });
+      } catch (e) {
+        console.error('[EngineController] Failed to record run defeat in history:', e);
+      }
       // UI: show loss modal, etc.
     });
   }

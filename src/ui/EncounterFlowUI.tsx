@@ -132,7 +132,7 @@ export const EncounterFlowUI: React.FC<EncounterFlowUIProps> = ({
       )}
 
       {/* Activity Queue Display */}
-      {encounterFlow.queuedActivities.length > 0 && (
+  {(encounterFlow.queuedActivities?.length ?? 0) > 0 && (
         <div className="activity-queue">
           <h4>Upcoming Activities:</h4>
           <div className="queue-items">

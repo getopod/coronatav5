@@ -3,18 +3,35 @@
  * Handles saving and loading game state, player progress, and history to localStorage
  */
 
+// Type alias for run outcome/category
+export type RunOutcome = 'victory' | 'defeat' | 'resigned';
+
 export interface GameSessionData {
   id: string;
   timestamp: number;
   duration: number;
   score: number;
   encountersCompleted: number;
-  finalOutcome: 'victory' | 'defeat' | 'resigned';
+  finalOutcome: RunOutcome;
   exploitsGained: string[];
   blessingsGained: string[];
   fearsGained: string[];
   coinsEarned: number;
   selectedFortune?: string;
+  /**
+   * Area or zone(s) where the run took place (e.g., 'Haunted Forest', 'Goblin Market').
+   * Can be a string or array of strings if multiple areas are relevant.
+   */
+  area?: string | string[];
+  /**
+   * Category for grouping runs (e.g., 'victory', 'defeat', 'resigned').
+   * This can be used for richer filtering/grouping in the UI.
+   */
+  category?: RunOutcome;
+  /**
+   * Richer stats object for future extensibility (e.g., { moves: 42, perfectEncounters: 2, ... })
+   */
+  stats?: Record<string, any>;
 }
 
 export interface PlayerProfile {
@@ -286,7 +303,7 @@ class PersistenceManager {
     }
   }
 
-  public endSession(outcome: 'victory' | 'defeat' | 'resigned', gameData: any): void {
+  public endSession(outcome: RunOutcome, gameData: any): void {
     try {
       const sessionData = this.getCurrentSession();
       if (!sessionData) return;
@@ -304,7 +321,11 @@ class PersistenceManager {
         blessingsGained: gameData.blessingsGained || [],
         fearsGained: gameData.fearsGained || [],
         coinsEarned: gameData.coinsEarned || 0,
-        selectedFortune: gameData.selectedFortune
+        selectedFortune: gameData.selectedFortune,
+        // New fields for area, category, and stats
+        area: gameData.area,
+        category: gameData.category || outcome,
+        stats: gameData.stats
       };
 
       this.addGameSession(gameSession);
@@ -461,5 +482,5 @@ export const createProfile = (name?: string) =>
 export const startGameSession = () => 
   persistenceManager.startSession();
 
-export const endGameSession = (outcome: 'victory' | 'defeat' | 'resigned', gameData: any) => 
+export const endGameSession = (outcome: RunOutcome, gameData: any) => 
   persistenceManager.endSession(outcome, gameData);

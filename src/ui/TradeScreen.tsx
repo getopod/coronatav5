@@ -257,7 +257,8 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   const curseRemovalCost = 100 + (curseRemovalCount * 50);
 
   return (
-    <div className="trade-screen">
+    <div className="trade-screen-root">
+      <div className="trade-screen">
       <div className="trade-header">
         <h1>Merchant's Shop</h1>
         <div className="coin-display">
@@ -415,6 +416,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
           onApplyBlessing={handleApplyBlessing}
         />
       )}
+      </div>
     </div>
   );
 };

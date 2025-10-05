@@ -49,9 +49,11 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
 
   if (!currentWander) {
     return (
-      <div className="wander-screen">
+      <div className="wander-screen-root">
+        <div className="wander-screen">
         <div className="wander-loading">
           <h2>The path reveals itself...</h2>
+        </div>
         </div>
       </div>
     );

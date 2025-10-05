@@ -27,6 +27,7 @@
   opacity: 0.8;
 }
 
+
 .back-btn {
   padding: 0.5rem 1rem;
   background: rgba(255, 255, 255, 0.1);
@@ -35,6 +36,14 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.back-btn:focus,
+.back-btn:focus-visible {
+  outline: 3px solid #FFD700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.25);
+  z-index: 10;
 }
 
 .back-btn:hover {
@@ -55,18 +64,31 @@
   gap: 1rem;
 }
 
+
 .run-item {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   padding: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s, box-shadow 0.3s cubic-bezier(.4,2,.6,1), transform 0.2s cubic-bezier(.4,2,.6,1);
+  position: relative;
 }
+
+.run-item:focus,
+.run-item:focus-visible {
+  outline: 3px solid #FFD700;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.25), 0 2px 12px 0 rgba(255,215,0,0.12);
+  z-index: 10;
+  background: rgba(255, 215, 0, 0.13);
+}
+
 
 .run-item:hover {
   background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 16px 0 rgba(255,215,0,0.10);
 }
 
 .run-item.selected {
@@ -107,11 +129,25 @@
   color: #E6E6FA;
 }
 
+
 .run-details {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   padding: 1.5rem;
+  animation: fadeSlideIn 0.5s cubic-bezier(.4,2,.6,1);
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18);
+}
+
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .run-details h3 {

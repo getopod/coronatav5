@@ -15,7 +15,7 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
 
   // Initialize player state
   const player: PlayerState = {
-    coins: 0,
+    coins: 50, // Set starting coins to 50
     shuffles: 3, // Starting shuffles
     discards: 2, // Starting discards
     score: 0,

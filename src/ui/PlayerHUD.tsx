@@ -150,6 +150,27 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
   // Dragging handlers for testing window
   const handleMouseDown = (e: React.MouseEvent) => {
+  // --- Dynamic style injection for testing window position ---
+  React.useEffect(() => {
+    if (!showTestingWindow) return;
+    const className = `testing-window-draggable--x${testingWindowPosition.x}y${testingWindowPosition.y}`;
+    const styleId = `testing-window-style-${className}`;
+    let styleTag = document.getElementById(styleId);
+    const css = `.${className} { left: ${testingWindowPosition.x}px !important; top: ${testingWindowPosition.y}px !important; }`;
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      styleTag.appendChild(document.createTextNode(css));
+      document.head.appendChild(styleTag);
+    } else {
+      styleTag.textContent = css;
+    }
+    return () => {
+      if (styleTag && styleTag.parentNode) {
+        styleTag.parentNode.removeChild(styleTag);
+      }
+    };
+  }, [testingWindowPosition.x, testingWindowPosition.y, showTestingWindow]);
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - testingWindowPosition.x,
@@ -295,8 +316,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
       {encounter && (
         <div className="encounter-section">
           <div className="encounter-header">
-            <span className={`encounter-type ${encounter.type}`}>
-              {encounter.type === 'fear' ? '😰' : '⚡'} {encounter.type.toUpperCase()}
+            <span className={`encounter-type ${encounter?.type || ''}`}>
+              {encounter?.type === 'fear' ? '😰' : '⚡'} {typeof encounter?.type === 'string' ? encounter.type.toUpperCase() : ''}
             </span>
             <span className="encounter-name">{encounter.title || encounter.name}</span>
           </div>
@@ -515,18 +536,11 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                 {/* Testing Window */}
                 {showTestingWindow && (
                   <div 
-                    className="testing-window-draggable"
-                    style={{
-                      left: `${testingWindowPosition.x}px`,
-                      top: `${testingWindowPosition.y}px`
-                    }}
+                    className={`testing-window-draggable testing-window-draggable--x${testingWindowPosition.x}y${testingWindowPosition.y}`}
                   >
                     <div 
                       className="testing-window-header"
                       onMouseDown={handleMouseDown}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleMouseDown(e as any); }}
                     >
                       <span>🔧 Testing Admin</span>
                       <button 
