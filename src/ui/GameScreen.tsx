@@ -68,7 +68,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const handleRestartEncounter = () => {
     if (window.engine && typeof window.engine.restartEncounter === 'function') {
       window.engine.restartEncounter();
-    } else if (window.engine && window.engine.state && window.engine.state.run) {
+    } else if (window.engine && window.engine.state && window.gameState.run) {
       // Naive reset: just re-emit stateChange
       window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
     }
@@ -77,9 +77,9 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const handleSkipEncounter = () => {
     if (window.engine && typeof window.engine.skipToNextEncounter === 'function') {
       window.engine.skipToNextEncounter();
-    } else if (window.engine && window.engine.state && window.engine.state.run) {
+    } else if (window.engine && window.engine.state && window.gameState.run) {
       // Naive: increment encounter and emit
-      window.engine.state.run.currentEncounter = (window.engine.state.run.currentEncounter || 0) + 1;
+      window.gameState.run.currentEncounter = (window.gameState.run.currentEncounter || 0) + 1;
       window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
     }
   };
@@ -1338,29 +1338,21 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     setDragOverPileId(null);
     setSelectedCardId(null);
   };
-  // --- ENGINE STATE SUBSCRIPTION ---
-  const [gameState, setGameState] = React.useState(engine?.state);
-  React.useEffect(() => {
-    if (!engine?.eventEmitter) return;
-    const handleStateChange = (newState: any) => setGameState({ ...newState });
-    engine.eventEmitter.on('stateChange', handleStateChange);
-    return () => engine.eventEmitter.off('stateChange', handleStateChange);
-  }, [engine]);
-
-  // Example: render piles and player state (now from gameState)
+  // Example: render piles and player state
   const piles = gameState.piles || {};
   // const player = gameState.player || {}; // Remove duplicate
+
 
   // Separate piles by type
   console.log('GameScreen - piles before separation:', piles);
   console.log('GameScreen - available pile types:', Object.values(piles).map((p: any) => p.type));
-
+  
   const pileArray = getPiles(piles);
   const tableauPiles = pileArray.filter((pile: any) => pile && pile.type === 'tableau').sort((a: any, b: any) => a.id.localeCompare(b.id));
   const deckPile = pileArray.find((pile: any) => pile && (pile.type === 'deck' || pile.type === 'stock'));
   const wastePile = pileArray.find((pile: any) => pile && pile.type === 'waste');
   const handPile = pileArray.find((pile: any) => pile && pile.type === 'hand');
-
+  
   console.log('GameScreen - deckPile found:', deckPile);
   console.log('GameScreen - deckPile cards:', deckPile?.cards?.length || 0);
   console.log('GameScreen - handPile found:', handPile);
