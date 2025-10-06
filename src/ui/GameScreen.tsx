@@ -68,7 +68,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const handleRestartEncounter = () => {
     if (window.engine && typeof window.engine.restartEncounter === 'function') {
       window.engine.restartEncounter();
-    } else if (window.engine && window.engine.state && window.gameState.run) {
+    } else if (window.engine && window.engine.state && window.engine.state.run) {
       // Naive reset: just re-emit stateChange
       window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
     }
@@ -77,9 +77,9 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const handleSkipEncounter = () => {
     if (window.engine && typeof window.engine.skipToNextEncounter === 'function') {
       window.engine.skipToNextEncounter();
-    } else if (window.engine && window.engine.state && window.gameState.run) {
+    } else if (window.engine && window.engine.state && window.engine.state.run) {
       // Naive: increment encounter and emit
-      window.gameState.run.currentEncounter = (window.gameState.run.currentEncounter || 0) + 1;
+      window.engine.state.run.currentEncounter = (window.engine.state.run.currentEncounter || 0) + 1;
       window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
     }
   };
@@ -1219,11 +1219,6 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
   // Pile click handler (for moving selected card to empty pile)
   const handlePileClick = (pileId: string) => {
     if (selectedCardId) {
-      // If we're in destination selection mode (highlightedDestinations), only allow move to highlighted
-      if (highlightedDestinations.length > 0 && !highlightedDestinations.includes(pileId)) {
-        triggerShake(selectedCardId);
-        return;
-      }
       // Block moves to deck pile (stock)
       const targetPile = getPiles(engine.state.piles).find((pile: any) => pile.id === pileId);
       if (targetPile && (targetPile.type === 'stock' || targetPile.type === 'deck')) {
@@ -1235,13 +1230,13 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       )?.id;
       if (fromPileId) {
         try {
+          console.log('GameScreen: Attempting pile move', { from: fromPileId, to: pileId, cardId: selectedCardId });
           engine.moveCard({ from: fromPileId, to: pileId, cardId: selectedCardId });
           setSelectedCardId(null);
-          setHighlightedDestinations([]);
         } catch (e) {
+          console.error('GameScreen: Pile move failed, triggering shake. Error:', e, { from: fromPileId, to: pileId, cardId: selectedCardId });
           triggerShake(selectedCardId);
           setSelectedCardId(null); // Deselect card after failed move
-          setHighlightedDestinations([]);
         }
       }
     }
@@ -1276,35 +1271,26 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     // Prevent double-click interference with normal selection by adding a small delay
     setTimeout(() => {
       setHighlightedDestinations([]);
-      if (!engine || typeof engine.getValidDestinationsForCard !== 'function') {
-        triggerShake(cardId);
-        setSelectedCardId(null);
-        return;
-      }
-      const validDestinations = engine.getValidDestinationsForCard(cardId);
-      if (!validDestinations || validDestinations.length === 0) {
-        triggerShake(cardId);
-        setSelectedCardId(null);
-        return;
-      }
-      if (validDestinations.length === 1) {
-        // Only one valid destination, move immediately
-        const fromPile = getPiles(engine.state.piles).find((pile: any) =>
-          Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
-        );
-        const fromPileId = fromPile && typeof fromPile === 'object' && 'id' in fromPile ? fromPile.id : undefined;
+      // Try to move to the first available foundation pile
+      const fromPile = getPiles(engine.state.piles).find((pile: any) =>
+        Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
+      );
+      const fromPileId = fromPile && typeof fromPile === 'object' && 'id' in fromPile ? fromPile.id : undefined;
+      const foundationPile = getPiles(engine.state.piles).find((pile: any) => pile.type === 'foundation');
+      if (fromPileId && foundationPile) {
         try {
-          engine.moveCard({ from: fromPileId, to: validDestinations[0], cardId });
+          console.log('GameScreen: Attempting double-click move', { from: fromPileId, to: foundationPile.id, cardId });
+          engine.moveCard({ from: fromPileId, to: foundationPile.id, cardId });
           setSelectedCardId(null);
         } catch (e) {
+          console.error('GameScreen: Double-click move failed, triggering shake. Error:', e, { from: fromPileId, to: foundationPile.id, cardId });
           triggerShake(cardId);
           setSelectedCardId(null);
         }
-        return;
+      } else {
+        triggerShake(cardId);
+        setSelectedCardId(null);
       }
-      // Multiple valid destinations: highlight them and wait for user to click
-      setHighlightedDestinations(validDestinations);
-      setSelectedCardId(cardId);
     }, 100);
   };
 

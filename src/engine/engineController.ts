@@ -9,8 +9,90 @@ import { gameModeProfiles } from './gameModeProfiles';
 import type { GameModeProfile } from './gameModeProfiles';
 import { integrateEnhancedScoring, EnhancedScoringSystem } from './enhancedScoring';
 import { FeatTrackingSystem } from './featTracking';
+import { checkEncounterCompletion, progressEncounter, checkRunCompletion } from './encounterSystem';
+
+export interface EngineControllerConfig {
+  registryConfig: RegistryConfig;
+  registryEntries: RegistryEntry[];
+  customHandlers?: Record<string, EffectHandler>;
+}
+
+export interface EnginePlugin {
+  id: string;
+  onRegister?: (controller: EngineController) => void;
+  onUnregister?: (controller: EngineController) => void;
+  onEvent?: (event: EngineEvent, controller: EngineController) => void;
+  effectHandlers?: Record<string, EffectHandler>;
+  uiConsumers?: ((event: EngineEvent) => void)[];
+}
 
 export class EngineController {
+  public config: GameModeProfile;
+  public logic: any;
+  // Save game state to localStorage (browser)
+  saveToLocalStorage(key: string = 'coronata_game_state') {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, this.saveState());
+      }
+    } catch (e) {
+      console.error('[EngineController] Failed to save to localStorage:', e);
+    }
+  }
+
+  // Load game state from localStorage (browser)
+  loadFromLocalStorage(key: string = 'coronata_game_state') {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const data = window.localStorage.getItem(key);
+        if (data) this.loadState(data);
+      }
+    } catch (e) {
+      console.error('[EngineController] Failed to load from localStorage:', e);
+    }
+  }
+
+  // Save game state to file (Node/electron)
+  saveToFile(path: string) {
+    try {
+      // Only works in Node/electron
+      const fs = typeof require !== 'undefined' ? require('fs') : null;
+      if (fs) {
+        fs.writeFileSync(path, this.saveState(), 'utf8');
+      }
+    } catch (e) {
+      console.error('[EngineController] Failed to save to file:', e);
+    }
+  }
+
+  // Load game state from file (Node/electron)
+  loadFromFile(path: string) {
+    try {
+      // Only works in Node/electron
+      const fs = typeof require !== 'undefined' ? require('fs') : null;
+      if (fs) {
+        const data = fs.readFileSync(path, 'utf8');
+        if (data) this.loadState(data);
+      }
+    } catch (e) {
+      console.error('[EngineController] Failed to load from file:', e);
+    }
+  }
+  // Switch game variant and reload config
+  switchVariant(variant: string, newConfig?: RegistryConfig, newEntries?: RegistryEntry[]) {
+    if (newConfig) {
+      newConfig.variant = variant;
+      this.state = loadRegistry(newConfig);
+      this.registryEntries = newEntries || this.registryEntries;
+      // Attach engineController to state.registry for effect handlers
+      if (this.state.registry) {
+        this.state.registry.engineController = this;
+      }
+    } else {
+      this.state.registry.variant = variant;
+    }
+    this.emitEvent('stateChange', this.state);
+  }
   public state: GameState;
   public effectEngine: EffectEngine;
   public eventEmitter: EventEmitter;
@@ -35,74 +117,122 @@ export class EngineController {
       handlers: { ...builtInHandlers, ...(config.customHandlers || {}) }
     });
     this.eventEmitter = new EventEmitter();
+    
     // Initialize feat tracking system
     this.featTracker = new FeatTrackingSystem();
+    
     // Track new game session
     this.featTracker.updateStats('gamesStarted', 1);
+    
     // Auto-integrate enhanced features based on game mode profile
     if (this.config.enableEnhancedScoring) {
       console.log(`Auto-integrating enhanced scoring for ${mode} mode`);
       integrateEnhancedScoring(this, mode);
     }
+    
     // Set up player defaults based on game mode
     if (this.config.enableHandManagement && this.config.defaultMaxHandSize) {
       if (this.state.player) {
         this.state.player.maxHandSize = this.config.defaultMaxHandSize;
       }
     }
+    
     this.wireEvents();
   }
 
-  /**
-   * Returns all valid destination pile IDs for a given cardId in the current state.
-   * Finds the pile containing the card, then checks all piles to see if a move is valid.
-   */
-  public getValidDestinationsForCard(cardId: string): string[] {
-    if (!this.state.piles) return [];
-    // Find the pile containing the card
-    let fromPileId: string | undefined = undefined;
-    for (const [pileId, pile] of Object.entries(this.state.piles)) {
-      const pileTyped = pile as Pile;
-      if (Array.isArray(pileTyped.cards) && pileTyped.cards.some((c: Card) => c.id === cardId)) {
-        fromPileId = pileId;
-        break;
-      }
-    }
-    if (!fromPileId) return [];
-    const validDestinations: string[] = [];
-    for (const [toPileId, toPile] of Object.entries(this.state.piles)) {
-      if (toPileId === fromPileId) continue; // Don't move to same pile
-      const move: Move = { from: fromPileId, to: toPileId, cardId };
-      try {
-        if (validateMove(move, this.state)) {
-          validDestinations.push(toPileId);
-        }
-      } catch (e) {
-        // Ignore errors, treat as invalid
-      }
-    }
-    return validDestinations;
+  switchGameMode(mode: string, logicModule?: any) {
+    this.config = gameModeProfiles[mode] || gameModeProfiles['klondike'];
+    this.logic = logicModule || null;
+    // Optionally reset state, registry, etc. as needed
+    this.emitEvent('modeChange', { mode, config: this.config });
   }
 
+  // Collect all active effects from registry entries, optionally filtered by context
+  getActiveEffects(state?: GameState, context?: string, moveData?: any): Effect[] {
+    const currentState = state || this.state;
+
+    // Get player's active exploits, curses, and fortunes
+    const activeRegistryIds = [
+      ...(currentState.player?.exploits || []),
+      ...(currentState.player?.curses || []),
+      ...(currentState.player?.fortunes || [])
+    ];
+    if (currentState.player?.activeFortune) {
+      activeRegistryIds.push(currentState.player.activeFortune);
+    }
+    
+    // Collect blessing IDs from all cards
+    const cardBlessingIds: string[] = [];
+    Object.values(currentState.piles || {}).forEach(pile => {
+      pile.cards.forEach(card => {
+        if (card.blessings) {
+          cardBlessingIds.push(...card.blessings);
+        }
+      });
+    });
+    
+    // Combine all active registry IDs
+    const allActiveIds = [...activeRegistryIds, ...cardBlessingIds];
+    
+    // Filter registry entries to only active ones
+    const activeEntries = this.registryEntries.filter(entry => 
+      allActiveIds.includes(entry.id)
+    );
+    
+    console.log('Active registry entries:', activeEntries.length, 'out of', this.registryEntries.length, '(including card blessings)');
+    
+    // Map RegistryEffect to Effect, but skip event-based effects (handled by event system)
+    const allEffects = activeEntries.flatMap(entry =>
+      (entry.effects || [])
+        .filter(eff => !(eff.condition && typeof eff.condition === 'object' && eff.condition.event))
+        .map(eff => ({
+          type: eff.action, // map 'action' to 'type'
+          target: eff.target,
+          value: eff.value,
+          condition: eff.condition,
+          meta: { 
+            context, 
+            moveData, 
+            sourceEntry: entry.id,
+            sourceLabel: entry.label 
+          },
+          // Add other fields as needed
+        }))
+    );
+
+    // If no context filtering requested, return all effects
+    if (!context || !currentState || !moveData) {
+      return allEffects;
+    }
+
+    // Filter effects for move context
+    if (context === 'move') {
+      return allEffects.filter(effect => this.checkMoveEffectConditions(effect, moveData));
+    }
+
+    return allEffects;
+  }
+
+  // Helper method to check move effect conditions
   private checkMoveEffectConditions(effect: Effect, moveData: any): boolean {
     if (!effect.condition) return true;
     if (typeof effect.condition === 'function') return effect.condition(this.state);
-
+    
     const { card, toPile } = moveData;
-
+    
     // Check target pile type matching
     if (!this.checkTargetPileCondition(effect, toPile)) return false;
-
+    
     // Check card-specific conditions if card exists
     if (!this.checkCardConditions(effect, card)) return false;
-
+    
     // Event-based conditions would be handled elsewhere (on_play_from_hand, etc.)
     // For now, skip event conditions in move context
     const condition = effect.condition as any;
     if (condition?.event) {
       return false; // These need special handling
     }
-
+    
     return true;
   }
 
@@ -320,6 +450,36 @@ export class EngineController {
       } else {
         console.log('Base scoring: Skipped because rules =', this.config?.rules);
       }
+      // Win/Loss
+      if (this.winLossDetector) {
+        if (this.winLossDetector.checkWin(this.state)) {
+          this.emitEvent('win', this.state);
+        }
+        if (this.winLossDetector.checkLoss(this.state)) {
+          this.emitEvent('loss', this.state);
+        }
+      }
+      // Undo/Redo
+      if (this.undoRedoManager) {
+        this.undoRedoManager.recordMove(event.payload as Move);
+      }
+      // UI hooks: can add event consumers here
+    });
+    // On state change: apply effects, check win/loss
+  this.eventEmitter.on('stateChange', () => {
+      this.applyActiveEffects();
+      if (this.winLossDetector) {
+        if (this.winLossDetector.checkWin(this.state)) {
+          this.emitEvent('win', this.state);
+        }
+        if (this.winLossDetector.checkLoss(this.state)) {
+          this.emitEvent('loss', this.state);
+        }
+      }
+      // UI hooks: can add event consumers here
+    });
+    // On encounter events: handle progression
+    this.eventEmitter.on('encounter_completed', (event: EngineEvent) => {
       console.log('Encounter completed:', event.payload);
       // UI can show encounter completion feedback here
     });
