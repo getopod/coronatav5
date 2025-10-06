@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { GameState } from '../engine/types';
 import { EncounterFlowManager } from '../engine/encounterFlow';
-import TradeScreen from './TradeScreen';
-import WanderScreen from './WanderScreen';
-import { registry } from '../registry/index';
+// Removed unused imports: TradeScreen, WanderScreen, registry
 import './EncounterFlowUI.css';
 
 interface EncounterFlowUIProps {
   gameState: GameState;
   engine: any;
   onFlowComplete: () => void;
+  onPhaseChange?: (phase: string) => void;
 }
 
 interface ActivityUIState {
@@ -22,7 +21,8 @@ interface ActivityUIState {
 export const EncounterFlowUI: React.FC<EncounterFlowUIProps> = ({ 
   gameState, 
   engine, 
-  onFlowComplete 
+  onFlowComplete, 
+  onPhaseChange
 }) => {
   const [activityState, setActivityState] = useState<ActivityUIState>({
     phase: 'complete',
@@ -41,10 +41,16 @@ export const EncounterFlowUI: React.FC<EncounterFlowUIProps> = ({
         loading: false,
         error: null
       });
+      if (typeof onPhaseChange === 'function') {
+        onPhaseChange(encounterFlow.currentActivity.type);
+      }
     } else if (encounterFlow?.phase === 'complete') {
       onFlowComplete();
+      if (typeof onPhaseChange === 'function') {
+        onPhaseChange('complete');
+      }
     }
-  }, [encounterFlow, onFlowComplete]);
+  }, [encounterFlow, onFlowComplete, onPhaseChange]);
 
   const completeCurrentActivity = (results: any) => {
     // Create new flow manager instance and complete activity
@@ -82,77 +88,13 @@ export const EncounterFlowUI: React.FC<EncounterFlowUIProps> = ({
 
   return (
     <div className="encounter-flow-ui">
-      {activityState.phase === 'trade' && (
-        <TradeScreen
-          onBack={() => completeCurrentActivity({ skipped: true })}
-          onPurchase={(item, cost) => {
-            // Update game state with purchase
-            const purchases = [{ item, cost }];
-            completeCurrentActivity({ purchases });
-          }}
-          onSell={(item, value) => {
-            // Update game state with sale
-            const sales = [{ item, value }];
-            completeCurrentActivity({ sales });
-          }}
-          onBlessingApplication={(blessingId, cardId) => {
-            // Handle blessing application
-            console.log('Applying blessing', blessingId, 'to card', cardId);
-          }}
-          playerCoin={gameState.player?.coins || 0}
-          equippedExploits={gameState.player?.exploits?.map(id => 
-            registry.exploit?.find((e: any) => e.id === id)).filter((item): item is any => item !== undefined) || []}
-          gameState={gameState}
-        />
-      )}
-      
-      {activityState.phase === 'wander' && (
-        <WanderScreen 
-          onChoiceMade={(wanderId, choice, outcome) => {
-            completeCurrentActivity({ 
-              choice,
-              wanderId,
-              outcome 
-            });
-          }}
-          onBack={() => {
-            setActivityState(prev => ({
-              ...prev,
-              phase: 'complete'
-            }));
-          }}
-        />
-      )}
-      
       {activityState.phase === 'fortune-swap' && (
         <FortuneSwapActivity 
           data={activityState.data}
           onComplete={completeCurrentActivity}
         />
       )}
-
-      {/* Activity Queue Display */}
-  {(encounterFlow.queuedActivities?.length ?? 0) > 0 && (
-        <div className="activity-queue">
-          <h4>Upcoming Activities:</h4>
-          <div className="queue-items">
-            {encounterFlow.queuedActivities.map((activity: any) => {
-              const getActivityIcon = (type: string) => {
-                if (type === 'trade') return '💰';
-                if (type === 'wander') return '🚶';
-                return '🔮';
-              };
-              
-              return (
-                <span key={activity.id} className={`queue-item ${activity.type}`}>
-                  {getActivityIcon(activity.type)}
-                  {activity.type}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* TradeScreen and WanderScreen overlays are now handled by GameScreen */}
     </div>
   );
 };

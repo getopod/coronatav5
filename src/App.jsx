@@ -5,6 +5,7 @@ import RunHistoryScreen from './ui/RunHistoryScreen';
 import { EngineController } from './engine/engineController';
 import { startGameSession } from './engine/persistenceManager';
 import { registry } from './registry/index';
+import { populateKeywordRegistry } from './registry/keyword-registry';
 import { createDefaultCoronataPiles } from './engine/gameInitialization';
 // Helper to generate a RegistryConfig for Coronata with piles, cards, and initialCards
 function createCoronataRegistryConfig() {
@@ -53,6 +54,10 @@ import './App.css';
 
 
 function App() {
+  // Ensure keywordRegistry is populated at startup
+  React.useEffect(() => {
+    populateKeywordRegistry();
+  }, []);
   // Always Coronata mode, always show welcome first
   const [showCoronataWelcome, setShowCoronataWelcome] = useState(true);
   const [showFortuneSelection, setShowFortuneSelection] = useState(false);

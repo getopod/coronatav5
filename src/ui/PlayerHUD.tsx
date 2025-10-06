@@ -29,7 +29,7 @@ function getDiscardedState(gameState: any, handPile: any, deckPile: any, player:
         ...handPile,
         cards: newHandCards
       },
-      deck: {
+      stock: {
         ...deckPile,
         cards: remainingDeckCards
       }
@@ -43,6 +43,7 @@ function getDiscardedState(gameState: any, handPile: any, deckPile: any, player:
 import React from 'react';
 import { GameState } from '../engine/types'; // Changed from core_engine to engine
 import { registry } from '../registry/index';
+import { keywordRegistry, generateKeywordDescription } from '../registry/keyword-registry';
 import { useEngineEvent } from './EngineEventProvider';
 import { EncounterFlowUI } from './EncounterFlowUI';
 import './PlayerHUD.css';
@@ -56,6 +57,7 @@ export interface PlayerHUDProps {
   onOpenWander?: () => void;
   onNextEncounter?: () => void;
   onOpenDebugPanel?: () => void;
+  expanded?: boolean; // If true, HUD is expanded for overlays
 }
 
 export const PlayerHUD: React.FC<PlayerHUDProps> = ({ 
@@ -66,7 +68,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onOpenTrade,
   onOpenWander,
   onNextEncounter,
-  onOpenDebugPanel
+  onOpenDebugPanel,
+  expanded = false
 }) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
@@ -79,8 +82,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   // Modal and tooltip state
   const [showModal, setShowModal] = React.useState(false);
   const [modalContent, setModalContent] = React.useState<any[]>([]);
-  const [modalTitle, setModalTitle] = React.useState('');
-  const [showFortunePopup, setShowFortunePopup] = React.useState(false);
+  // Removed modalTitle state as it is no longer used
   
   // Testing and options state
   const [showTestingWindow, setShowTestingWindow] = React.useState(false);
@@ -152,6 +154,13 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
   // Dragging handlers for testing window
   const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - testingWindowPosition.x,
+      y: e.clientY - testingWindowPosition.y
+    });
+  };
+
   // --- Dynamic style injection for testing window position ---
   React.useEffect(() => {
     if (!showTestingWindow) return;
@@ -168,17 +177,9 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
       styleTag.textContent = css;
     }
     return () => {
-      if (styleTag && styleTag.parentNode) {
-        styleTag.parentNode.removeChild(styleTag);
-      }
+      styleTag?.parentNode?.removeChild(styleTag);
     };
   }, [testingWindowPosition.x, testingWindowPosition.y, showTestingWindow]);
-    setIsDragging(true);
-    setDragOffset({
-      x: e.clientX - testingWindowPosition.x,
-      y: e.clientY - testingWindowPosition.y
-    });
-  };
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging) {
@@ -272,32 +273,40 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
     return fortunes;
   };
   
-  // Handle click to show modal
+  // Handle click to show modal (unified for all effect types)
   const handleEffectClick = (type: string) => {
     let items: any[] = [];
-    let title = '';
-    
+    let typeKey = '';
     switch (type) {
       case 'exploits':
         items = getPlayerExploits();
-        title = 'Active Exploits';
+        typeKey = 'exploit';
         break;
       case 'curses':
         items = getPlayerCurses();
-        title = 'Active Curses';
+        typeKey = 'curse';
         break;
       case 'blessings':
         items = getPlayerBlessings();
-        title = 'Active Blessings';
+        typeKey = 'blessing';
         break;
       case 'fortunes':
         items = getPlayerFortunes();
-        title = 'Active Fortunes';
+        typeKey = 'fortune';
         break;
     }
-    
-    setModalContent(items);
-    setModalTitle(title);
+    // For each item, try to find the keyword registry entry
+    const keywordItems = items.map((item: any) => {
+      const keywordEntry = keywordRegistry.find(
+        (k: any) => k.id === item.id && k.type === typeKey
+      );
+      return {
+        ...item,
+        keywordDescription: keywordEntry ? generateKeywordDescription(keywordEntry.keywords) : null,
+        keywordEntry
+      };
+    });
+    setModalContent(keywordItems);
     setShowModal(true);
   };
 
@@ -313,7 +322,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   }, [player.score, encounter?.scoreGoal]);
 
   return (
-    <div className="player-hud">
+    <div className={"player-hud" + (expanded ? " player-hud-expanded" : "") }>
       {/* Current Encounter Info */}
       {encounter && (
         <div className="encounter-section">
@@ -415,11 +424,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                       <button
                         className={`effect-count ${fortuneCount > 0 ? 'has-items clickable' : ''}`}
                         type="button"
-                        onClick={() => {
-                          if (fortuneCount > 0) {
-                            setShowFortunePopup(!showFortunePopup);
-                          }
-                        }}
+                        onClick={() => fortuneCount > 0 && handleEffectClick('fortunes')}
                       >
                         <div className="resource-header">
                           <span className="effect-icon">🍀</span>
@@ -480,64 +485,23 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                   </button>
                 </div>
 
-                {/* Fortune Popup */}
-                {showFortunePopup && selectedFortune && (
-                  <div className="fortune-popup">
-                    <div className="fortune-popup-content">
-                      <div className="fortune-popup-header">
-                        <h3>{selectedFortune.label}</h3>
-                        <button 
-                          className="fortune-popup-close" 
-                          onClick={() => setShowFortunePopup(false)}
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div className="fortune-popup-body">
-                        <h3>{selectedFortune.description}</h3>
-                        {selectedFortune.effects && selectedFortune.effects.length > 0 && (
-                          <div className="fortune-effects">
-                            <h3>Effects:</h3>
-                            {selectedFortune.effects.map((effect: any, effectIndex: number) => (
-                              <h3 key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
-                                {effect.action} {effect.target} {effect.value && `(${effect.value})`}
-                              </h3>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Fortune Popup removed; all effect popups use unified modal */}
 
-                {/* Modal */}
+                {/* Modal: Only modal-item contents (header and effect) */}
                 {showModal && (
-                  <div className="effect-modal-overlay">
-                    <section className="effect-modal" aria-label="Effect Modal">
-                      <button className="modal-close modal-close-abs" type="button" aria-label="Close modal" onClick={() => setShowModal(false)}>&times;</button>
-                      <div className="modal-header">
-                        <h3>{modalTitle}</h3>
-                        <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+                  <div>
+                    {modalContent.map((item, idx) => (
+                      <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
+                        <div className="modal-item-header">
+                          <span className="modal-item-category">{item.category ? item.category.toUpperCase() : ''}</span>
+                          {item.category ? ' - ' : ''}
+                          <span className="modal-item-name">{item.label}</span>
+                        </div>
+                        <div className="modal-item-effect">
+                          {item.description}
+                        </div>
                       </div>
-                      <div className="modal-content">
-                        {modalContent.map((item, idx) => (
-                          <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
-                            <div className="modal-item-title">{item.label}</div>
-                            <div className="modal-item-description">{item.description}</div>
-                            {item.effects && item.effects.length > 0 && (
-                              <div className="modal-item-effects">
-                                <strong>Effects:</strong>
-                                {item.effects.map((effect: any, effectIndex: number) => (
-                                  <div key={typeof effect === 'string' ? effect : effectIndex + '-' + String(effect)} className="effect-detail">
-                                    {effect.action} {effect.target} {effect.value && `(${effect.value})`}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </section>
+                    ))}
                   </div>
                 )}
 
@@ -546,13 +510,16 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                   <div 
                     className={`testing-window-draggable testing-window-draggable--x${testingWindowPosition.x}y${testingWindowPosition.y}`}
                   >
-                    <div 
-                      className="testing-window-header"
-                      onMouseDown={handleMouseDown}
-                    >
-                      <span>🔧 Testing Admin</span>
+                    <div className="testing-window-header-row">
+                      <button
+                        type="button"
+                        className="testing-window-header-btn"
+                        onMouseDown={handleMouseDown}
+                      >
+                        <span>🔧 Testing Admin</span>
+                      </button>
                       <button 
-                        className="close-testing"
+                        className="close-testing close-testing-margin"
                         onClick={() => setShowTestingWindow(false)}
                       >
                         ×

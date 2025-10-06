@@ -6,16 +6,10 @@ export interface HowToPlayProps {
 }
 
 export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['quick-start']));
-
+  // Only one section can be expanded at a time; all collapsed by default
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId);
-    } else {
-      newExpanded.add(sectionId);
-    }
-    setExpandedSections(newExpanded);
+    setExpandedSection(prev => (prev === sectionId ? null : sectionId));
   };
   return (
     <div className="how-to-play">
@@ -33,18 +27,15 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
               your path to victory. Master the art of patience while wielding powerful registry items,
               confronting fearsome challenges, and building an unstoppable deck that defies the odds.
             </p>
-            <p>
-              <em>Will you become a legendary solitaire master, or will the cards claim another victim?</em>
-            </p>
           </section>
 
           {/* Quick Start Guide */}
           <section className="tutorial-section">
             <div className="section-header" onClick={() => toggleSection('quick-start')}>
-              <h2>🚀 Quick Start Guide (Essential Reading)</h2>
-              <span className={`expand-icon ${expandedSections.has('quick-start') ? 'expanded' : ''}`}>▼</span>
+              <h2>Quick Start</h2>
+              <span className={`expand-icon ${expandedSection === 'quick-start' ? 'expanded' : ''}`}>▼</span>
             </div>
-            {expandedSections.has('quick-start') && (
+            {expandedSection === 'quick-start' && (
               <div className="section-content">
                 <div className="tutorial-step">
                   <h3>Step 1: Choose Your Fortune</h3>
@@ -55,7 +46,6 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                     <li><strong>Resource Hoarder:</strong> Extra shuffles and discards</li>
                   </ul>
                 </div>
-
                 <div className="tutorial-step">
                   <h3>Step 2: Master Basic Card Movement</h3>
                   <p>The core of Coronata is still Klondike solitaire:</p>
@@ -66,7 +56,6 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                     <li><strong>Stack Moves:</strong> Move properly sequenced groups together</li>
                   </ul>
                 </div>
-
                 <div className="tutorial-step">
                   <h3>Step 3: Understand Your Resources</h3>
                   <p>You start with limited resources that refresh each encounter:</p>
@@ -77,7 +66,6 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                     <li><strong>Hand Size:</strong> 5 cards (upgradeable)</li>
                   </ul>
                 </div>
-
                 <div className="tutorial-step">
                   <h3>Step 4: Win Your First Encounter</h3>
                   <p>Each encounter has a score goal that increases over time:</p>
@@ -92,57 +80,17 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             )}
           </section>
 
-          {/* Advanced Strategy */}
-          <section className="tutorial-section">
-            <div className="section-header" onClick={() => toggleSection('advanced')}>
-              <h2>⚔️ Advanced Strategy & Registry Items</h2>
-              <span className={`expand-icon ${expandedSections.has('advanced') ? 'expanded' : ''}`}>▼</span>
-            </div>
-            {expandedSections.has('advanced') && (
-              <div className="section-content">
-                <div className="strategy-section">
-                  <h3>Registry Items Overview</h3>
-                  <div className="registry-overview">
-                    <div className="registry-type">
-                      <h4>🔮 Fortunes (Run-Level)</h4>
-                      <p>Persistent modifiers chosen at run start and swapped after Dangers. Define your core strategy.</p>
-                    </div>
-                    <div className="registry-type">
-                      <h4>⚔️ Exploits (Build Power)</h4>
-                      <p>Powerful passive effects (max 4 equipped). Examples: bonus scoring, extra resources, special moves.</p>
-                    </div>
-                    <div className="registry-type">
-                      <h4>✨ Blessings (Card Upgrades)</h4>
-                      <p>Permanent upgrades applied to individual cards. Apply to Kings, Aces, or frequently played cards.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="strategy-section">
-                  <h3>Trading Strategy</h3>
-                  <p><strong>Critical:</strong> Once you leave Trade, you cannot return! Plan purchases carefully.</p>
-                  <ul>
-                    <li><strong>Early Game:</strong> Focus on reliable scoring and resource generation</li>
-                    <li><strong>Mid Game:</strong> Build synergies between your Fortune and Exploits</li>
-                    <li><strong>Late Game:</strong> Optimize for your specific playstyle</li>
-                    <li><strong>Rerolls:</strong> Cost 50 coins +25 per reroll (escalating)</li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </section>
-
           {/* Complete Rules Reference */}
           <section className="tutorial-section">
             <div className="section-header" onClick={() => toggleSection('rules')}>
-              <h2>📚 Complete Rules Reference</h2>
-              <span className={`expand-icon ${expandedSections.has('rules') ? 'expanded' : ''}`}>▼</span>
+              <h2>Structure</h2>
+              <span className={`expand-icon ${expandedSection === 'rules' ? 'expanded' : ''}`}>▼</span>
             </div>
-            {expandedSections.has('rules') && (
+            {expandedSection === 'rules' && (
               <div className="section-content">
                 <div className="rules-grid">
                   <div className="rule-card">
-                    <h3>🏔️ Run Structure</h3>
+                    <h3>🏔️ Structure</h3>
                     <ul>
                       <li><strong>5 Trials, 15 Encounters:</strong> Fear → Fear → Danger × 5</li>
                       <li><strong>Victory:</strong> Meet score goals to progress</li>
@@ -151,9 +99,27 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                       <li><strong>Final Boss:</strong> Usurper encounter</li>
                     </ul>
                   </div>
-
+                <div className="feature-section">
+                  <h3>🎯 After Fear Encounters</h3>
+                  <p>
+                    You receive <strong>1 Trade + 2 Wander events</strong> in random order.
+                    Wanders are randomly selected by the game - you choose responses, not events.
+                    <em> Plan purchases carefully - timing is everything!</em>
+                  </p>
+                  <h3>⚡ After Danger Encounters</h3>
+                  <p>
+                    <strong>Fortune swap</strong> - you <strong>must</strong> exchange your current Fortune for a new one.
+                    Plus <strong>50% chance for bonus Trade</strong> opportunity.
+                    Use this to adapt your strategy mid-run!
+                  </p>
+                  <h3>🏆 Final Challenge</h3>
+                  <p>
+                    After completing all 15 encounters, face the <strong>Usurper</strong> - the ultimate boss.
+                    Your build, resources, and choices determine victory or defeat.
+                  </p>
+                </div>
                   <div className="rule-card">
-                    <h3>🃏 Card Rules</h3>
+                    <h3>🃏 Moves</h3>
                     <ul>
                       <li><strong>Tableau:</strong> Descending, alternating colors</li>
                       <li><strong>Foundation:</strong> Ascending by suit (2× score)</li>
@@ -161,145 +127,115 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                       <li><strong>Stack Moves:</strong> Properly sequenced groups</li>
                     </ul>
                   </div>
-
-                  <div className="rule-card">
-                    <h3>💰 Economy</h3>
-                    <ul>
-                      <li><strong>Starting:</strong> 50 coins</li>
-                      <li><strong>Rewards:</strong> 25/40/60 per encounter</li>
-                      <li><strong>Shuffles:</strong> 3 per encounter</li>
-                      <li><strong>Discards:</strong> 3 per encounter</li>
-                    </ul>
-                  </div>
                 </div>
               </div>
             )}
           </section>
 
-          <section className="coronata-features">
-            <h2>Registry Items</h2>
-            
-            <div className="feature-section">
-              <h3>🔮 Fortunes</h3>
-              <p>
-                Run-level modifiers chosen at start and optionally swapped after Dangers. 
-                Only one Fortune active at a time, providing persistent effects throughout the run.
-              </p>
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('registry-items')}>
+              <h2>Mechanics</h2>
+              <span className={`expand-icon ${expandedSection === 'registry-items' ? 'expanded' : ''}`}>▼</span>
             </div>
-
-            <div className="feature-section">
-              <h3>⚔️ Exploits</h3>
-              <p>
-                Persistent items with passive or triggered effects (max 4 equipped). 
-                Examples include bonus scoring, extra shuffles, or new movement rules.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>✨ Blessings</h3>
-              <p>
-                Permanent card upgrades that attach to specific cards. Purchase blessings in Trade, 
-                then apply them to individual cards in your deck. Blessed cards show sparkle effects 
-                and provide enhanced benefits when played.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>😈 Curses</h3>
-              <p>
-                Negative modifiers that restrict actions or impose costs. Applied during 
-                encounters and can usually be removed through trading.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>😨 Fears</h3>
-              <p>
-                Lightweight encounter modifiers for Fear encounters. Make encounters 
-                more challenging with specific restrictions or effects.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>⚠️ Dangers</h3>
-              <p>
-                Heavyweight encounter modifiers for Danger encounters. Multi-effect 
-                challenges that significantly change gameplay mechanics.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>🚶 Wanders</h3>
-              <p>
-                Narrative events with choice-based outcomes. <strong>The game randomly selects 
-                which wander you encounter</strong> - you choose how to respond, not which event occurs.
-                Present options like gaining coins, drawing cards, or receiving items.
-              </p>
-            </div>
-
-            <div className="feature-section">
-              <h3>🏆 Feats</h3>
-              <p>
-                Trackable achievements awarded for meeting specific objectives during runs. 
-                Each feat provides coin and score rewards when completed.
-              </p>
-            </div>
+            {expandedSection === 'registry-items' && (
+              <div className="section-content">
+                <div className="feature-section">
+                  <h3>🔮 Fortunes</h3>
+                  <p>
+                    Run-level modifiers chosen at start and optionally swapped after Dangers. 
+                    Only one Fortune active at a time, providing persistent effects throughout the run.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>⚔️ Exploits</h3>
+                  <p>
+                    Persistent items with passive or triggered effects (max 4 equipped). 
+                    Examples include bonus scoring, extra shuffles, or new movement rules.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>✨ Blessings</h3>
+                  <p>
+                    Permanent card upgrades that attach to specific cards. Purchase blessings in Trade, 
+                    then apply them to individual cards in your deck. Blessed cards show sparkle effects 
+                    and provide enhanced benefits when played.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>😈 Curses</h3>
+                  <p>
+                    Negative modifiers that restrict actions or impose costs. Applied during 
+                    encounters and can usually be removed through trading.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>😨 Fears</h3>
+                  <p>
+                    Lightweight encounter modifiers for Fear encounters. Make encounters 
+                    more challenging with specific restrictions or effects.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>⚠️ Dangers</h3>
+                  <p>
+                    Heavyweight encounter modifiers for Danger encounters. Multi-effect 
+                    challenges that significantly change gameplay mechanics.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>🚶 Wanders</h3>
+                  <p>
+                    Narrative events with choice-based outcomes. <strong>The game randomly selects 
+                    which wander you encounter</strong> - you choose how to respond, not which event occurs.
+                    Present options like gaining coins, drawing cards, or receiving items.
+                  </p>
+                </div>
+                <div className="feature-section">
+                  <h3>🏆 Feats</h3>
+                  <p>
+                    Trackable achievements awarded for meeting specific objectives during runs. 
+                    Each feat provides coin and score rewards when completed.
+                  </p>
+                </div>
+              </div>
+            )}
           </section>
 
-          <section className="progression-flow">
-            <h2>⚠️ Critical: Your Decision Points</h2>
-            <div className="feature-section">
-              <h3>🎯 After Fear Encounters</h3>
-              <p>
-                You receive <strong>1 Trade + 2 Wander events</strong> in random order.
-                <strong>⚠️ CRITICAL:</strong> Once you leave the Trade window, you cannot return!
-                Wanders are randomly selected by the game - you choose responses, not events.
-                <em>Plan purchases carefully - timing is everything!</em>
-              </p>
-
-              <h3>⚡ After Danger Encounters</h3>
-              <p>
-                <strong>Mandatory Fortune swap</strong> - exchange your current Fortune for a new one.
-                Plus <strong>50% chance for bonus Trade</strong> opportunity.
-                Use this to adapt your strategy mid-run!
-              </p>
-
-              <h3>🏆 Final Challenge</h3>
-              <p>
-                After completing all 15 encounters, face the <strong>Usurper</strong> - the ultimate boss.
-                Your build, resources, and choices determine victory or defeat.
-              </p>
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('beginner-tips')}>
+              <h2>Tips</h2>
+              <span className={`expand-icon ${expandedSection === 'beginner-tips' ? 'expanded' : ''}`}>▼</span>
             </div>
-          </section>
-
-          <section className="beginner-tips">
-            <h2>💡 Beginner Tips</h2>
-            <div className="tips-grid">
-              <div className="tip-card">
-                <h3>🎯 Focus on Foundations</h3>
-                <p>Foundation plays score 2× points and are your primary victory path. Prioritize building suits over complex tableau maneuvers.</p>
+            {expandedSection === 'beginner-tips' && (
+              <div className="section-content">
+                <div className="tips-grid">
+                  <div className="tip-card">
+                    <h3>🎯 Play where you want</h3>
+                    <p>Foundation plays score 2× and 3x if that card has not been played to a Tableau that encounter, so no need to worry about missing out on points!</p>
+                  </div>
+                  <div className="tip-card">
+                    <h3>🪙 Save Early, Spend Wisely</h3>
+                    <p>Don't blow your starting coins on the first trade. Save for powerful items that appear later in your run.</p>
+                  </div>
+                  <div className="tip-card">
+                    <h3>🔮 Choose Fortunes Carefully</h3>
+                    <p>Your starting Fortune defines your playstyle. Some favor aggressive foundation building, others enable complex tableau strategies.</p>
+                  </div>
+                  <div className="tip-card">
+                    <h3>⚔️ Build Synergies</h3>
+                    <p>Exploits work best in combination. Look for items that complement your Fortune and playing style.</p>
+                  </div>
+                  <div className="tip-card">
+                    <h3>✨ Bless Key Cards</h3>
+                    <p>Apply blessings to cards you play frequently (Kings for empty columns, Aces for foundations, high-value cards).</p>
+                  </div>
+                  <div className="tip-card">
+                    <h3>🎲 Embrace the Chaos</h3>
+                    <p>Every run is different! Failed runs teach you more than successful ones. Learn from each attempt.</p>
+                  </div>
+                </div>
               </div>
-              <div className="tip-card">
-                <h3>🪙 Save Early, Spend Wisely</h3>
-                <p>Don't blow your starting coins on the first trade. Save for powerful items that appear later in your run.</p>
-              </div>
-              <div className="tip-card">
-                <h3>🔮 Choose Fortunes Carefully</h3>
-                <p>Your starting Fortune defines your playstyle. Some favor aggressive foundation building, others enable complex tableau strategies.</p>
-              </div>
-              <div className="tip-card">
-                <h3>⚔️ Build Synergies</h3>
-                <p>Exploits work best in combination. Look for items that complement your Fortune and playing style.</p>
-              </div>
-              <div className="tip-card">
-                <h3>✨ Bless Key Cards</h3>
-                <p>Apply blessings to cards you play frequently (Kings for empty columns, Aces for foundations, high-value cards).</p>
-              </div>
-              <div className="tip-card">
-                <h3>🎲 Embrace the Chaos</h3>
-                <p>Every run is different! Failed runs teach you more than successful ones. Learn from each attempt.</p>
-              </div>
-            </div>
+            )}
           </section>
 
           <section className="resources">

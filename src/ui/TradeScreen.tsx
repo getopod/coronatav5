@@ -360,7 +360,6 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
 
         {selectedTab === 'upgrades' && (
           <div className="upgrades-section">
-            <h3>Run Upgrades</h3>
             <div className="items-grid">
               {upgrades.map((upgrade) => (
                 <div key={upgrade.id} className="trade-item upgrade">
@@ -382,7 +381,6 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
               ))}
             </div>
             
-            <h3>Services</h3>
             <div className="services-grid">
               <div className="service-item">
                 <h4>Curse Removal</h4>

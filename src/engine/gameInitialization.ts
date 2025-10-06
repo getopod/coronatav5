@@ -17,20 +17,22 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
   const player: PlayerState = {
     coins: 50, // Set starting coins to 50
     shuffles: 3, // Starting shuffles
-    discards: 2, // Starting discards
+    discards: 3, // Starting discards (per master doc)
     score: 0,
     exploits: [],
     curses: [],
     blessings: [],
-    activeFortune: undefined
+    activeFortune: undefined,
+    maxHandSize: 5, // Per master doc
+    maxExploitSlots: 4 // Per master doc
   };
 
   // Initialize run state with balanced configuration
   const encounterConfig = {
     totalTrials: 5,
     encountersPerTrial: 3,
-    baseScoreGoal: 112, // Fixed to working value 
-    scoreGoalIncrease: 0, // We use calculateEncounterGoal function instead
+    baseScoreGoal: 0, // Not used, scoring handled by enhancedScoring.ts
+    scoreGoalIncrease: 0, // Not used, scoring handled by enhancedScoring.ts
     fearWeight: 0.67 // 2/3 fear, 1/3 danger per trial
   };
   
@@ -171,7 +173,6 @@ export function createDefaultCoronataPiles() {
 // Helper function to check if engine is already initialized for Coronata
 export function isCoronataInitialized(engineController: any): boolean {
   return !!(
-    engineController.state?.run &&
     engineController.state?.run?.encounter &&
     engineController.state?.player &&
     engineController.scoringSystem?.getEncounterProgress

@@ -3,13 +3,13 @@
 .trade-header {
   display: flex;
   justify-content: space-between;
+  columns: .5fr 2fr;
   align-items: center;
-  width: 100%;
-  margin-bottom: 4px;
+  gap: 10px;
 }
 
 .trade-header h1 {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: bold;
   background: linear-gradient(45deg, #4a90e2, #7bb3f0);
   -webkit-background-clip: text;
@@ -17,6 +17,7 @@
   background-clip: text;
   text-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
   margin: 0;
+  margin-bottom: 0px;
 }
 
 .coin-display {
@@ -30,42 +31,51 @@
 }
 
 .coin-icon {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .coin-amount {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: bold;
   color: #4a90e2;
 }
 
 .trade-screen-root {
-  width: 100vw;
-  height: 100vh;
-  max-width: 390px;
+  width: 390px;
+  height: min(654px, 100vh);
+  max-height: 100vh;
+  max-width: 100vw;
   position: absolute;
   top: 50%;
   left: 50%;
   padding-inline: min(5vw, 32px);
   box-sizing: border-box;
-  transform: translate(-50%, -50%) scale(calc(min(1, (90vw - 2 * min(5vw, 32px)) / 390, 90vh / 654)));
+  transform: translate(-50%, -50%);
   transform-origin: center;
-  overflow: hidden;
+  overflow-y: auto;
   z-index: 2000;
   background: none;
 }
 
 .trade-screen {
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(135deg, #1a2332, #253447, #2e4057);
+  width: 350px;
+  max-width: 350px;
+  font-size: 12px;
+  margin-left: auto;
+  margin-right: auto;
+  height: 100%;
+  max-height: 500px;
+  background: linear-gradient(135deg, #1a2a2a, #2d4a4a, #3d6a6a);
   color: #ffffff;
-  padding: 0;
+  padding: 4px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border: 2px solid #4a7a7a;
   overflow-y: auto;
-  box-sizing: border-box;
+  z-index: 3001;
 }
 
 .trade-tab:hover {
@@ -101,8 +111,8 @@
   font-size: 8px;
   display: flex;
   flex-direction: column;
-  width: 90vw;
-  height: 100px;
+  width: 100%;
+  height: 100&;
   align-self: center;
   box-sizing: border-box;
 }
@@ -140,15 +150,15 @@
 .item-header h3 {
   color: #4a90e2;
   margin: 0;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: bold;
-  line-height: 1.2;
+  line-height: 1;
 }
 
 .rarity {
   padding: 6px 12px;
-  border-radius: 15px;
-  font-size: 6px;
+  border-radius: 16px;
+  font-size: 8px;
   font-weight: bold;
   text-transform: capitalize;
   white-space: nowrap;
@@ -161,12 +171,18 @@
 }
 
 .rarity.uncommon {
-  background: rgba(52, 152, 219, 0.2);
-  color: #3498db;
-  border: 1px solid #3498db;
+background: rgba(52, 219, 60, 0.2);
+color: #34db58;
+border: 1px solid #34db4a;
 }
 
 .rarity.rare {
+background: rgba(52, 152, 219, 0.2);
+color: #3498db;
+border: 1px solid #3498db;
+}
+
+.rarity.epic {
   background: rgba(155, 89, 182, 0.2);
   color: #9b59b6;
   border: 1px solid #9b59b6;
@@ -216,7 +232,11 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 8px;
-  min-width: 20px;
+  height: 30px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  max-width: 100px;
 }
 
 .btn-buy {
@@ -343,12 +363,13 @@
 }
 
 .btn-back {
+  height: 20px;
   padding: 0.25rem 0.5rem;
   background: linear-gradient(45deg, #666, #555);
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;

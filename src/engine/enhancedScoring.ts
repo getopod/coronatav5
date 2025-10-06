@@ -2,6 +2,8 @@
 import { GameState, Move } from './types';
 import { initializeRun, selectEncounter, defaultCoronataConfig, progressEncounter, checkRunCompletion } from './encounterSystem';
 import { EncounterFlowManager } from './encounterFlow';
+import { awardEncounterCompletion } from './encounterRewards';
+import { createDefaultCoronataPiles } from './gameInitialization';
 
 // Import from relative paths since we're consolidating into /engine/
 export interface EnhancedScoringSystem {
@@ -13,6 +15,7 @@ export interface EnhancedScoringSystem {
   awardBonus(state: GameState, bonusType: string, amount: number): GameState;
   scoreSequence(state: GameState, sequenceLength: number): number;
   applyPenalty(state: GameState, penaltyType: string, amount: number): GameState;
+  resetForNewEncounter(state: GameState, newEncounterNumber: number): GameState;
 }
 
 export class CoronataScoringSystem implements EnhancedScoringSystem {
@@ -187,10 +190,13 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       if (state.run.encounter) {
         state.run.encounter.completed = true;
 
-        // NEW: Use EncounterFlowManager for proper post-encounter flow
-        const encounterType = state.run.encounter.type || 'fear';
+  // --- AWARD REWARDS FOR ENCOUNTER COMPLETION ---
+  const encounterType = state.run.encounter.type || 'fear';
+  // Award coins and score, merge result into state
+  const newState = awardEncounterCompletion(encounterType, state, state.player.score, state.run.encounter.scoreGoal);
+  Object.assign(state, newState);
 
-        // Initialize encounter flow manager
+        // NEW: Use EncounterFlowManager for proper post-encounter flow
         const flowManager = new EncounterFlowManager(state);
 
         // Set up post-encounter activities based on Master Doc
@@ -206,10 +212,6 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
         };
 
         console.log(`Encounter completed! Starting ${encounterType} flow:`, state.run.encounterFlow);
-
-        // DEPRECATED: Remove old choice system
-        // state.run.awaitingPlayerChoice = true;
-        // state.run.availableChoices = [...];
       }
     }
 
@@ -225,6 +227,19 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       // Get registry entries from the engine state
       const registryEntries = state.registry?.entries || [];
       const newRunState = progressEncounter(state.run, defaultCoronataConfig, registryEntries);
+
+      // Select the new encounter and assign it to state.run.encounter
+      if (typeof selectEncounter === 'function') {
+        state.run.encounter = selectEncounter(newRunState);
+      }
+
+      // Update encounter goal for the new encounter
+      if (state.run.encounter) {
+        const encounterNumber = typeof state.run.encounter.id === 'string' ? 
+          parseInt(state.run.encounter.id) || 1 : 
+          state.run.encounter.id || 1;
+        state.run.encounter.scoreGoal = this.calculateEncounterGoal(encounterNumber);
+      }
 
       // Check if run is complete (all 15 encounters done)
       if (checkRunCompletion(newRunState)) {
@@ -301,7 +316,6 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
    */
   resetForNewEncounter(state: GameState, newEncounterNumber: number): GameState {
     console.log(`Resetting for encounter ${newEncounterNumber}...`);
-    
     // Preserve player inventory (coins, exploits, curses, blessings, fortunes)
     const preservedInventory = {
       coins: state.player.coins,
@@ -313,63 +327,35 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       discards: 2 // Reset discards for new encounter
     };
 
-    // Reset game board state
-    state.player.score = 0; // Fresh score for new encounter
-    
-    // Reset all piles to fresh state
-    if (state.piles) {
-      // Collect all cards from all piles
-      const allCards: any[] = [];
-      Object.values(state.piles).forEach(pile => {
-        if (pile.cards) {
-          allCards.push(...pile.cards);
-        }
-      });
-
-      // Reset all cards to default state (face down, no special effects)
-      allCards.forEach(card => {
-        card.faceUp = false;
-        card.blessed = false;
-        card.tempEffects = [];
-      });
-
-      // Shuffle all cards back into deck
-      this.shuffleArray(allCards);
-
-      // Reset pile structures
-      state.piles.deck.cards = allCards;
-      state.piles.waste.cards = [];
-      state.piles.hand.cards = [];
-      
-      // Reset foundations
-      for (let i = 1; i <= 4; i++) {
-        if (state.piles[`foundation-${i}`]) {
-          state.piles[`foundation-${i}`].cards = [];
-        }
-      }
-      
-      // Reset tableau
-      for (let i = 1; i <= 7; i++) {
-        if (state.piles[`tableau-${i}`]) {
-          state.piles[`tableau-${i}`].cards = [];
-        }
-      }
-    }
+    // Fully reinitialize piles/cards for new encounter using canonical setup
+  state.piles = createDefaultCoronataPiles();
 
     // Restore preserved inventory
     Object.assign(state.player, preservedInventory);
 
-    // Deal fresh hand
-    const handSize = state.player.maxHandSize || 5;
-    if (state.piles?.deck?.cards && state.piles?.hand?.cards) {
-      for (let i = 0; i < handSize && state.piles.deck.cards.length > 0; i++) {
-        const card = state.piles.deck.cards.pop();
-        if (card) {
-          card.faceUp = true; // Hand cards should be face up
-          state.piles.hand.cards.push(card);
-        }
-      }
-    }
+    // Reset player state
+    state.player.score = 0;
+    state.player.combo = 0;
+    state.player.comboHistory = [];
+    state.player.bonusHistory = [];
+    state.player.penaltyHistory = [];
+    state.player.encounterBonuses = [];
+    state.player.encounterPenalties = [];
+    state.player.encounterRewards = [];
+    state.player.encounterNumber = newEncounterNumber;
+
+    // Reset encounter state
+  state.run.encounter = selectEncounter(state.run);
+    state.run.encounterNumber = newEncounterNumber;
+    state.run.encounterProgress = 0;
+    state.run.encounterCompleted = false;
+    state.run.encounterScore = 0;
+    state.run.encounterBonuses = [];
+    state.run.encounterPenalties = [];
+    state.run.encounterRewards = [];
+
+    // Reset overlays and modals
+  // (No state.ui property in GameState; skipping overlay/modal reset)
 
     // Set new encounter goal
     const newGoal = this.calculateEncounterGoal(newEncounterNumber);
@@ -385,7 +371,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       preservedExploits: state.player.exploits?.length || 0,
       preservedCurses: state.player.curses?.length || 0,
       handSize: state.piles?.hand?.cards?.length || 0,
-      deckSize: state.piles?.deck?.cards?.length || 0
+      deckSize: state.piles?.stock?.cards?.length || 0
     });
 
     return state;

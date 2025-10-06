@@ -9,17 +9,12 @@ import { RegistryEntry } from '../registry/index';
 export interface EncounterConfig {
   totalTrials: number;
   encountersPerTrial: number;
-  baseScoreGoal: number;
-  scoreGoalIncrease: number;
-  fearWeight: number; // 0-1, how often fears vs dangers appear
+  // Pattern is always F, F, D per trial (see selectEncounter)
 }
 
 export const defaultCoronataConfig: EncounterConfig = {
   totalTrials: 5,
   encountersPerTrial: 3,
-  baseScoreGoal: 112, // Fixed to working value
-  scoreGoalIncrease: 0, // Will use calculateEncounterGoal function instead
-  fearWeight: 0.67, // 2/3 fear, 1/3 danger per trial (F, F, D pattern)
 };
 
 /**
@@ -39,7 +34,8 @@ export function initializeRun(difficulty: number = 1, config: EncounterConfig = 
 /**
  * Create a fallback encounter when no registry entries are available
  */
-function createFallbackEncounter(encounterType: 'fear' | 'danger', runState: RunState, config: EncounterConfig): EncounterState {
+// Fallback encounter for testing only; should never appear in production if registry is populated
+function createFallbackEncounter(encounterType: 'fear' | 'danger', runState: RunState): EncounterState {
   const fallbackEntry = {
     id: `fallback-${encounterType}`,
     label: `Test ${encounterType.charAt(0).toUpperCase() + encounterType.slice(1)}`,
@@ -47,10 +43,8 @@ function createFallbackEncounter(encounterType: 'fear' | 'danger', runState: Run
     type: encounterType,
     effects: []
   };
-
-  const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
-  const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
-
+  // Use a fixed scoreGoal for fallback encounters (not used in real gameplay)
+  const scoreGoal = 100;
   return {
     id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
     type: encounterType,
@@ -88,7 +82,7 @@ export function selectEncounter(
   // Use fallback if no encounters available
   if (availableEncounters.length === 0) {
     console.warn(`No ${encounterType} encounters available, using fallback`);
-    return createFallbackEncounter(encounterType, runState, config);
+  return createFallbackEncounter(encounterType, runState);
   }
 
   // Select random encounter
@@ -98,13 +92,10 @@ export function selectEncounter(
   // Validate selection and fallback if needed
   if (!selectedEntry?.id) {
     console.error('Invalid encounter selected, using fallback');
-    return createFallbackEncounter(encounterType, runState, config);
+  return createFallbackEncounter(encounterType, runState);
   }
 
-  // Calculate score goal
-  const encounterNumber = (runState.currentTrial - 1) * config.encountersPerTrial + runState.currentEncounter;
-  const scoreGoal = config.baseScoreGoal + (encounterNumber - 1) * config.scoreGoalIncrease;
-
+  // The real scoreGoal for encounters is set by enhancedScoring.ts after selection
   return {
     id: `${encounterType}-${runState.currentTrial}-${runState.currentEncounter}`,
     type: encounterType,
@@ -112,7 +103,7 @@ export function selectEncounter(
     name: selectedEntry.label,
     description: selectedEntry.description,
     effects: selectedEntry.effects || [],
-    scoreGoal,
+    scoreGoal: 0, // Placeholder; will be set by enhancedScoring
     completed: false,
   };
 }

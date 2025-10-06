@@ -130,7 +130,7 @@ Where:
 3. Apply multiplicative modifiers (product of all Nx bonuses from registry effects)
 4. Evaluate special tokens (basePlusBeneath, card-specific blessings, etc.)
 
-**Foundation Multiplier**: Foundation plays score 2× base value by default (can be modified by registry effects)
+**Foundation Multiplier**: Foundation plays score 2× base value by default (can be modified by registry effects) Foundation plays score 3x base value if that card has not been played to a tableau yet this encounter.
 
 ---
 

@@ -898,170 +898,13 @@ export const feats: RegistryEntry[] = [
     rarity: "common",
     category: "",
     completed: false,
-  // visibility: 'visible',
-    tags: ["fortune", "first", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_rare" }
-    ]
-  },
-  {
-    id: "feat-gilded-hand",
-    label: "The Gilded Hand",
-    description: "Earn 100 Coin in a single run.",
-    type: "feat",
-    rarity: "common",
-    category: "",
-    completed: false,
-    tags: ["coin", "earning", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "exploit-whispering-gale" }
-    ]
-  },
-  {
-    id: "feat-midas",
-    label: "The Midas",
-    description: "Hoard 200 Coin by the end of a run.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    tags: ["coin", "hoarding", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "wander", value: "wander-peddler-of-cures" }
-    ]
-  },
-  {
-    id: "feat-foundationer",
-    label: "The Foundationer",
-    description: "Clear 10 foundations in a single run.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    tags: ["foundation", "clearing", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_rare" }
-    ]
-  },
-  {
-    id: "feat-architect",
-    label: "The Architect",
-    description: "Build 5 full tableaus in a single run.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    tags: ["tableau", "building", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "danger", value: "danger-devils-gambit" }
-    ]
-  },
-  {
-    id: "feat-grand-strategist",
-    label: "The Grand Strategist",
-    description: "Win a run with 5 or more Exploits.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["exploit", "victory", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "fear", value: "fear-entombment" }
-    ]
-  },
-  {
-    id: "feat-discarder",
-    label: "The Discarder",
-    description: "Discard your hand 5 times in a single run.",
-    type: "feat",
-    rarity: "common",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["discard", "hand", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "wander", value: "random_new" }
-    ]
-  },
-  {
-    id: "feat-temporal-king",
-    label: "The Temporal King",
-    description: "Shuffle the deck 20 times in a single run.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["shuffle", "deck", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_rare" }
-    ]
-  },
-  {
-    id: "feat-resolute",
-    label: "The Resolute",
-    description: "Win a run without paying to remove a Curse.",
-    type: "feat",
-    rarity: "rare",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["curse", "victory", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_legendary" }
-    ]
-  },
-  {
-    id: "feat-loremaster",
-    label: "The Loremaster",
-    description: "Complete 5 Wander events.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["wander", "completion", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "wander", value: "random_new" }
-    ]
-  },
-  {
-    id: "feat-unburdened",
-    label: "The Unburdened",
-    description: "Pay to remove 3 Curses in a single run.",
-    type: "feat",
-    rarity: "common",
-    category: "",
-    completed: false,
-    visibility: 'visible',
-    tags: ["curse", "removal", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_common" }
-    ]
-  },
+      tags: ["fortune", "first", "achievement"],
+      choices: [],
+      results: {},
+      effects: [
+        { action: "unlock_item", target: "exploit", value: "random_rare" }
+      ]
+    },
   {
     id: "feat-moneylender",
     label: "The Moneylender",
@@ -1853,22 +1696,6 @@ export const feats: RegistryEntry[] = [
     ]
   },
 
-  // Additional feats from Current Registry.json to complete the 42 total
-  {
-    id: "feat-harbinger",
-    label: "The Harbinger",
-    description: "Acquire your first Fortune. Unlocks a new Rare Exploit for the pool.",
-    type: "feat",
-    rarity: "uncommon",
-    category: "",
-    completed: false,
-    tags: ["fortune", "first", "achievement"],
-    choices: [],
-    results: {},
-    effects: [
-      { action: "unlock_item", target: "exploit", value: "random_rare" }
-    ]
-  },
   {
     id: "feat-moneylender",
     label: "The Moneylender",

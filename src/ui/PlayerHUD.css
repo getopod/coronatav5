@@ -1,3 +1,57 @@
+/* Modal item header: yellow, bold, HUD style */
+.modal-item-header {
+  color: #ffe066;
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 2px;
+}
+
+.modal-item-category {
+  color: #ffe066;
+  font-weight: bold;
+}
+
+.modal-item-name {
+  color: #ffe066;
+  font-weight: bold;
+}
+
+/* Modal item effect/description: white text */
+.modal-item-effect {
+  color: #fff;
+  font-size: 1em;
+  margin-bottom: 4px;
+}
+
+/* Remove card-like styling from modal-item if present */
+/* Remove card-like styling from modal-item if present */
+.modal-item {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 4px 0 8px 0;
+}
+/* Testing window header row (flex container) */
+.testing-window-header-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* Testing window header button (draggable) */
+.testing-window-header-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: move;
+  text-align: left;
+}
+
+/* Margin for close button in header row */
+.close-testing-margin {
+  margin-left: 8px;
+}
 /* Modal close absolute positioning */
 .modal-close-abs {
   position: absolute;
@@ -544,41 +598,23 @@
 /* Match Debug Panel modal sizing & positioning */
 .effect-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: auto;
+  transform: translate(-50%, -50%);
   z-index: 3000;
 }
 
 .effect-modal {
   /* Keep color scheme, but match sizing/positioning */
   background: rgba(20, 20, 20, 0.98);
-  border: 2px solid #4a4a4a;
+  border: 2px solid #ffd700;
   border-radius: 12px;
   padding: 20px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 70vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-  /* Centered by overlay flex */
-}
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #333;
-  padding-bottom: 10px;
-}
-
-.modal-header h3 {
-  color: #ffffff;
+    max-width: 300px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   margin: 0;
   font-size: 16px;
 }
@@ -603,26 +639,28 @@
 
 .modal-content {
   color: #ffffff;
+  display: flex;
+  flex-direction: row;
+    .modal-close {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 12px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px;
+  /* Custom scrollbars for Firefox only; Chrome/Safari fallback to default */
 }
 
-.modal-item {
-  margin-bottom: 15px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  border-left: 3px solid #6366f1;
-}
 
-.modal-item:last-child {
-  margin-bottom: 0;
-}
-
-.modal-item-title {
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 5px;
-  color: #fbbf24;
-}
 
 .modal-item-description {
   font-size: 12px;
@@ -739,7 +777,7 @@
   background: rgba(0, 0, 0, 0.9);
   border: 2px solid #ffd700;
   border-radius: 8px;
-  padding: 0;
+  padding: 2px;
   z-index: 2000;
   max-width: 300px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -850,7 +888,10 @@
 /* Testing window */
 .testing-window {
   position: fixed;
-  width: 300px;
+  width: 100vw;
+  max-width: 375px;
+  left: 50%;
+  transform: translateX(-50%);
   background: #1f2937;
   border: 2px solid #374151;
   border-radius: 8px;
@@ -863,14 +904,16 @@
 /* New testing window styles */
 .testing-window-draggable {
   position: fixed;
-  width: 250px;
+  width: 100vw;
+  max-width: 375px;
+  left: 50%;
+  transform: translateX(-50%);
   background: #1f2937;
   border: 2px solid #374151;
   border-radius: 8px;
   z-index: 10000;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   overflow: hidden;
-  left: var(--testing-window-left, 100px);
   top: var(--testing-window-top, 100px);
 }
 

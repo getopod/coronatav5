@@ -58,6 +58,7 @@ export class EncounterFlowManager {
     this.flowState.completedActivities = [];
     this.flowState.currentActivity = null;
 
+
     if (encounterType === 'fear') {
       // After Fear: 1 Trade + 2 Wanders in random order
       const activities: EncounterActivity[] = [
@@ -65,21 +66,34 @@ export class EncounterFlowManager {
         { type: 'wander', id: `wander-${Date.now()}-1` },
         { type: 'wander', id: `wander-${Date.now()}-2` }
       ];
-
       // Randomize order as per Master Doc
       this.flowState.queuedActivities = this.shuffleArray(activities);
-      
     } else if (encounterType === 'danger') {
       // After Danger: Mandatory Fortune Swap + 50% chance for bonus Trade
       this.flowState.queuedActivities = [
         { type: 'fortune-swap', id: `fortune-swap-${Date.now()}` }
       ];
-
       // 50% chance for bonus trade using Math.random
       if (Math.random() < 0.5) {
         this.flowState.queuedActivities.push({
           type: 'trade',
           id: `bonus-trade-${Date.now()}`
+        });
+      }
+      // Check if this is the last Danger (Trial 5, Encounter 15)
+      const isLastDanger = this.state.run &&
+        this.state.run.currentTrial === 5 &&
+        (
+          // If currentEncounter is 2 (0-based: 0=Fear1, 1=Fear2, 2=Danger)
+          this.state.run.currentEncounter === 2 ||
+          // Or if encounter number is 15 (1-based)
+          (((this.state.run.currentTrial - 1) * 3) + this.state.run.currentEncounter + 1) === 15
+        );
+      if (isLastDanger) {
+        // Always add a Final Trade after the Fortune Swap and possible bonus Trade
+        this.flowState.queuedActivities.push({
+          type: 'trade',
+          id: `final-trade-${Date.now()}`
         });
       }
     }
@@ -520,22 +534,14 @@ export class EncounterFlowManager {
    * This triggers the encounter reset and progression
    */
   onFlowComplete(): GameState {
-    // Advance run state
+    // Only set pendingEncounterReset for the next encounter; do NOT increment currentEncounter/currentTrial here.
     if (this.state.run) {
-      this.state.run.currentEncounter = (this.state.run.currentEncounter || 1) + 1;
-      
-      // Check if we need to move to next trial
       const maxEncountersPerTrial = 3; // From encounter system config
-      if (this.state.run.currentEncounter > maxEncountersPerTrial) {
-        this.state.run.currentTrial = (this.state.run.currentTrial || 1) + 1;
-        this.state.run.currentEncounter = 1;
-      }
+      // Calculate the next encounter number (sequential, not incremented here)
+      const encounterNumber = ((this.state.run.currentTrial - 1) * maxEncountersPerTrial) + this.state.run.currentEncounter + 1;
 
-      // Generate new encounter (this would normally use the encounter system)
-      const encounterNumber = ((this.state.run.currentTrial - 1) * maxEncountersPerTrial) + this.state.run.currentEncounter;
-      
-      console.log(`Advancing to encounter ${encounterNumber} (Trial ${this.state.run.currentTrial}, Encounter ${this.state.run.currentEncounter})`);
-      
+      console.log(`(FIXED) Setting pendingEncounterReset for encounter ${encounterNumber} (Trial ${this.state.run.currentTrial}, Encounter ${this.state.run.currentEncounter})`);
+
       // Reset encounter flow for next encounter
       this.flowState = {
         phase: 'encounter',
@@ -549,8 +555,8 @@ export class EncounterFlowManager {
         this.state.run.encounterFlow.active = false;
         this.state.run.encounterFlow.phase = 'encounter';
       }
-      
-      // Return the new encounter number for the scoring system to handle the reset
+
+      // Set pendingEncounterReset for the scoring system to handle the reset and progression
       this.state.meta = this.state.meta || {};
       this.state.meta.pendingEncounterReset = encounterNumber;
     }

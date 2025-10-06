@@ -5,7 +5,7 @@ import './WanderScreen.css';
 
 interface WanderScreenProps {
   onChoiceMade: (wanderId: string, choice: string, outcome: string) => void;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const WanderScreen: React.FC<WanderScreenProps> = ({
@@ -51,9 +51,9 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
     return (
       <div className="wander-screen-root">
         <div className="wander-screen">
-        <div className="wander-loading">
-          <h2>The path reveals itself...</h2>
-        </div>
+          <div className="wander-loading">
+            <h2>The path reveals itself...</h2>
+          </div>
         </div>
       </div>
     );
@@ -61,100 +61,75 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
 
   return (
     <div className="wander-screen">
-      <div className="wander-header">
-        <h1>Wandering</h1>
-        <p>The road ahead offers unexpected encounters and choices.</p>
-      </div>
-
+      {onBack && (
+        <button className="wander-back-btn" onClick={onBack} style={{position:'absolute',top:10,left:10}}>
+          ← Back
+        </button>
+      )}
       <div className="wander-content">
         <div className="wander-story">
           <div className="story-card">
-            <div className="story-header">
+            <div className="story-title">
               <h2>{currentWander.label}</h2>
-              <div className="story-category">
-                <span className={`category-tag ${currentWander.category}`}>
-                  {currentWander.category}
-                </span>
-              </div>
             </div>
-            
             <div className="story-description">
               <p>{currentWander.description}</p>
             </div>
-
-            <div className="story-tags">
-              {currentWander.tags.map((tag: string) => (
-                <span key={tag} className="story-tag">
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {!showOutcome ? (
+              <div className="choices-section">
+                <h3>What will you do?</h3>
+                <div className="choices-list">
+                  {currentWander.choices.map((choice: string) => (
+                    <button
+                      key={choice}
+                      className={`choice-button ${selectedChoice === choice ? 'selected' : ''}`}
+                      onClick={() => handleChoiceClick(choice)}
+                    >
+                      <div className="choice-text">{choice}</div>
+                      <div className="choice-preview">
+                        {currentWander.results[choice] && (
+                          <span className="outcome-preview">
+                            → {currentWander.results[choice]}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="choice-actions">
+                  <button
+                    className="btn-confirm"
+                    onClick={handleConfirmChoice}
+                    disabled={!selectedChoice}
+                  >
+                    Make Your Choice
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="outcome-section">
+                <h3>Your Choice</h3>
+                <div className="chosen-action">
+                  <p><strong>You chose:</strong> {selectedChoice}</p>
+                </div>
+                <div className="outcome-card">
+                  <h4>What happens:</h4>
+                  <p>{outcome}</p>
+                </div>
+                <div className="outcome-actions">
+                  <button
+                    className="btn-proceed"
+                    onClick={handleProceed}
+                  >
+                    Continue Journey
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        {!showOutcome ? (
-          <div className="choices-section">
-            <h3>What will you do?</h3>
-            <div className="choices-list">
-              {currentWander.choices.map((choice: string) => (
-                <button
-                  key={choice}
-                  className={`choice-button ${selectedChoice === choice ? 'selected' : ''}`}
-                  onClick={() => handleChoiceClick(choice)}
-                >
-                  <div className="choice-text">{choice}</div>
-                  <div className="choice-preview">
-                    {currentWander.results[choice] && (
-                      <span className="outcome-preview">
-                        → {currentWander.results[choice]}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-            
-            <div className="choice-actions">
-              <button
-                className="btn-confirm"
-                onClick={handleConfirmChoice}
-                disabled={!selectedChoice}
-              >
-                Make Your Choice
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="outcome-section">
-            <h3>Your Choice</h3>
-            <div className="chosen-action">
-              <p><strong>You chose:</strong> {selectedChoice}</p>
-            </div>
-            
-            <div className="outcome-card">
-              <h4>What happens:</h4>
-              <p>{outcome}</p>
-            </div>
-            
-            <div className="outcome-actions">
-              <button
-                className="btn-proceed"
-                onClick={handleProceed}
-              >
-                Continue Journey
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="wander-actions">
-        <button className="btn-back" onClick={onBack}>
-          Return to Previous Choice
-        </button>
       </div>
     </div>
   );
 };
-
 export default WanderScreen;

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { exploits, blessings, fears, curses, dangers, wanders, feats } from '../registry/registry';
+import { exploits, blessings, fears, curses, dangers, feats } from '../registry/registry';
 import './Glossary.css';
 
 export interface GlossaryProps {
   onBack: () => void;
 }
 
-type TabType = 'exploits' | 'blessings' | 'fears' | 'curses' | 'dangers' | 'wanders' | 'feats';
+type TabType = 'exploits' | 'blessings' | 'fears' | 'curses' | 'dangers' | 'feats';
 
 interface RegistryEntry {
   id: string;
@@ -25,7 +25,7 @@ interface RegistryEntry {
 export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
   const [activeTab, setActiveTab] = useState<TabType>('exploits');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRarity, setSelectedRarity] = useState<string>('all');
+
 
   // Filter items based on search and rarity
   const filterItems = (items: RegistryEntry[]) => {
@@ -33,21 +33,12 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       const matchesSearch = item.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      // Only apply rarity filter for exploits
-      const matchesRarity = activeTab !== 'exploits' || selectedRarity === 'all' || item.rarity === selectedRarity;
-      
-      return matchesSearch && matchesRarity;
+      return matchesSearch;
     });
   };
 
   // Get unique rarities for filter (only for exploits)
-  const getRarities = (items: RegistryEntry[]) => {
-    // Only show rarities for exploits
-    if (activeTab !== 'exploits') return [];
-    const rarities = [...new Set(items.map(item => item.rarity).filter(Boolean))];
-    return rarities.sort((a, b) => a.localeCompare(b));
-  };
+
 
   // Get current items based on active tab
   const getCurrentItems = (): RegistryEntry[] => {
@@ -57,7 +48,6 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       case 'fears': return fears;
       case 'curses': return curses;
       case 'dangers': return dangers;
-      case 'wanders': return wanders;
       case 'feats': return feats;
       default: return [];
     }
@@ -65,7 +55,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
 
   const currentItems = getCurrentItems();
   const filteredItems = filterItems(currentItems);
-  const availableRarities = getRarities(currentItems);
+
 
   // Get effect description
   const getEffectDescription = (effect: any): string => {
@@ -313,12 +303,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
             >
               ⚡ Dangers ({dangers.length})
             </button>
-            <button 
-              className={`tab-button ${activeTab === 'wanders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('wanders')}
-            >
-              🌟 Wanders ({wanders.length})
-            </button>
+
             <button 
               className={`tab-button ${activeTab === 'feats' ? 'active' : ''}`}
               onClick={() => setActiveTab('feats')}
@@ -348,7 +333,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
 
           <div className="items-grid">
             {filteredItems.map((item) => (
-              <div key={item.id} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
+              <div key={`${item.type}-${item.id}`} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
                 <div className="item-header">
                   <h3 className="item-title">{item.label}</h3>
                   {activeTab === 'exploits' && item.rarity && (
@@ -380,8 +365,8 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
               <div className="no-results-icon">🔍</div>
               <h3>No {activeTab} found</h3>
               <p>
-                {searchTerm || selectedRarity !== 'all' 
-                  ? 'Try adjusting your search terms or filters'
+                {searchTerm
+                  ? 'Try adjusting your search terms'
                   : `No ${activeTab} available in the registry`
                 }
               </p>
