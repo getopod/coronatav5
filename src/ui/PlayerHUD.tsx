@@ -55,6 +55,7 @@ export interface PlayerHUDProps {
   onOpenTrade?: () => void;
   onOpenWander?: () => void;
   onNextEncounter?: () => void;
+  onOpenDebugPanel?: () => void;
 }
 
 export const PlayerHUD: React.FC<PlayerHUDProps> = ({ 
@@ -64,7 +65,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   onShowRunRecap,
   onOpenTrade,
   onOpenWander,
-  onNextEncounter
+  onNextEncounter,
+  onOpenDebugPanel
 }) => {
   const { player, run } = gameState;
   const encounter = run?.encounter;
@@ -433,7 +435,13 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                   <button 
                     className="testing-button hud-action-button" 
                     title="Testing functions (admin)"
-                    onClick={handleTestingClick}
+                    onClick={() => {
+                      if (onOpenDebugPanel) {
+                        onOpenDebugPanel();
+                      } else {
+                        handleTestingClick();
+                      }
+                    }}
                   >
                     Testing
                   </button>
@@ -486,14 +494,14 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                         </button>
                       </div>
                       <div className="fortune-popup-body">
-                        <p>{selectedFortune.description}</p>
+                        <h3>{selectedFortune.description}</h3>
                         {selectedFortune.effects && selectedFortune.effects.length > 0 && (
                           <div className="fortune-effects">
-                            <strong>Effects:</strong>
+                            <h3>Effects:</h3>
                             {selectedFortune.effects.map((effect: any, effectIndex: number) => (
-                              <div key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
+                              <h3 key={`fortune-effect-${effectIndex}-${effect.action || 'unknown'}`} className="effect-detail">
                                 {effect.action} {effect.target} {effect.value && `(${effect.value})`}
-                              </div>
+                              </h3>
                             ))}
                           </div>
                         )}

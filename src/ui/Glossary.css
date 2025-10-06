@@ -94,7 +94,7 @@
 .glossary-controls {
   background: rgba(244, 228, 188, 0.9);
   border-bottom: 2px solid #d4af37;
-  padding: 6px;
+  padding: 5px;
 }
 
 .tab-navigation {
@@ -191,8 +191,11 @@
 .glossary-content {
   flex: 1;
   overflow-y: auto;
-  padding: 6px;
+  padding: 5px;
   background: rgba(244, 228, 188, 0.9);
+.results-info {
+  font-size: 8px;
+}
 }
 
 .items-grid {
@@ -204,7 +207,7 @@
 .item-card {
   background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a8 100%);
   border-radius: 6px;
-  padding: 4px;
+  padding: 4px !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   border: 1px solid #d4af37;
   transition: all 0.3s ease;

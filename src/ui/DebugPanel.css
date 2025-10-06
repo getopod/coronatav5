@@ -1,3 +1,60 @@
+.compact-width-60 {
+  width: 60px !important;
+}
+.compact-width-90 {
+  width: 90px !important;
+}
+.compact-width-110 {
+  width: 110px !important;
+}
+.compact-btn-narrow {
+  min-width: 0 !important;
+  padding: 2px 6px !important;
+}
+.glossary-section {
+  margin-top: 8px;
+}
+.glossary-title {
+  font-size: 1em;
+  margin: 4px 0;
+}
+.glossary-list {
+  font-size: 0.95em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.compact-debug-panel .debug-panel-modal {
+  max-width: 420px;
+  padding: 10px 10px 10px 10px;
+}
+.compact-section {
+  margin-bottom: 8px;
+}
+.compact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.compact-btn {
+  font-size: 0.95em;
+  min-width: 0;
+  padding: 2px 6px;
+  margin: 0;
+}
+.compact-select {
+  font-size: 0.95em;
+  padding: 2px 4px;
+  min-width: 0;
+  margin: 0;
+}
+.compact-input {
+  font-size: 0.95em;
+  padding: 2px 4px;
+  min-width: 0;
+  margin: 0;
+}
 /* Close button for DebugPanel modal */
 .debug-panel-close-btn {
   position: absolute;

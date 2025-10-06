@@ -48,6 +48,13 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   // For gridlines toggle
   const [gridlinesOn, setGridlinesOn] = React.useState(false);
 
+  // New debug states for registry actions
+  const [selectedExploit, setSelectedExploit] = React.useState('');
+  const [selectedCurse, setSelectedCurse] = React.useState('');
+  const [selectedFortune, setSelectedFortune] = React.useState('');
+  const [coinAmount, setCoinAmount] = React.useState(0);
+  const [restartValidation, setRestartValidation] = React.useState('');
+
   // Handler: Gain points
   const handleGainPoints = () => {
     if (window.engine && typeof window.engine.gainPoints === 'function') {
@@ -85,8 +92,67 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
     });
   };
 
+  // Handler: Gain Exploit
+  const handleGainExploit = () => {
+    if (!selectedExploit) return;
+    if (window.engine && window.engine.state && window.engine.state.player) {
+      const exploits = window.engine.state.player.exploits || [];
+      if (!exploits.includes(selectedExploit)) {
+        window.engine.state.player.exploits = [...exploits, selectedExploit];
+        window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+      }
+    }
+    setSelectedExploit('');
+  };
+
+  // Handler: Gain Curse
+  const handleGainCurse = () => {
+    if (!selectedCurse) return;
+    if (window.engine && window.engine.state && window.engine.state.player) {
+      const curses = window.engine.state.player.curses || [];
+      if (!curses.includes(selectedCurse)) {
+        window.engine.state.player.curses = [...curses, selectedCurse];
+        window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+      }
+    }
+    setSelectedCurse('');
+  };
+
+  // Handler: Gain Fortune
+  const handleGainFortune = () => {
+    if (!selectedFortune) return;
+    if (window.engine && window.engine.state && window.engine.state.player) {
+      const fortunes = window.engine.state.player.fortunes || [];
+      if (!fortunes.includes(selectedFortune)) {
+        window.engine.state.player.fortunes = [...fortunes, selectedFortune];
+        window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+      }
+    }
+    setSelectedFortune('');
+  };
+
+  // Handler: Gain Coins
+  const handleGainCoins = () => {
+    if (!coinAmount) return;
+    if (window.engine && window.engine.state && window.engine.state.player) {
+      window.engine.state.player.coins = (window.engine.state.player.coins || 0) + coinAmount;
+      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+    }
+    setCoinAmount(0);
+  };
+
+  // Handler: Restart Encounter with Validation
+  const handleRestartEncounterValidated = () => {
+    if (restartValidation.trim().toLowerCase() === 'restart') {
+      handleRestartEncounter();
+      setRestartValidation('');
+    } else {
+      alert('Type "restart" to confirm.');
+    }
+  };
+
   return (
-    <div className="debug-panel">
+    <div className="debug-panel compact-debug-panel">
       <div className="debug-panel-modal">
         <button
           className="debug-panel-close-btn"
@@ -98,9 +164,9 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
         </button>
         <h3>Debug Panel</h3>
   {/* New debug controls */}
-        <div className="debug-section">
+  <div className="debug-section compact-section">
           <h4>Quick Actions</h4>
-          <div className="quick-actions-row">
+          <div className="quick-actions-row compact-row">
             <input
               type="number"
               min={-9999}
@@ -108,12 +174,113 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
               value={pointValue}
               onChange={e => setPointValue(Number(e.target.value))}
               title="Point Value"
+              className="compact-input compact-width-60"
             />
-            <button onClick={handleGainPoints}>Gain Points</button>
-            <button onClick={handleRestartEncounter}>Restart Encounter</button>
-            <button onClick={handleSkipEncounter}>Skip to Next Encounter</button>
-            <button onClick={handleToggleGridlines}>{gridlinesOn ? 'Hide Gridlines' : 'Show Gridlines'}</button>
+            <button className="compact-btn compact-btn-narrow" onClick={handleGainPoints}>Gain</button>
+            <button className="compact-btn compact-btn-narrow" onClick={handleRestartEncounter}>Restart</button>
+            <button className="compact-btn compact-btn-narrow" onClick={handleSkipEncounter}>Skip</button>
+            <button className="compact-btn compact-btn-narrow" onClick={handleToggleGridlines}>{gridlinesOn ? 'Grid Off' : 'Grid On'}</button>
           </div>
+        </div>
+
+        {/* Gain Exploit */}
+  <div className="debug-section compact-section">
+          <h4>Gain Exploit</h4>
+          <div className="quick-actions-row compact-row">
+            <select value={selectedExploit} onChange={e => setSelectedExploit(e.target.value)} title="Select Exploit" className="compact-select compact-width-110">
+              <option value="">Exploit</option>
+              {(registry.exploit || []).map((exploit: any) => (
+                <option key={exploit.id} value={exploit.id}>{exploit.label}</option>
+              ))}
+            </select>
+            <button className="compact-btn compact-btn-narrow" onClick={handleGainExploit} disabled={!selectedExploit}>Gain</button>
+          </div>
+        </div>
+
+        {/* Gain Curse */}
+  <div className="debug-section compact-section">
+          <h4>Gain Curse</h4>
+          <div className="quick-actions-row compact-row">
+            <select value={selectedCurse} onChange={e => setSelectedCurse(e.target.value)} title="Select Curse" className="compact-select compact-width-110">
+              <option value="">Curse</option>
+              {(registry.curse || []).map((curse: any) => (
+                <option key={curse.id} value={curse.id}>{curse.label}</option>
+              ))}
+            </select>
+            <button className="compact-btn compact-btn-narrow" onClick={handleGainCurse} disabled={!selectedCurse}>Gain</button>
+          </div>
+        </div>
+
+        {/* Gain Fortune */}
+  <div className="debug-section compact-section">
+          <h4>Gain Fortune</h4>
+          <div className="quick-actions-row compact-row">
+            <select value={selectedFortune} onChange={e => setSelectedFortune(e.target.value)} title="Select Fortune" className="compact-select compact-width-110">
+              <option value="">Fortune</option>
+              {(registry.fortune || []).map((fortune: any) => (
+                <option key={fortune.id} value={fortune.id}>{fortune.label}</option>
+              ))}
+            </select>
+            <button className="compact-btn compact-btn-narrow" onClick={handleGainFortune} disabled={!selectedFortune}>Gain</button>
+          </div>
+        </div>
+
+        {/* Gain Coins */}
+  <div className="debug-section compact-section">
+          <h4>Gain Coins</h4>
+          <div className="quick-actions-row compact-row">
+            <input
+              type="number"
+              min={-9999}
+              max={9999}
+              value={coinAmount}
+              onChange={e => setCoinAmount(Number(e.target.value))}
+              title="Coin Amount"
+              className="compact-input compact-width-60"
+            />
+            <button className="compact-btn compact-btn-narrow" onClick={handleGainCoins} disabled={!coinAmount}>Gain</button>
+          </div>
+        </div>
+
+        {/* Restart Encounter with Validation */}
+  <div className="debug-section compact-section">
+          <h4>Restart Encounter (Validation)</h4>
+          <div className="quick-actions-row compact-row">
+            <input
+              type="text"
+              value={restartValidation}
+              onChange={e => setRestartValidation(e.target.value)}
+              placeholder="Type 'restart' to confirm"
+              title="Type 'restart' to confirm"
+              className="compact-input compact-width-90"
+            />
+            <button className="compact-btn compact-btn-narrow" onClick={handleRestartEncounterValidated} disabled={restartValidation.trim().toLowerCase() !== 'restart'}>
+              Confirm
+            </button>
+          </div>
+
+        {/* Simple Icon Glossary */}
+        <div className="debug-section compact-section glossary-section">
+          <h4 className="glossary-title">Icon Glossary</h4>
+          <div className="glossary-list">
+            <span title="Score">⭐ score</span>
+            <span title="Coins">🪙 coins</span>
+            <span title="Reveal">👁️ reveal</span>
+            <span title="Draw">🎴 draw</span>
+            <span title="Tableau">📋 tableau</span>
+            <span title="Foundation">🏛️ foundation</span>
+            <span title="Hand">✋ hand</span>
+            <span title="Block">⛔ block</span>
+            <span title="Blessing">✨ blessing</span>
+            <span title="Curse">🩸 curse</span>
+            <span title="Shuffle">🔄 shuffle</span>
+            <span title="Discard">🗑️ discard</span>
+            <span title="Health">💚 health</span>
+            <span title="Damage">💥 damage</span>
+            <span title="Unlock">🔓 unlock</span>
+            <span title="Wild">🃏 wild</span>
+          </div>
+        </div>
         </div>
         {/* Blessing Application */}
         <div className="debug-section">
@@ -1719,17 +1886,11 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
               setCurrentScreen('game');
             }
           }}
+          onOpenDebugPanel={() => setShowDebugPanel(true)}
         />
       )}
 
       {/* Debug Panel Toggle Button */}
-      <button
-        className="debug-toggle-button"
-        onClick={() => setShowDebugPanel(!showDebugPanel)}
-        title="Toggle Debug Panel"
-      >
-        🐛 Debug
-      </button>
 
       {/* Debug Panel as subcomponent */}
       {showDebugPanel && (

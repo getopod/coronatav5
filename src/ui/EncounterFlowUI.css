@@ -1,3 +1,23 @@
+.encounter-flow-ui > .trade-activity,
+.encounter-flow-ui > .wander-activity {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(calc(min(1, 100vw / 390px, 100vh / 654px))) !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1001 !important;
+  background: none !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 /* Screen Overlay */
 .screen-overlay {
   position: fixed;
@@ -15,8 +35,9 @@
 /* Encounter Flow UI Styles */
 /* Encounter Flow UI Styles */
 .encounter-flow-ui {
-  width: 90vw;
-  height: 90vh;
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
   overflow-y: auto;
   padding: 20px;
   background: linear-gradient(135deg, #2c1810 0%, #1a0f08 100%);
@@ -482,3 +503,5 @@
     justify-content: center;
   }
 }
+
+/* --- Overlay Consistency Override for Trade/Wander in Encounter Flow --- */

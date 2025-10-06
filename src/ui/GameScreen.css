@@ -649,7 +649,7 @@ body {
 /* Floating Zoom Window */
 .floating-zoom-window {
   position: fixed;
-  top: 10px;
+  top: 5px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 20, 20, 0.9);
