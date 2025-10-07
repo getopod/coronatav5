@@ -59,7 +59,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
   const handleGainPoints = () => {
     if (window.engine && typeof window.engine.gainPoints === 'function') {
       window.engine.gainPoints(pointValue);
-    } else if (window.engine && window.engine.state && window.engine.state.player) {
+  } else if (window.engine?.state?.player) {
       window.engine.state.player.score = (window.engine.state.player.score || 0) + pointValue;
       window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
     }
@@ -70,17 +70,17 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
       window.engine.restartEncounter();
     } else if (window.engine && window.engine.state && window.engine.state.run) {
       // Naive reset: just re-emit stateChange
-      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+  window.engine.emitEvent?.('stateChange', window.engine.state);
     }
   };
   // Handler: Skip to next encounter
   const handleSkipEncounter = () => {
     if (window.engine && typeof window.engine.skipToNextEncounter === 'function') {
       window.engine.skipToNextEncounter();
-    } else if (window.engine && window.engine.state && window.engine.state.run) {
+  } else if (window.engine?.state?.run) {
       // Naive: increment encounter and emit
       window.engine.state.run.currentEncounter = (window.engine.state.run.currentEncounter || 0) + 1;
-      window.engine.emitEvent && window.engine.emitEvent('stateChange', window.engine.state);
+  window.engine.emitEvent?.('stateChange', window.engine.state);
     }
   };
   // Handler: Toggle gridlines
@@ -384,7 +384,7 @@ const DebugPanel: React.FC<DebugPanelProps> = ({
           {showRegistryLog && registryEffectLog.length > 0 && (
             <div className="registry-log">
               {registryEffectLog.slice(-10).map((entry, idx) => (
-                <div key={idx} className="registry-log-entry">
+                <div key={entry.id || idx} className="registry-log-entry">
                   <div className="registry-log-timestamp"><strong>{entry.timestamp.split('T')[1].split('.')[0]}</strong> - {entry.type}</div>
                   <div className="registry-log-effect">
                     {entry.effect} → {entry.payload?.cardId || 'N/A'}
@@ -930,7 +930,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       // Complete the current wander activity, passing choice/outcome as payload
       flowManager.completeCurrentActivity({ wanderId, choice, outcome });
 
-      // If flow is now complete, immediately advance to next encounter
+      // Always check if flow is complete after completing activity
       if (flowManager.isFlowComplete()) {
         let updatedState = flowManager.onFlowComplete();
         if (engine.scoringSystem && typeof engine.scoringSystem.updateEncounterProgress === 'function') {
@@ -995,10 +995,10 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
           !effect.condition || effect.condition.choice === choice
         );
       }
-      if (wanderEffects.length === 0 && wander.results && wander.results[choice]) {
+  if (wanderEffects.length === 0 && wander.results?.[choice]) {
         const result = wander.results[choice];
         if (result.includes('coin')) {
-          const coinMatch = result.match(/(\+|-)?(\d+)\s*coin/i);
+          const coinMatch = /([+-]?)(\d+)\s*coin/i.exec(result);
           if (coinMatch) {
             const value = parseInt(coinMatch[2]) * (coinMatch[1] === '-' ? -1 : 1);
             wanderEffects.push({ type: 'award_coin', value });
@@ -1012,7 +1012,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       engine.emitEvent('wander_complete', { wanderId, choice, outcome, effects: wanderEffects });
       console.log('Wander completed:', { wanderId, choice, effects: wanderEffects });
       if (outcome.includes('Gain') && outcome.includes('Coin')) {
-        const coinMatch = outcome.match(/(\d+)\s*Coin/i);
+  const coinMatch = /(\d+)\s*Coin/i.exec(outcome);
         if (coinMatch) {
           const coinAmount = parseInt(coinMatch[1]);
           newState.player.coins = (newState.player.coins || 0) + coinAmount;
@@ -1020,7 +1020,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
         }
       }
       if (outcome.includes('lose') && outcome.includes('Coin')) {
-        const coinMatch = outcome.match(/lose.*?(\d+)\s*Coin/i) || outcome.match(/(\d+)\s*Coin.*?lose/i);
+  const coinMatch = /lose.*?(\d+)\s*Coin/i.exec(outcome) || /(\d+)\s*Coin.*?lose/i.exec(outcome);
         if (coinMatch) {
           const coinAmount = parseInt(coinMatch[1]);
           newState.player.coins = Math.max(0, (newState.player.coins || 0) - coinAmount);
@@ -1676,7 +1676,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
                   }
                 }}
               >
-                Return to Main Menu
+            Main Menu
               </button>
             </div>
           </div>

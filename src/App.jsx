@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, Options } from './ui';
+import { Updates } from './ui/Updates';
 import RunHistoryScreen from './ui/RunHistoryScreen';
 import { EngineController } from './engine/engineController';
 import { startGameSession } from './engine/persistenceManager';
@@ -65,6 +66,7 @@ function App() {
   const [showGlossary, setShowGlossary] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(false);
   const [selectedFortune, setSelectedFortune] = useState(null);
 
   // Engine always in Coronata mode
@@ -122,11 +124,16 @@ function App() {
     setShowCoronataWelcome(false);
     setShowOptions(true);
   };
+  const handleShowUpdates = () => {
+    setShowCoronataWelcome(false);
+    setShowUpdates(true);
+  };
   const handleBackToWelcome = () => {
     setShowHowToPlay(false);
     setShowGlossary(false);
     setShowHistory(false);
     setShowOptions(false);
+    setShowUpdates(false);
     setShowCoronataWelcome(true);
   };
 
@@ -137,10 +144,12 @@ function App() {
         onStart={handleCoronataStart}
         onHowToPlay={handleShowHowToPlay}
         onGlossary={handleShowGlossary}
-        onHistory={handleShowHistory}
-        onOptions={handleShowOptions}
+        onUpdates={handleShowUpdates}
       />
     );
+  }
+  if (showUpdates) {
+    return <Updates onBack={handleBackToWelcome} />;
   }
   if (showHowToPlay) {
     return <HowToPlay onBack={handleBackToWelcome} />;

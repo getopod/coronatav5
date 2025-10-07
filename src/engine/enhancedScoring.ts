@@ -220,25 +220,25 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
       const newEncounterNumber = state.meta.pendingEncounterReset;
       console.log(`Processing pending encounter reset for encounter ${newEncounterNumber}`);
 
-      // Reset the board for the new encounter
-      state = this.resetForNewEncounter(state, newEncounterNumber);
+      // Use registry.fear and registry.danger for encounter selection
+      const registryEntries = [
+        ...((state.registry?.fear || [])),
+        ...((state.registry?.danger || []))
+      ];
+      state = this.resetForNewEncounter(state, newEncounterNumber, registryEntries);
 
       // Progress to the next encounter
-      // Get registry entries from the engine state
-      const registryEntries = state.registry?.entries || [];
       const newRunState = progressEncounter(state.run, defaultCoronataConfig, registryEntries);
 
       // Select the new encounter and assign it to state.run.encounter
       if (typeof selectEncounter === 'function') {
-        state.run.encounter = selectEncounter(newRunState);
-      }
-
-      // Update encounter goal for the new encounter
-      if (state.run.encounter) {
-        const encounterNumber = typeof state.run.encounter.id === 'string' ? 
-          parseInt(state.run.encounter.id) || 1 : 
-          state.run.encounter.id || 1;
-        state.run.encounter.scoreGoal = this.calculateEncounterGoal(encounterNumber);
+        state.run.encounter = selectEncounter(newRunState, defaultCoronataConfig, undefined, registryEntries);
+        // Always update scoreGoal after selection
+        if (state.run.encounter) {
+          // Use encounter index from run state, not id string
+          const encounterIdx = (newRunState.currentTrial - 1) * defaultCoronataConfig.encountersPerTrial + newRunState.currentEncounter;
+          state.run.encounter.scoreGoal = this.calculateEncounterGoal(encounterIdx);
+        }
       }
 
       // Check if run is complete (all 15 encounters done)
@@ -314,7 +314,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
    * Reset game board for a new encounter while preserving player inventory
    * This should be called when starting each new encounter in a run
    */
-  resetForNewEncounter(state: GameState, newEncounterNumber: number): GameState {
+  resetForNewEncounter(state: GameState, newEncounterNumber: number, registryEntries?: any[]): GameState {
     console.log(`Resetting for encounter ${newEncounterNumber}...`);
     // Preserve player inventory (coins, exploits, curses, blessings, fortunes)
     const preservedInventory = {
@@ -345,7 +345,7 @@ export class CoronataScoringSystem implements EnhancedScoringSystem {
     state.player.encounterNumber = newEncounterNumber;
 
     // Reset encounter state
-  state.run.encounter = selectEncounter(state.run);
+  state.run.encounter = selectEncounter(state.run, undefined, undefined, registryEntries);
     state.run.encounterNumber = newEncounterNumber;
     state.run.encounterProgress = 0;
     state.run.encounterCompleted = false;

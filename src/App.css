@@ -82,36 +82,7 @@ strong {
 }
 
 
-.fortunes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(282px, 1fr));
-  gap: 6px;
-  margin-bottom: 10px;
-  justify-content: center;
-  width: 100%;
-  justify-items: center;
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
-}
 
-.fortune-card {
-  background: linear-gradient(145deg, #2a2a40, #1e1e30);
-  border: 2px solid #3a3a5c;
-  border-radius: 15px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  min-height: 140px;
-  max-height: 160px;
-  max-width: 282px;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  width: 100%;
-  font-family: inherit;
-  color: inherit;
-}
 
 .card-body p {
   color: #e0e0e0;

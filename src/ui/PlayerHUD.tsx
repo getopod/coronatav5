@@ -79,14 +79,13 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
   const ctx = useEngineEvent();
   const engine = ctx?.engine;
   
-  // Modal and tooltip state
-  const [showModal, setShowModal] = React.useState(false);
+  // Modal states: separate for effect details and resign confirmation
+  const [showEffectModal, setShowEffectModal] = React.useState(false);
+  const [showResignModal, setShowResignModal] = React.useState(false);
   const [modalContent, setModalContent] = React.useState<any[]>([]);
-  // Removed modalTitle state as it is no longer used
   
-  // Testing and options state
+  // Testing window state
   const [showTestingWindow, setShowTestingWindow] = React.useState(false);
-  const [showOptionsWindow, setShowOptionsWindow] = React.useState(false);
   const [testingAuthenticated, setTestingAuthenticated] = React.useState(false);
   const [testingWindowPosition, setTestingWindowPosition] = React.useState({ x: 100, y: 100 });
   const [isDragging, setIsDragging] = React.useState(false);
@@ -114,9 +113,7 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
     }
   };
 
-  const handleOptionsClick = () => {
-    setShowOptionsWindow(!showOptionsWindow);
-  };
+
 
   // Testing admin functions
   const handleAddCoins = () => {
@@ -306,8 +303,8 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
         keywordEntry
       };
     });
-    setModalContent(keywordItems);
-    setShowModal(true);
+  setModalContent(keywordItems);
+  setShowEffectModal(true);
   };
 
   // Update progress bar width
@@ -452,29 +449,34 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
                   </button>
 
                   <button 
-                    className="options-button hud-action-button" 
-                    title="Options"
-                    onClick={handleOptionsClick}
-                  >
-                    Options
-                  </button>
-
-                  <button 
                     className="resign-button hud-action-button" 
                     title="Resign and view run summary"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to resign and view the run recap?')) {
-                        console.log('Player resigned - showing run recap');
-                        if (onShowRunRecap) {
-                          onShowRunRecap();
-                        } else if (onNavigateToWelcome) {
-                          onNavigateToWelcome();
-                        }
-                      }
-                    }}
+                    onClick={() => setShowResignModal(true)}
                   >
                     Resign
                   </button>
+
+                  {/* Resign confirmation modal */}
+                  {showResignModal && (
+                    <div className="modal-bg">
+                      <div className="modal">
+                        <h3>Confirm Resignation</h3>
+                        <p>Are you sure you want to resign and view the run recap?</p>
+                        <div className="modal-buttons">
+                          <button onClick={() => {
+                            setShowResignModal(false);
+                            console.log('Player resigned - showing run recap');
+                            if (onShowRunRecap) {
+                              onShowRunRecap();
+                            } else if (onNavigateToWelcome) {
+                              onNavigateToWelcome();
+                            }
+                          }}>Yes, Resign</button>
+                          <button onClick={() => setShowResignModal(false)}>Cancel</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <button 
                     className="discard-button hud-action-button" 
@@ -487,21 +489,26 @@ export const PlayerHUD: React.FC<PlayerHUDProps> = ({
 
                 {/* Fortune Popup removed; all effect popups use unified modal */}
 
-                {/* Modal: Only modal-item contents (header and effect) */}
-                {showModal && (
-                  <div>
-                    {modalContent.map((item, idx) => (
-                      <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
-                        <div className="modal-item-header">
-                          <span className="modal-item-category">{item.category ? item.category.toUpperCase() : ''}</span>
-                          {item.category ? ' - ' : ''}
-                          <span className="modal-item-name">{item.label}</span>
+                {/* Effect details modal: Only modal-item contents (header and effect) */}
+                {showEffectModal && (
+                  <div className="modal-bg">
+                    <div className="modal">
+                      {modalContent.map((item, idx) => (
+                        <div key={typeof item === 'string' ? item : idx + '-' + String(item)} className="modal-item">
+                          <div className="modal-item-header">
+                            <span className="modal-item-category">{item.category ? item.category.toUpperCase() : ''}</span>
+                            {item.category ? ' - ' : ''}
+                            <span className="modal-item-name">{item.label}</span>
+                          </div>
+                          <div className="modal-item-effect">
+                            {item.description}
+                          </div>
                         </div>
-                        <div className="modal-item-effect">
-                          {item.description}
-                        </div>
+                      ))}
+                      <div className="modal-buttons">
+                        <button onClick={() => setShowEffectModal(false)}>Close</button>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 )}
 

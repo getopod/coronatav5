@@ -238,57 +238,59 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             )}
           </section>
 
-          <section className="resources">
-            <h2>Resources & Mechanics</h2>
-            <div className="resource-grid">
-              <div className="resource-item">
-                <span className="resource-icon">🪙</span>
-                <div>
-                  <strong>Coins</strong>
-                  <p>Start with 50 coins. Earn 25 per Fear, 40 per Danger, 60 from Usurper. Use for trading.</p>
-                </div>
-              </div>
-              
-              <div className="resource-item">
-                <span className="resource-icon">🔄</span>
-                <div>
-                  <strong>Shuffles</strong>
-                  <p>Limited per encounter (default 3). Used to shuffle waste pile back into deck.</p>
-                </div>
-              </div>
-              
-              <div className="resource-item">
-                <span className="resource-icon">🗑️</span>
-                <div>
-                  <strong>Hand Discards</strong>
-                  <p>Limited per encounter (default 3). Shuffle entire hand back into deck.</p>
-                </div>
-              </div>
-
-              <div className="resource-item">
-                <span className="resource-icon">🎯</span>
-                <div>
-                  <strong>Score Goals</strong>
-                  <p>Smooth 25% growth per encounter. Foundation plays score 2× base value by default.</p>
-                </div>
-              </div>
-
-              <div className="resource-item">
-                <span className="resource-icon">🛒</span>
-                <div>
-                  <strong>Trade</strong>
-                  <p>Fixed inventory each visit: 4 Exploits, 3 Blessings, 2 Curses. Plus upgrades, curse removal, reroll options.</p>
-                </div>
-              </div>
-
-              <div className="resource-item">
-                <span className="resource-icon">🏔️</span>
-                <div>
-                  <strong>Ascension Levels</strong>
-                  <p>9 difficulty levels beyond base game. Higher costs, tougher goals, unique rewards and challenges.</p>
-                </div>
-              </div>
+          <section className="tutorial-section">
+            <div className="section-header" onClick={() => toggleSection('resources-mechanics')}>
+              <h2>Resources & Mechanics</h2>
+              <span className={`expand-icon ${expandedSection === 'resources-mechanics' ? 'expanded' : ''}`}>▼</span>
             </div>
+            {expandedSection === 'resources-mechanics' && (
+              <div className="section-content">
+                <div className="resource-grid">
+                  <div className="resource-item">
+                    <span className="resource-icon">🪙</span>
+                    <div>
+                      <strong>Coins</strong>
+                      <p>Start with 50 coins. Earn 25 per Fear, 40 per Danger, 60 from Usurper. Use for trading.</p>
+                    </div>
+                  </div>
+                  <div className="resource-item">
+                    <span className="resource-icon">🔄</span>
+                    <div>
+                      <strong>Shuffles</strong>
+                      <p>Limited per encounter (default 3). Used to shuffle waste pile back into deck.</p>
+                    </div>
+                  </div>
+                  <div className="resource-item">
+                    <span className="resource-icon">🗑️</span>
+                    <div>
+                      <strong>Hand Discards</strong>
+                      <p>Limited per encounter (default 3). Shuffle entire hand back into deck.</p>
+                    </div>
+                  </div>
+                  <div className="resource-item">
+                    <span className="resource-icon">🎯</span>
+                    <div>
+                      <strong>Score Goals</strong>
+                      <p>Smooth 25% growth per encounter. Foundation plays score 2× base value by default.</p>
+                    </div>
+                  </div>
+                  <div className="resource-item">
+                    <span className="resource-icon">🛒</span>
+                    <div>
+                      <strong>Trade</strong>
+                      <p>Fixed inventory each visit: 4 Exploits, 3 Blessings, 2 Curses. Plus upgrades, curse removal, reroll options.</p>
+                    </div>
+                  </div>
+                  <div className="resource-item">
+                    <span className="resource-icon">🏔️</span>
+                    <div>
+                      <strong>Ascension Levels</strong>
+                      <p>9 difficulty levels beyond base game. Higher costs, tougher goals, unique rewards and challenges.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
         </div>

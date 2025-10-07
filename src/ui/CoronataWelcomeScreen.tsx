@@ -8,14 +8,14 @@ interface CoronataWelcomeScreenProps {
   onStart: () => void;
   onHowToPlay: () => void;
   onGlossary: () => void;
-  onOptions: () => void;
+  onUpdates: () => void;
 }
 
 export function CoronataWelcomeScreen({
   onStart,
   onHowToPlay,
   onGlossary,
-  onOptions
+  onUpdates
 }: Readonly<CoronataWelcomeScreenProps>) {
   const [showHistory, setShowHistory] = useState(false);
 
@@ -80,8 +80,8 @@ export function CoronataWelcomeScreen({
         <button className="welcome-button secondary" onClick={() => setShowHistory(true)}>
           History
         </button>
-        <button className="welcome-button secondary" onClick={onOptions}>
-          Options
+        <button className="welcome-button secondary" onClick={onUpdates}>
+          Updates
         </button>
       </div>
 

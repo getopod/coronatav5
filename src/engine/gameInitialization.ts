@@ -1,5 +1,7 @@
 // Game initialization utilities for Coronata run structure
 import { GameState, RunState, PlayerState, Card, Suit } from './types';
+import { EncounterState } from './types';
+import { RegistryEntry } from '../registry/index';
 import { initializeRun, selectEncounter } from './encounterSystem';
 import { integrateEnhancedScoring } from './enhancedScoring';
 
@@ -41,6 +43,66 @@ export function initializeCoronataGame(config: GameInitConfig): Partial<GameStat
   // Select first encounter
   const firstEncounter = selectEncounter(run);
   run.encounter = firstEncounter;
+
+    // Select all fears and dangers for the run at initialization
+    // Assume registry is imported from '../registry/index'
+    // and has arrays: registry.fear, registry.danger
+    const totalEncounters = encounterConfig.totalTrials * encounterConfig.encountersPerTrial;
+    const fearCount = Math.floor(totalEncounters * encounterConfig.fearWeight);
+    const dangerCount = totalEncounters - fearCount;
+
+    // Helper to sample without replacement
+    function sampleWithoutReplacement<T>(arr: T[], count: number): T[] {
+      const copy = [...arr];
+      const result = [];
+      for (let i = 0; i < count && copy.length > 0; i++) {
+        const idx = Math.floor(Math.random() * copy.length);
+        result.push(copy.splice(idx, 1)[0]);
+      }
+      return result;
+    }
+
+    // Import registry
+    const { registry } = require('../registry/index');
+    const selectedFears = sampleWithoutReplacement(registry.fear, fearCount);
+    const selectedDangers = sampleWithoutReplacement(registry.danger, dangerCount);
+
+    // Store in run state
+    // Extend run state to include selectedFears/selectedDangers
+      (run as any).selectedFears = selectedFears as RegistryEntry[];
+      (run as any).selectedDangers = selectedDangers as RegistryEntry[];
+
+    // Select first encounter from preselected lists
+    function getEncounterForIndex(index: number): EncounterState {
+      // Fears first, then dangers
+      if (index < selectedFears.length) {
+          const entry = selectedFears[index] as RegistryEntry;
+          return {
+            id: `fear-${index+1}`,
+            type: 'fear',
+            registryId: entry.id,
+            name: entry.label,
+            description: entry.description,
+            effects: entry.effects || [],
+            scoreGoal: 0,
+            completed: false,
+          };
+      } else {
+          const entry = selectedDangers[index - selectedFears.length] as RegistryEntry;
+          return {
+            id: `danger-${index+1-selectedFears.length}`,
+            type: 'danger',
+            registryId: entry.id,
+            name: entry.label,
+            description: entry.description,
+            effects: entry.effects || [],
+            scoreGoal: 0,
+            completed: false,
+          };
+      }
+    }
+
+    run.encounter = getEncounterForIndex(0);
 
   const gameState: Partial<GameState> = {
     player,

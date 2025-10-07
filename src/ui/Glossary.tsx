@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { exploits, blessings, fears, curses, dangers, feats } from '../registry/registry';
+import { keywordRegistry, generateKeywordDescription } from '../registry/keyword-registry';
 import './Glossary.css';
 
 export interface GlossaryProps {
@@ -332,32 +333,42 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
           </div>
 
           <div className="items-grid">
-            {filteredItems.map((item) => (
-              <div key={`${item.type}-${item.id}`} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
-                <div className="item-header">
-                  <h3 className="item-title">{item.label}</h3>
-                  {activeTab === 'exploits' && item.rarity && (
-                    <span 
-                      className={`rarity-badge ${item.rarity.toLowerCase()}`}
-                    >
-                      {item.rarity}
-                    </span>
+            {filteredItems.map((item) => {
+              // Find keywordRegistry entry for this item
+              const keywordEntry = keywordRegistry.find(
+                (k) => k.id === item.id && k.type === item.type
+              );
+              return (
+                <div key={`${item.type}-${item.id}`} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
+                  <div className="item-header">
+                    <h3 className="item-title">{item.label}</h3>
+                    {activeTab === 'exploits' && item.rarity && (
+                      <span 
+                        className={`rarity-badge ${item.rarity.toLowerCase()}`}
+                      >
+                        {item.rarity}
+                      </span>
+                    )}
+                  </div>
+                  <p className="item-description">{item.description}</p>
+                  {/* Keyword description, if available */}
+                  {keywordEntry?.keywords && (
+                    <div className="item-keyword-description">
+                      <strong>Keywords:</strong> {generateKeywordDescription(keywordEntry.keywords)}
+                    </div>
+                  )}
+                  {item.effects && item.effects.length > 0 && (
+                    <div className="item-effects">
+                      <ul>
+                        {item.effects.map((effect, effectIndex) => (
+                          <li key={`${item.id}-effect-${effectIndex}-${effect.action || 'unknown'}`}>{getConciseEffectDescription(effect)}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
-                
-                <p className="item-description">{item.description}</p>
-                
-                {item.effects && item.effects.length > 0 && (
-                  <div className="item-effects">
-                    <ul>
-                      {item.effects.map((effect, effectIndex) => (
-                        <li key={`${item.id}-effect-${effectIndex}-${effect.action || 'unknown'}`}>{getConciseEffectDescription(effect)}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {filteredItems.length === 0 && (

@@ -448,13 +448,15 @@ body {
 
 .modal-button {
   border: none;
+  top: 50%;
   border-radius: 6px;
   padding: 10px 20px;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 80px;
+  max-height: 40px;
 }
 
 .modal-button.cancel {
@@ -478,6 +480,8 @@ body {
 /* Run recap modal specific styles */
 .modal-content.run-recap {
   max-width: 500px;
+  z-index: 4000;
+  position: fixed
 }
 
 .recap-stats {
