@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { exploits, blessings, curses } from '../registry/registry';
+import { exploits, blessings } from '../registry/registry';
 import type { RegistryEntry } from '../registry/index';
 import { BlessingApplicationModal } from './BlessingApplicationModal';
 import './TradeScreen.css';
@@ -127,15 +127,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
       });
     });
     
-    // Select 2 random curses
-    const selectedCurses = getRandomByRarity(curses, 2);
-    selectedCurses.forEach(curse => {
-      items.push({
-        ...curse,
-        cost: calculateCost(curse.rarity, 'curse'),
-        category: 'curse'
-      });
-    });
+    // Curses are not available in registry; skip curse selection.
     
     return items;
   };

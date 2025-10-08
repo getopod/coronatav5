@@ -4,7 +4,6 @@
  */
 
 import { GameState } from './types';
-import { feats } from '../registry/registry';
 import type { RegistryEntry } from '../registry/index';
 
 export interface FeatProgress {

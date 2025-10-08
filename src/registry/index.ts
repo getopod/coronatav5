@@ -44,23 +44,13 @@ export type RegistryEntry =
 import {
   exploits,
   blessings,
-  fears,
-  dangers,
-  fortunes,
-  curses,
-  feats,
-  wanders
+  fears
 } from './registry';
 
 export const registry = {
   exploit: exploits,
   blessing: blessings,
-  fear: fears,
-  danger: dangers,
-  fortune: fortunes,
-  curse: curses,
-  feat: feats,
-  wander: wanders
+  fear: fears
 };
 
 export type RegistryCategory = keyof typeof registry;

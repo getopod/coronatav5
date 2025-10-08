@@ -1,7 +1,104 @@
+// BLESSINGS
+export const blessings: RegistryEntry[] = [
+  {
+    id: "blessing-midas-touch",
+    label: "The Midas Touch",
+    description: "Triggers: foundation play | Effects: scoring multiplier | Modifiers: one-time",
+    type: "blessing",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["scoring", "foundation"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "score_multiplier", target: "foundation", value: 4, oneShot: true }
+    ]
+  },
+  {
+    id: "blessing-golden-touch",
+    label: "The Golden Touch",
+    description: "Triggers: tableau play | Effects: special scoring | Modifiers: one-time",
+    type: "blessing",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["scoring", "tableau"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "score_special", target: "tableau", value: "basePlusBeneath", oneShot: true }
+    ]
+  },
+  {
+    id: "blessing-harvest",
+    label: "The Harvest",
+    description: "Triggers: foundation play | Effects: currency bonus",
+    type: "blessing",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["coin", "foundation"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "award_coin", target: "player", value: 20, condition: { event: "on_play_to_foundation" } }
+    ]
+  }
+];
+
+// FEARS
+export const fears: RegistryEntry[] = [
+  {
+    id: "fear-suffocation",
+    label: "Fear of Suffocation",
+    description: "Effects: movement restriction | Modifiers: permanent",
+    type: "fear",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["discard", "restriction"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "block", target: "discard" }
+    ]
+  },
+  {
+    id: "fear-entombment",
+    label: "Fear of Entombment",
+    description: "Triggers: hand play | Effects: face-down flip | Modifiers: permanent",
+    type: "fear",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["tableau", "face-down"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "flip_facedown", target: "tableau", condition: { event: "on_play_from_hand" } }
+    ]
+  },
+  {
+    id: "fear-poisoned-chalice",
+    label: "Fear of the Poisoned Chalice",
+    description: "Effects: scoring penalty | Modifiers: value-based",
+    type: "fear",
+    rarity: "",
+    category: "",
+    completed: false,
+    tags: ["scoring", "seven"],
+    choices: [],
+    results: {},
+    effects: [
+      { action: "award_score", target: "tableau|foundation", value: 0, condition: { value: 7 } }
+    ]
+  }
+];
 import type { RegistryEntry } from './index';
 
 // EXPLOITS
-export const registry: RegistryEntry[] = [
+export const exploits: RegistryEntry[] = [
   {
     id: "exploit-quickdraw",
     label: "Quickdraw",

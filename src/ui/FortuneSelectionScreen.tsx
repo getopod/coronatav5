@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { fortunes } from '../registry/registry';
 import type { RegistryEntry } from '../registry/index';
 import './FortuneSelectionScreen.css';
 
@@ -17,12 +16,8 @@ const FortuneSelectionScreen: React.FC<FortuneSelectionScreenProps> = ({
 
   // Select 3 random fortunes on component mount
   useEffect(() => {
-    const getRandomFortunes = () => {
-      const shuffled = [...fortunes].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, 3);
-    };
-    
-    setSelectedFortunes(getRandomFortunes());
+    // No fortunes available; set selectedFortunes to empty array or provide fallback.
+    setSelectedFortunes([]);
   }, []);
 
   const handleFortuneClick = (fortune: RegistryEntry) => {

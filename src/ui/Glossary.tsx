@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { exploits, blessings, fears, curses, dangers, feats } from '../registry/registry';
+import { exploits, blessings, fears } from '../registry/registry';
 import { keywordRegistry, generateKeywordDescription } from '../registry/keyword-registry';
 import './Glossary.css';
 
@@ -47,9 +47,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
       case 'exploits': return exploits;
       case 'blessings': return blessings;
       case 'fears': return fears;
-      case 'curses': return curses;
-      case 'dangers': return dangers;
-      case 'feats': return feats;
+  // Only exploits, blessings, and fears are available
       default: return [];
     }
   };
@@ -292,25 +290,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
             >
               😨 Fears ({fears.length})
             </button>
-            <button 
-              className={`tab-button ${activeTab === 'curses' ? 'active' : ''}`}
-              onClick={() => setActiveTab('curses')}
-            >
-              🩸 Curses ({curses.length})
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'dangers' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dangers')}
-            >
-              ⚡ Dangers ({dangers.length})
-            </button>
-
-            <button 
-              className={`tab-button ${activeTab === 'feats' ? 'active' : ''}`}
-              onClick={() => setActiveTab('feats')}
-            >
-              🏆 Feats ({feats.length})
-            </button>
+            {/* Only exploits, blessings, and fears tabs are available */}
           </div>
 
           {/* Search */}

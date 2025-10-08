@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { wanders } from '../registry/registry';
 import type { RegistryEntry } from '../registry/index';
 import './WanderScreen.css';
 
@@ -19,12 +18,8 @@ const WanderScreen: React.FC<WanderScreenProps> = ({
 
   // Select a random wander on component mount
   useEffect(() => {
-    const selectRandomWander = () => {
-      const randomIndex = Math.floor(Math.random() * wanders.length);
-      return wanders[randomIndex];
-    };
-    
-    setCurrentWander(selectRandomWander());
+    // No wanders available; set currentWander to null or provide fallback.
+    setCurrentWander(null);
   }, []);
 
   const handleChoiceClick = (choice: string) => {
