@@ -49,7 +49,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   const [tradeItems, setTradeItems] = useState<TradeItem[]>([]);
   const [selectedTab, setSelectedTab] = useState<'buy' | 'sell' | 'upgrades'>('buy');
   const [rerollCount, setRerollCount] = useState(0);
-  const [curseRemovalCount, setCurseRemovalCount] = useState(0);
+  // Curse removal is disabled since curses are not available
   const [blessingModalOpen, setBlessingModalOpen] = useState(false);
   const [selectedBlessing, setSelectedBlessing] = useState<RegistryEntry | null>(null);
 
@@ -91,7 +91,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
     const baseCosts = {
       exploit: { common: 30, uncommon: 60, rare: 120, legendary: 250 },
       blessing: { common: 35, uncommon: 70, rare: 140, legendary: 200 },
-      curse: { common: 15, uncommon: 30, rare: 60, legendary: 120 }
+      // curse: { common: 15, uncommon: 30, rare: 60, legendary: 120 } // Not used
     };
     
     const costs = baseCosts[type as keyof typeof baseCosts] || baseCosts.exploit;
@@ -169,14 +169,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
     }
   };
 
-  // Handle curse removal
-  const handleCurseRemoval = () => {
-    const removalCost = 100 + (curseRemovalCount * 50); // Escalating cost
-    if (playerCoin >= removalCost) {
-      setCurseRemovalCount(prev => prev + 1);
-      onPurchase({ id: 'curse-removal', label: 'Curse Removal', description: 'Remove curses' } as RegistryEntry, removalCost);
-    }
-  };
+  // Curse removal is disabled
 
   // Handle purchase
   const handlePurchase = (item: TradeItem | Upgrade) => {
@@ -246,7 +239,6 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
   };
 
   const rerollCost = 50 + (rerollCount * 25);
-  const curseRemovalCost = 100 + (curseRemovalCount * 50);
 
   return (
     <div className="trade-screen-root">
@@ -373,19 +365,7 @@ const TradeScreen: React.FC<TradeScreenProps> = ({
               ))}
             </div>
             
-            <div className="services-grid">
-              <div className="service-item">
-                <h4>Curse Removal</h4>
-                <p>Remove up to 2 curses from your current loadout.</p>
-                <button
-                  className="btn-service"
-                  onClick={handleCurseRemoval}
-                  disabled={playerCoin < curseRemovalCost}
-                >
-                  Remove Curses (🪙 {curseRemovalCost})
-                </button>
-              </div>
-            </div>
+            {/* Curse removal service is disabled since curses are not available */}
           </div>
         )}
       </div>

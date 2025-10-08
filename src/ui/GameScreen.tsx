@@ -1266,30 +1266,51 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
     }
   };
 
-  // Enhanced card double-click handler (auto-move with intelligent destination detection)
+  // Enhanced card double-click handler (auto-move with multi-destination support)
   const handleCardDoubleClick = (cardId: string) => {
-    // Prevent double-click interference with normal selection by adding a small delay
     setTimeout(() => {
-      setHighlightedDestinations([]);
-      // Try to move to the first available foundation pile
+      // Find all valid move destinations for this card
       const fromPile = getPiles(engine.state.piles).find((pile: any) =>
         Array.isArray(pile.cards) && pile.cards.some((card: any) => card.id === cardId)
       );
       const fromPileId = fromPile && typeof fromPile === 'object' && 'id' in fromPile ? fromPile.id : undefined;
-      const foundationPile = getPiles(engine.state.piles).find((pile: any) => pile.type === 'foundation');
-      if (fromPileId && foundationPile) {
-        try {
-          console.log('GameScreen: Attempting double-click move', { from: fromPileId, to: foundationPile.id, cardId });
-          engine.moveCard({ from: fromPileId, to: foundationPile.id, cardId });
-          setSelectedCardId(null);
-        } catch (e) {
-          console.error('GameScreen: Double-click move failed, triggering shake. Error:', e, { from: fromPileId, to: foundationPile.id, cardId });
-          triggerShake(cardId);
-          setSelectedCardId(null);
-        }
-      } else {
+      if (!fromPileId) {
         triggerShake(cardId);
         setSelectedCardId(null);
+        return;
+      }
+      // Find all piles where this card can move
+      const validDestinations = getPiles(engine.state.piles)
+        .filter((pile: any) => {
+          if (pile.id === fromPileId) return false;
+          try {
+            // Simulate move (engine.moveCard may throw if invalid)
+            engine.validateMove({ from: fromPileId, to: pile.id, cardId });
+            return true;
+          } catch {
+            return false;
+          }
+        });
+      if (validDestinations.length === 1) {
+        // Only one valid move, auto-move
+        try {
+          engine.moveCard({ from: fromPileId, to: validDestinations[0].id, cardId });
+          setSelectedCardId(null);
+          setHighlightedDestinations([]);
+        } catch (e) {
+          triggerShake(cardId);
+          setSelectedCardId(null);
+          setHighlightedDestinations([]);
+        }
+      } else if (validDestinations.length > 1) {
+        // Multiple valid moves, highlight them
+        setHighlightedDestinations(validDestinations.map((pile: any) => pile.id));
+        setSelectedCardId(cardId);
+      } else {
+        // No valid moves
+        triggerShake(cardId);
+        setSelectedCardId(null);
+        setHighlightedDestinations([]);
       }
     }, 100);
   };
@@ -1889,7 +1910,7 @@ export function GameScreen({ onNavigateToWelcome, selectedFortune }: GameScreenP
       {currentScreen === 'fortune-swap' && (
         <div className="screen-overlay">
           <FortuneSwapActivity
-            currentFortune={gameState.player?.activeFortune ? registry.fortune.find(f => f.id === gameState.player.activeFortune) : undefined}
+            currentFortune={undefined}
             availableFortunes={gameState.run?.encounterFlow?.currentActivity?.data?.options || []}
             onFortuneSelected={handleFortuneSwapSelection}
             onBack={handleFortuneSwapBack}

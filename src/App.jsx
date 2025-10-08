@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary, Options } from './ui';
+import { EngineEventProvider, GameScreen, CoronataWelcomeScreen, FortuneSelectionScreen, HowToPlay, Glossary } from './ui';
 import { Updates } from './ui/Updates';
 import RunHistoryScreen from './ui/RunHistoryScreen';
 import { EngineController } from './engine/engineController';
