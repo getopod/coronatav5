@@ -195,8 +195,8 @@
   background: rgba(139, 69, 19, 0.1);
   padding: 15px;
   border-radius: 6px;
+  justify-content: center;
   border: 1px solid #d4af37;
-}
 
 .registry-type h4 {
   color: #8b4513;
@@ -448,4 +448,3 @@
   .tips-grid {
     grid-template-columns: 1fr;
   }
-}

@@ -99,25 +99,25 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
                       <li><strong>Final Boss:</strong> Usurper encounter</li>
                     </ul>
                   </div>
-                <div className="feature-section">
-                  <h3>🎯 After Fear Encounters</h3>
-                  <p>
-                    You receive <strong>1 Trade + 2 Wander events</strong> in random order.
-                    Wanders are randomly selected by the game - you choose responses, not events.
-                    <em> Plan purchases carefully - timing is everything!</em>
-                  </p>
-                  <h3>⚡ After Danger Encounters</h3>
-                  <p>
-                    <strong>Fortune swap</strong> - you <strong>must</strong> exchange your current Fortune for a new one.
-                    Plus <strong>50% chance for bonus Trade</strong> opportunity.
-                    Use this to adapt your strategy mid-run!
-                  </p>
-                  <h3>🏆 Final Challenge</h3>
-                  <p>
-                    After completing all 15 encounters, face the <strong>Usurper</strong> - the ultimate boss.
-                    Your build, resources, and choices determine victory or defeat.
-                  </p>
-                </div>
+                  <div className="feature-section">
+                    <h3>🎯 After Fear Encounters</h3>
+                    <p>
+                      You receive <strong>1 Trade + 2 Wander events</strong> in random order.
+                      Wanders are randomly selected by the game - you choose responses, not events.
+                      <em> Plan purchases carefully - timing is everything!</em>
+                    </p>
+                    <h3>⚡ After Danger Encounters</h3>
+                    <p>
+                      <strong>Fortune swap</strong> - you <strong>must</strong> exchange your current Fortune for a new one.
+                      Plus <strong>50% chance for bonus Trade</strong> opportunity.
+                      Use this to adapt your strategy mid-run!
+                    </p>
+                    <h3>🏆 Final Challenge</h3>
+                    <p>
+                      After completing all 15 encounters, face the <strong>Usurper</strong> - the ultimate boss.
+                      Your build, resources, and choices determine victory or defeat.
+                    </p>
+                  </div>
                   <div className="rule-card">
                     <h3>🃏 Moves</h3>
                     <ul>
@@ -132,70 +132,57 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             )}
           </section>
 
+          {/* Roadmap & New Features - now a sibling section */}
           <section className="tutorial-section">
-            <div className="section-header" onClick={() => toggleSection('registry-items')}>
-              <h2>Mechanics</h2>
-              <span className={`expand-icon ${expandedSection === 'registry-items' ? 'expanded' : ''}`}>▼</span>
+            <div className="section-header" onClick={() => toggleSection('roadmap-features')}>
+              <h2>Roadmap & New Features</h2>
+              <span className={`expand-icon ${expandedSection === 'roadmap-features' ? 'expanded' : ''}`}>▼</span>
             </div>
-            {expandedSection === 'registry-items' && (
+            {expandedSection === 'roadmap-features' && (
               <div className="section-content">
-                <div className="feature-section">
-                  <h3>🔮 Fortunes</h3>
-                  <p>
-                    Run-level modifiers chosen at start and optionally swapped after Dangers. 
-                    Only one Fortune active at a time, providing persistent effects throughout the run.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>⚔️ Exploits</h3>
-                  <p>
-                    Persistent items with passive or triggered effects (max 4 equipped). 
-                    Examples include bonus scoring, extra shuffles, or new movement rules.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>✨ Blessings</h3>
-                  <p>
-                    Permanent card upgrades that attach to specific cards. Purchase blessings in Trade, 
-                    then apply them to individual cards in your deck. Blessed cards show sparkle effects 
-                    and provide enhanced benefits when played.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>😈 Curses</h3>
-                  <p>
-                    Negative modifiers that restrict actions or impose costs. Applied during 
-                    encounters and can usually be removed through trading.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>😨 Fears</h3>
-                  <p>
-                    Lightweight encounter modifiers for Fear encounters. Make encounters 
-                    more challenging with specific restrictions or effects.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>⚠️ Dangers</h3>
-                  <p>
-                    Heavyweight encounter modifiers for Danger encounters. Multi-effect 
-                    challenges that significantly change gameplay mechanics.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>🚶 Wanders</h3>
-                  <p>
-                    Narrative events with choice-based outcomes. <strong>The game randomly selects 
-                    which wander you encounter</strong> - you choose how to respond, not which event occurs.
-                    Present options like gaining coins, drawing cards, or receiving items.
-                  </p>
-                </div>
-                <div className="feature-section">
-                  <h3>🏆 Feats</h3>
-                  <p>
-                    Trackable achievements awarded for meeting specific objectives during runs. 
-                    Each feat provides coin and score rewards when completed.
-                  </p>
+                <div className="roadmap-grid">
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">♾️</span>
+                    <div>
+                      <strong>Endless Mode</strong>
+                      <p>Play beyond the final boss! Endless mode lets you continue your run with escalating difficulty, new modifiers, and unique rewards for each completed cycle.</p>
+                    </div>
+                  </div>
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">🃏</span>
+                    <div>
+                      <strong>Classic Solitaire Games</strong>
+                      <p>Enjoy multiple solitaire variants, including Klondike, Spider, and FreeCell, each with custom roguelike twists and progression systems.</p>
+                    </div>
+                  </div>
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">📅</span>
+                    <div>
+                      <strong>Daily Challenges</strong>
+                      <p>Face new challenges every day with unique modifiers, leaderboards, and special rewards for top performers.</p>
+                    </div>
+                  </div>
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">🛠️</span>
+                    <div>
+                      <strong>Customized Effects (Registry Entries)</strong>
+                      <p>Create and equip your own exploits, blessings, and curses using the registry system. Personalize your deck and strategy for each run.</p>
+                    </div>
+                  </div>
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">🤝</span>
+                    <div>
+                      <strong>Local Multiplayer</strong>
+                      <p>Compete or cooperate with friends in local multiplayer mode. Share resources, trade items, and tackle encounters together for a fresh roguelike experience.</p>
+                    </div>
+                  </div>
+                  <div className="roadmap-item">
+                    <span className="roadmap-icon">🏔️</span>
+                    <div>
+                      <strong>Ascension Levels</strong>
+                      <p>Unlock 9+ difficulty levels beyond the base game. Each ascension increases costs, introduces tougher goals, and offers unique rewards and challenges for expert players.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -238,60 +225,6 @@ export const HowToPlay: React.FC<HowToPlayProps> = ({ onBack }) => {
             )}
           </section>
 
-          <section className="tutorial-section">
-            <div className="section-header" onClick={() => toggleSection('resources-mechanics')}>
-              <h2>Resources & Mechanics</h2>
-              <span className={`expand-icon ${expandedSection === 'resources-mechanics' ? 'expanded' : ''}`}>▼</span>
-            </div>
-            {expandedSection === 'resources-mechanics' && (
-              <div className="section-content">
-                <div className="resource-grid">
-                  <div className="resource-item">
-                    <span className="resource-icon">🪙</span>
-                    <div>
-                      <strong>Coins</strong>
-                      <p>Start with 50 coins. Earn 25 per Fear, 40 per Danger, 60 from Usurper. Use for trading.</p>
-                    </div>
-                  </div>
-                  <div className="resource-item">
-                    <span className="resource-icon">🔄</span>
-                    <div>
-                      <strong>Shuffles</strong>
-                      <p>Limited per encounter (default 3). Used to shuffle waste pile back into deck.</p>
-                    </div>
-                  </div>
-                  <div className="resource-item">
-                    <span className="resource-icon">🗑️</span>
-                    <div>
-                      <strong>Hand Discards</strong>
-                      <p>Limited per encounter (default 3). Shuffle entire hand back into deck.</p>
-                    </div>
-                  </div>
-                  <div className="resource-item">
-                    <span className="resource-icon">🎯</span>
-                    <div>
-                      <strong>Score Goals</strong>
-                      <p>Smooth 25% growth per encounter. Foundation plays score 2× base value by default.</p>
-                    </div>
-                  </div>
-                  <div className="resource-item">
-                    <span className="resource-icon">🛒</span>
-                    <div>
-                      <strong>Trade</strong>
-                      <p>Fixed inventory each visit: 4 Exploits, 3 Blessings, 2 Curses. Plus upgrades, curse removal, reroll options.</p>
-                    </div>
-                  </div>
-                  <div className="resource-item">
-                    <span className="resource-icon">🏔️</span>
-                    <div>
-                      <strong>Ascension Levels</strong>
-                      <p>9 difficulty levels beyond base game. Higher costs, tougher goals, unique rewards and challenges.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
 
         </div>
       </div>
