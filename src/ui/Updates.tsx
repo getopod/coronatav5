@@ -17,7 +17,7 @@ export const Updates: React.FC<UpdatesProps> = ({ onBack }) => {
         <button className="close-button" onClick={onBack}>
           ✕
         </button>
-  <div className="how-to-play-content">
+        <div className="how-to-play-content">
           <section className="tutorial-section">
             <div className="section-header" onClick={() => toggleSection('working')}>
               <h2>What is working?</h2>
@@ -39,6 +39,7 @@ export const Updates: React.FC<UpdatesProps> = ({ onBack }) => {
               </div>
             )}
           </section>
+          <section className="tutorial-section">
             <div className="section-header" onClick={() => toggleSection('broken')}>
               <h2>What is broken?</h2>
               <span className={`expand-icon ${expandedSection === 'broken' ? 'expanded' : ''}`}>▼</span>
