@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { exploits, blessings, fears } from '../registry/registry';
-import { keywordRegistry, generateKeywordDescription } from '../registry/keyword-registry';
+// Keyword registry import removed (file missing)
 import './Glossary.css';
 
 export interface GlossaryProps {
@@ -314,10 +314,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
 
           <div className="items-grid">
             {filteredItems.map((item) => {
-              // Find keywordRegistry entry for this item
-              const keywordEntry = keywordRegistry.find(
-                (k) => k.id === item.id && k.type === item.type
-              );
+              // Keyword registry unavailable
               return (
                 <div key={`${item.type}-${item.id}`} className={`item-card ${activeTab === 'feats' && 'completed' in item && !item.completed ? 'feat-incomplete' : ''}`}>
                   <div className="item-header">
@@ -332,11 +329,7 @@ export const Glossary: React.FC<GlossaryProps> = ({ onBack }) => {
                   </div>
                   <p className="item-description">{item.description}</p>
                   {/* Keyword description, if available */}
-                  {keywordEntry?.keywords && (
-                    <div className="item-keyword-description">
-                      <strong>Keywords:</strong> {generateKeywordDescription(keywordEntry.keywords)}
-                    </div>
-                  )}
+                  {/* Keyword description unavailable (registry missing) */}
                   {item.effects && item.effects.length > 0 && (
                     <div className="item-effects">
                       <ul>

@@ -1,3 +1,4 @@
+// import './DebugPanel.css';
 // Extend window type for engine
 declare global {
   interface Window {
@@ -6,7 +7,6 @@ declare global {
 }
 
 import React from 'react';
-import './DebugPanel.css';
 
 // DebugPanel subcomponent for GameScreen
 interface DebugPanelProps {
